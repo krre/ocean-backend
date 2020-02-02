@@ -17,15 +17,14 @@ func NewApp() *App {
 }
 
 func (a *App) Run() error {
-	fmt.Println("Ocean started")
+	log.Println("Ocean started")
 
 	appendHandler := func(writer http.ResponseWriter, request *http.Request) {
 		body, err := ioutil.ReadAll(request.Body)
 
 		if err != nil {
-			fmt.Errorf("Error reading body: %v", err)
 			http.Error(writer, "can't read body", http.StatusBadRequest)
-			return
+			log.Println("Error reading body: " + err.Error())
 		}
 
 		fmt.Println(string(body))
@@ -35,7 +34,5 @@ func (a *App) Run() error {
 	}
 
 	http.HandleFunc("/append", appendHandler)
-	log.Fatal(http.ListenAndServe(":11000", nil))
-
-	return nil
+	return http.ListenAndServe(":11000", nil)
 }
