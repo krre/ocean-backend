@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -10,10 +11,19 @@ import (
 func main() {
 	fmt.Println("Ocean started")
 
-	appendHandler := func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		io.WriteString(w, "OK\n")
-		fmt.Println("appendHandler")
+	appendHandler := func(writer http.ResponseWriter, request *http.Request) {
+		body, err := ioutil.ReadAll(request.Body)
+
+		if err != nil {
+			fmt.Errorf("Error reading body: %v", err)
+			http.Error(writer, "can't read body", http.StatusBadRequest)
+			return
+		}
+
+		fmt.Println(string(body))
+		writer.Header().Set("Access-Control-Allow-Origin", "*")
+		writer.Header().Set("Access-Control-Allow-Headers", "*")
+		io.WriteString(writer, "OK\n")
 	}
 
 	http.HandleFunc("/append", appendHandler)
