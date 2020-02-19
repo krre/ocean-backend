@@ -1,0 +1,9 @@
+[package]
+name = "ocean"
+version = "0.1.0"
+authors = ["Vladimir Zarypov <krre31@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
