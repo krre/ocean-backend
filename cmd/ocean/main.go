@@ -7,7 +7,12 @@ import (
 )
 
 func main() {
-	a := app.NewApp()
+	a, err := app.NewApp()
+
+	if err != nil {
+		log.Fatalf("Error creating application: %v", err)
+	}
+
 	if err := a.Run(); err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
