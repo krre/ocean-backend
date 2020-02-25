@@ -10,7 +10,7 @@ pub struct Config {
 pub struct Database {
     pub name: String,
     pub host: String,
-    pub port: Option<u16>,
+    pub port: u16,
     pub user: String,
     pub password: String,
 }
