@@ -8,6 +8,8 @@ edition = "2018"
 name = "ocean"
 path = "src/ocean/lib.rs"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+toml = "0.5.6"
+serde = "1.0.104"
+serde_derive = "1.0.104"
+dirs = "2.0"
