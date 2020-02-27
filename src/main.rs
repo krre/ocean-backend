@@ -1,5 +1,7 @@
+use ocean::config;
+
 fn main() {
-    let config = ocean::Config::new();
+    let config = config::Config::new();
     println!("{:?}", config);
     println!("Ocean started");
 }
