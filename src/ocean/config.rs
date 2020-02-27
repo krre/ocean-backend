@@ -3,16 +3,16 @@ use std::fs;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    pub database: Database,
+    pub postgres: Postgres,
 }
 
 #[derive(Debug, Deserialize)]
-pub struct Database {
-    pub name: String,
+pub struct Postgres {
     pub host: String,
     pub port: u16,
-    pub user: String,
+    pub username: String,
     pub password: String,
+    pub database: String,
 }
 
 impl Config {
