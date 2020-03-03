@@ -1,3 +1,6 @@
+[server]
+port = 21000
+
 [postgres]
 host = "localhost"
 port = 5432

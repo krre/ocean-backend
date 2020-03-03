@@ -3,7 +3,13 @@ use std::fs;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
+    pub server: Server,
     pub postgres: Postgres,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Server {
+    pub port: u16,
 }
 
 #[derive(Debug, Deserialize)]
