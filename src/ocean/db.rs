@@ -1,7 +1,9 @@
 use crate::config;
 use postgres::{Client, NoTls};
 
-pub struct Db {}
+pub struct Db {
+    client: postgres::Client,
+}
 
 impl Db {
     pub fn new(config: &config::Postgres) -> Db {
@@ -13,6 +15,11 @@ impl Db {
             .password(&config.password)
             .connect(NoTls)
             .unwrap();
-        Db {}
+        Db { client }
+    }
+
+    pub fn migrate(&self) {
+        print!("Database migration... ");
+        println!("OK")
     }
 }

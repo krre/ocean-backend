@@ -1,15 +1,17 @@
 use crate::config;
 use crate::db;
 
-pub struct App {}
+pub struct App {
+    config: config::Config,
+}
 
 impl App {
-    pub fn new(config: &config::Config) -> App {
-        let db = db::Db::new(&config.postgres);
-        App {}
+    pub fn new(config: config::Config) -> App {
+        App { config }
     }
 
     pub fn start(&self) {
-        println!("Ocean started");
+        let db = db::Db::new(&self.config.postgres);
+        db.migrate();
     }
 }
