@@ -1,5 +1,6 @@
 use crate::config;
 use crate::db;
+use crate::migration;
 
 pub struct App {
     config: config::Config,
@@ -12,6 +13,6 @@ impl App {
 
     pub fn start(&self) {
         let db = db::Db::new(&self.config.postgres);
-        db.migrate();
+        migration::migrate(&db);
     }
 }

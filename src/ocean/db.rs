@@ -17,9 +17,4 @@ impl Db {
             .unwrap();
         Db { client }
     }
-
-    pub fn migrate(&self) {
-        print!("Database migration... ");
-        println!("OK")
-    }
 }
