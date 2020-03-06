@@ -12,7 +12,7 @@ impl App {
     }
 
     pub fn start(&self) {
-        let db = db::Db::new(&self.config.postgres);
-        migration::migrate(&db);
+        let mut db = db::Db::new(&self.config.postgres);
+        migration::migrate(&mut db);
     }
 }

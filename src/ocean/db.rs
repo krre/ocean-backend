@@ -2,12 +2,12 @@ use crate::config;
 use postgres::{Client, NoTls};
 
 pub struct Db {
-    client: postgres::Client,
+    conn: Client,
 }
 
 impl Db {
     pub fn new(config: &config::Postgres) -> Db {
-        let client = Client::configure()
+        let conn = Client::configure()
             .host("localhost")
             .port(config.port)
             .dbname(&config.database)
@@ -15,6 +15,14 @@ impl Db {
             .password(&config.password)
             .connect(NoTls)
             .unwrap();
-        Db { client }
+        Db { conn }
+    }
+
+    pub fn has_table(&mut self, name: &str) -> bool {
+        let row = self
+            .conn
+            .query_one("SELECT to_regclass($1)", &[&name])
+            .unwrap();
+        row.is_empty()
     }
 }
