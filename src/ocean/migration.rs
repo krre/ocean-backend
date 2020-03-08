@@ -18,6 +18,11 @@ pub fn migrate(db: &mut db::Db) {
         last_version = id as usize;
     }
 
+    if last_version == VERSION {
+        println!("Nothing to patch");
+        return;
+    }
+
     let mut i = last_version;
 
     for patch in &PATCHES[last_version..VERSION] {
