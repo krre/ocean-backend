@@ -23,6 +23,6 @@ impl Db {
             .conn
             .query_one("SELECT to_regclass($1)", &[&name])
             .unwrap();
-        row.is_empty()
+        !row.is_empty()
     }
 }
