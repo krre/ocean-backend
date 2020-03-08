@@ -18,6 +18,10 @@ pub fn migrate(db: &mut db::Db) {
         i += 1;
         println!("Apply database patch {}", i);
         patch(db);
+        // Create row with id as version number started from 1
+        db.conn
+            .execute("INSERT INTO migrations (created_at) VALUES (now())", &[])
+            .unwrap();
     }
 
     println!("Finish database migration")
@@ -25,7 +29,7 @@ pub fn migrate(db: &mut db::Db) {
 
 fn exec_queries(db: &mut db::Db, queries: &[&str]) {
     for query in queries {
-        db.conn.execute(*query, &[]);
+        db.conn.execute(*query, &[]).unwrap();
     }
 }
 
