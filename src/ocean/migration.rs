@@ -6,10 +6,16 @@ const PATCHES: [fn(db: &mut db::Db); VERSION] = [patch1];
 pub fn migrate(db: &mut db::Db) {
     println!("Start database migration");
 
-    let last_version = 0;
+    let mut last_version = 0;
 
     if db.has_table("migrations") {
-        println!("get version");
+        let row = db
+            .conn
+            .query_one("SELECT id FROM migrations ORDER BY id DESC LIMIT 1", &[])
+            .unwrap();
+
+        let id: i32 = row.get("id");
+        last_version = id as usize;
     }
 
     let mut i = last_version;
