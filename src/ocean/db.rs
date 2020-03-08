@@ -2,7 +2,7 @@ use crate::config;
 use postgres::{Client, NoTls};
 
 pub struct Db {
-    conn: Client,
+    pub conn: Client,
 }
 
 impl Db {
