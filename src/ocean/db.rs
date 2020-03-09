@@ -17,12 +17,4 @@ impl Db {
             .unwrap();
         Db { conn }
     }
-
-    pub fn has_table(&mut self, name: &str) -> bool {
-        let row = self
-            .conn
-            .query_one("SELECT to_regclass($1)", &[&name])
-            .unwrap();
-        !row.is_empty()
-    }
 }
