@@ -59,8 +59,8 @@ fn patch1(db: &mut db::Db) {
         id serial NOT NULL PRIMARY KEY,
         title text NOT NULL,
         description text NOT NULL,
-        updated_at timestamptz NOT NULL DEFAULT now(),
-        created_at timestamptz NOT NULL DEFAULT now())"];
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now())"];
 
     exec_queries(db, &queries);
 }
