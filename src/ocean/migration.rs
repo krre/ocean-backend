@@ -60,7 +60,8 @@ fn patch1(db: &mut db::Db) {
         title text NOT NULL,
         description text NOT NULL,
         created_at timestamptz NOT NULL DEFAULT now(),
-        updated_at timestamptz NOT NULL DEFAULT now())"];
+        updated_at timestamptz NOT NULL DEFAULT now())
+    "];
 
     exec_queries(db, &queries);
 }
