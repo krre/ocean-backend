@@ -13,8 +13,10 @@ impl App {
     }
 
     pub fn start(&self) {
-        let mut db = db::Db::new(&self.config.postgres);
-        migration::migrate(&mut db);
+        {
+            let mut db = db::Db::new(&self.config.postgres);
+            migration::migrate(&mut db);
+        }
 
         let server = api_server::ApiServer::new(self.config.server.port);
         server.listen();
