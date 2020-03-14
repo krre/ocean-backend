@@ -23,6 +23,8 @@ pub fn migrate(db: &mut db::Db) {
             .execute("INSERT INTO migrations (created_ts) VALUES (now())", &[])
             .unwrap();
     }
+
+    println!("Database version: {}", VERSION);
 }
 
 fn last_version(db: &mut db::Db) -> i32 {
