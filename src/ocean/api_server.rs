@@ -3,7 +3,6 @@ use hyper::Body;
 use hyper::Request;
 use hyper::Response;
 use hyper::Server;
-use std::net::SocketAddr;
 
 pub struct ApiServer {
     port: u16,
@@ -23,7 +22,7 @@ impl ApiServer {
     pub async fn listen(&self) {
         println!("API server listen on port {}", self.port);
 
-        let addr = SocketAddr::from(([127, 0, 0, 1], self.port));
+        let addr = ([127, 0, 0, 1], self.port).into();
 
         // Create a server bound on the provided address
         let serve_future = Server::bind(&addr)
