@@ -6,7 +6,7 @@ pub struct Db {
 }
 
 impl Db {
-    pub fn new(config: &config::Postgres) -> Db {
+    pub fn new(config: config::Postgres) -> Db {
         let conn = Client::configure()
             .host("localhost")
             .port(config.port)

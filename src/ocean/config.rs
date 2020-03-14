@@ -12,7 +12,7 @@ pub struct Server {
     pub port: u16,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Postgres {
     pub host: String,
     pub port: u16,
