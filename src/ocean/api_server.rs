@@ -21,16 +21,14 @@ impl ApiServer {
     }
 
     pub async fn listen(&self) {
+        let addr = ([127, 0, 0, 1], self.port).into();
+        let service = make_service_fn(|_| async { Ok::<_, hyper::Error>(service_fn(serve_req)) });
+        let server = Server::bind(&addr).serve(service);
+
         println!("API server listen on port {}", self.port);
 
-        let addr = ([127, 0, 0, 1], self.port).into();
-
-        let serve_future = Server::bind(&addr).serve(make_service_fn(|_| async {
-            Ok::<_, hyper::Error>(service_fn(serve_req))
-        }));
-
-        if let Err(e) = serve_future.await {
-            eprintln!("server error: {}", e);
+        if let Err(e) = server.await {
+            eprintln!("API server error: {}", e);
         }
     }
 }
