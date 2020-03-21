@@ -15,11 +15,7 @@ impl ApiServer {
         let addr = ([127, 0, 0, 1], self.port).into();
 
         let service = make_service_fn(|_| async {
-            // let router = router.clone();
-            Ok::<_, hyper::Error>(service_fn(move |req| async {
-                let router = router::Router::new();
-                router.route(req)
-            }))
+            Ok::<_, hyper::Error>(service_fn(move |req| async { router::route(req) }))
         });
 
         let server = Server::bind(&addr).serve(service);
