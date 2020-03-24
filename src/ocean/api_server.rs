@@ -15,7 +15,7 @@ impl ApiServer {
         let addr = ([127, 0, 0, 1], self.port).into();
 
         let service = make_service_fn(|_| async {
-            Ok::<_, hyper::Error>(service_fn(move |req| async { router::route(req) }))
+            Ok::<_, hyper::Error>(service_fn(move |req| router::route(req)))
         });
 
         let server = Server::bind(&addr).serve(service);
