@@ -1,6 +1,7 @@
 use hyper::body;
 use hyper::body::Buf;
 use hyper::{Body, Method, Request, Response, StatusCode};
+use serde_json;
 
 pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     if req.method() != Method::POST || req.uri().path() != "/dive" {
@@ -21,5 +22,11 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
 
     println!("Request: {}", raw_req);
 
-    Ok(Response::new(Body::from("hello, world!")))
+    let value: serde_json::Value = serde_json::from_slice(bytes).unwrap();
+    Ok(Response::new(exec(&value)))
+}
+
+fn exec(req: &serde_json::Value) -> Body {
+    println!("{}", req["method"]);
+    Body::from("hello, world!")
 }
