@@ -27,6 +27,10 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
 }
 
 fn exec(req: &serde_json::Value) -> Body {
-    println!("{}", req["method"]);
+    let method = &req["method"];
+    let method: Vec<&str> = method.as_str().unwrap().split('.').collect();
+    let controller = method[0];
+    let method = method[1];
+    println!("{} {}", controller, method);
     Body::from("hello, world!")
 }
