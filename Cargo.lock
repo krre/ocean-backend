@@ -583,7 +583,6 @@ version = "0.1.0"
 dependencies = [
  "dirs",
  "hyper",
- "lazy_static",
  "postgres",
  "serde",
  "serde_derive",
@@ -844,6 +843,9 @@ name = "serde"
 version = "1.0.105"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e707fbbf255b8fc8c3b99abb91e7257a622caeb20a9818cbadbeeede4e0932ff"
+dependencies = [
+ "serde_derive",
+]
 
 [[package]]
 name = "serde_derive"

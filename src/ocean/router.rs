@@ -1,5 +1,6 @@
 use crate::controller::topic;
 use crate::controller::Controller;
+use crate::json_rpc::request;
 use hyper::body;
 use hyper::body::Buf;
 use hyper::{Body, Method, Request, Response, StatusCode};
@@ -24,13 +25,12 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
 
     println!("Request: {}", raw_req);
 
-    let value: serde_json::Value = serde_json::from_slice(bytes).unwrap();
-    Ok(Response::new(exec(&value)))
+    let json_rpc_req: request::Request = serde_json::from_slice(bytes).unwrap();
+    Ok(Response::new(exec(&json_rpc_req)))
 }
 
-fn exec(req: &serde_json::Value) -> Body {
-    let method = &req["method"];
-    let method: Vec<&str> = method.as_str().unwrap().split('.').collect();
+fn exec(req: &request::Request) -> Body {
+    let method: Vec<&str> = req.method.split('.').collect();
     let name = method[0];
     let method = method[1];
     println!("{} {}", name, method);
