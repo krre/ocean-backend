@@ -1,3 +1,5 @@
+use crate::controller::topic;
+use crate::controller::Controller;
 use hyper::body;
 use hyper::body::Buf;
 use hyper::{Body, Method, Request, Response, StatusCode};
@@ -29,8 +31,18 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
 fn exec(req: &serde_json::Value) -> Body {
     let method = &req["method"];
     let method: Vec<&str> = method.as_str().unwrap().split('.').collect();
-    let controller = method[0];
+    let name = method[0];
     let method = method[1];
-    println!("{} {}", controller, method);
+    println!("{} {}", name, method);
+
+    let controller = factory(name).unwrap();
+    controller.exec();
     Body::from("hello, world!")
+}
+
+fn factory(name: &str) -> Option<Box<impl Controller>> {
+    match name {
+        "topic" => Some(Box::new(topic::Topic::new())),
+        _ => None,
+    }
 }
