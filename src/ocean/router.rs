@@ -36,7 +36,7 @@ fn exec(req: &request::Request) -> Body {
     println!("{} {}", name, method);
 
     let controller = factory(name).unwrap();
-    controller.exec();
+    controller.exec(method, &req.params);
     Body::from("hello, world!")
 }
 
