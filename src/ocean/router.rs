@@ -26,17 +26,17 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     println!("Request: {}", raw_req);
 
     let json_rpc_req: request::Request = serde_json::from_slice(bytes).unwrap();
-    Ok(Response::new(exec(&json_rpc_req)))
+    Ok(Response::new(exec(json_rpc_req)))
 }
 
-fn exec(req: &request::Request) -> Body {
+fn exec(req: request::Request) -> Body {
     let method: Vec<&str> = req.method.split('.').collect();
     let name = method[0];
     let method = method[1];
     println!("{} {}", name, method);
 
     let controller = factory(name).unwrap();
-    controller.exec(method, &req.params);
+    controller.exec(method, req.params);
     Body::from("hello, world!")
 }
 

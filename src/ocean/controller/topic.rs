@@ -1,24 +1,32 @@
 use super::Controller;
+use serde::Deserialize;
 use serde_json;
 
-#[derive(Default)]
-pub struct Topic {
+pub struct Topic {}
+
+#[derive(Deserialize)]
+struct CreateRequest {
     name: String,
     description: String,
 }
 
-impl Topic {}
+impl Topic {
+    fn create(&self, params: serde_json::Value) {
+        let request: CreateRequest = serde_json::from_value(params).unwrap();
+        println!("name: {} descr: {}", request.name, request.description);
+    }
+}
 
 impl Controller for Topic {
     fn new() -> Topic {
-        Default::default()
+        Topic {}
     }
 
-    fn exec(&self, method: &str, params: &Option<serde_json::Value>) {
+    fn exec(&self, method: &str, params: serde_json::Value) {
         println!("exec {}", method);
 
         match method {
-            "create" => println!("run create"),
+            "create" => self.create(params),
             _ => println!("method {} not found", method),
         }
     }
