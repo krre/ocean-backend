@@ -11,9 +11,9 @@ struct CreateRequest {
 }
 
 impl Topic {
-    fn create(&self, params: Option<serde_json::Value>) {
+    fn create(&self, params: Option<serde_json::Value>) -> Option<serde_json::Value> {
         let request: CreateRequest = serde_json::from_value(params.unwrap()).unwrap();
-        println!("name: {} descr: {}", request.name, request.description);
+        None
     }
 }
 
@@ -22,12 +22,13 @@ impl Controller for Topic {
         Topic {}
     }
 
-    fn exec(&self, method: &str, params: Option<serde_json::Value>) {
-        println!("exec {}", method);
-
+    fn exec(&self, method: &str, params: Option<serde_json::Value>) -> Option<serde_json::Value> {
         match method {
             "create" => self.create(params),
-            _ => println!("method {} not found", method),
+            _ => {
+                println!("method {} not found", method);
+                None
+            }
         }
     }
 }

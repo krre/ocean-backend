@@ -1,14 +1,17 @@
+use serde::Serialize;
 use serde_json;
 
+#[derive(Serialize)]
 pub struct Response {
-    id: String,
-    method: String,
-    result: Option<serde_json::Value>,
-    error: Option<Error>,
+    pub id: String,
+    pub method: String,
+    pub result: Option<serde_json::Value>,
+    pub error: Option<Error>,
 }
 
+#[derive(Serialize)]
 pub struct Error {
-    code: i32,
-    message: String,
-    data: Option<serde_json::Value>,
+    pub code: i32,
+    pub message: String,
+    pub data: Option<serde_json::Value>,
 }

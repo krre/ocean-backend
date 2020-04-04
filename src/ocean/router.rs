@@ -1,6 +1,7 @@
 use crate::controller::topic;
 use crate::controller::Controller;
 use crate::json_rpc::request;
+use crate::json_rpc::response;
 use hyper::body;
 use hyper::body::Buf;
 use hyper::{Body, Method, Request, Response, StatusCode};
@@ -26,18 +27,29 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     println!("Request: {}", raw_req);
 
     let json_rpc_req: request::Request = serde_json::from_slice(bytes).unwrap();
-    Ok(Response::new(exec(json_rpc_req)))
+    let json_rpc_resp = exec(json_rpc_req);
+    let raw_resp = serde_json::to_string(&json_rpc_resp).unwrap();
+
+    println!("Response: {}", raw_resp);
+
+    Ok(Response::new(Body::from(raw_resp)))
 }
 
-fn exec(req: request::Request) -> Body {
+fn exec(req: request::Request) -> response::Response {
     let method: Vec<&str> = req.method.split('.').collect();
     let name = method[0];
     let method = method[1];
-    println!("{} {}", name, method);
 
     let controller = factory(name).unwrap();
-    controller.exec(method, req.params);
-    Body::from("hello, world!")
+    let result = controller.exec(method, req.params);
+    let response = response::Response {
+        id: req.id.unwrap(),
+        method: req.method,
+        result: result,
+        error: None,
+    };
+
+    response
 }
 
 fn factory(name: &str) -> Option<Box<impl Controller>> {

@@ -4,5 +4,5 @@ pub mod topic;
 
 pub trait Controller {
     fn new() -> Self;
-    fn exec(&self, method: &str, params: Option<serde_json::Value>);
+    fn exec(&self, method: &str, params: Option<serde_json::Value>) -> Option<serde_json::Value>;
 }
