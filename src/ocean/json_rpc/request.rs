@@ -5,5 +5,5 @@ use serde_json;
 pub struct Request {
     pub id: Option<String>,
     pub method: String,
-    pub params: serde_json::Value,
+    pub params: Option<serde_json::Value>,
 }
