@@ -20,7 +20,7 @@ pub fn migrate(db: &mut db::Db) {
         patch(db);
         // Create row with id as version number started from 1
         db.conn
-            .execute("INSERT INTO migrations (created_ts) VALUES (now())", &[])
+            .execute("INSERT INTO migrations (create_ts) VALUES (now())", &[])
             .unwrap();
     }
 
@@ -33,7 +33,7 @@ fn last_version(db: &mut db::Db) -> i32 {
             .execute(
                 "CREATE TABLE IF NOT EXISTS migrations (
                 id serial NOT NULL PRIMARY KEY,
-                created_ts timestamptz NOT NULL DEFAULT now())",
+                create_ts timestamptz NOT NULL DEFAULT now())",
                 &[],
             )
             .unwrap();
@@ -61,8 +61,8 @@ fn patch1(db: &mut db::Db) {
         id serial NOT NULL PRIMARY KEY,
         title text NOT NULL,
         description text NOT NULL,
-        created_ts timestamptz NOT NULL DEFAULT now(),
-        updated_ts timestamptz NOT NULL DEFAULT now())
+        create_ts timestamptz NOT NULL DEFAULT now(),
+        update_ts timestamptz NOT NULL DEFAULT now())
     "];
 
     exec_queries(db, &queries);
