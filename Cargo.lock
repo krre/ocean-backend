@@ -583,6 +583,7 @@ version = "0.1.0"
 dependencies = [
  "dirs",
  "hyper",
+ "lazy_static",
  "postgres",
  "serde",
  "serde_derive",

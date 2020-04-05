@@ -1,18 +1,18 @@
+use crate::config;
 use crate::router;
 use hyper::service::{make_service_fn, service_fn};
 use hyper::Server;
 
-pub struct ApiServer {
-    port: u16,
-}
+pub struct ApiServer {}
 
 impl ApiServer {
-    pub fn new(port: u16) -> ApiServer {
-        ApiServer { port }
+    pub fn new() -> ApiServer {
+        ApiServer {}
     }
 
     pub async fn listen(&self) {
-        let addr = ([127, 0, 0, 1], self.port).into();
+        let port = config::CONFIG.server.port;
+        let addr = ([127, 0, 0, 1], port).into();
 
         let service = make_service_fn(|_| async {
             Ok::<_, hyper::Error>(service_fn(move |req| router::route(req)))
@@ -20,7 +20,7 @@ impl ApiServer {
 
         let server = Server::bind(&addr).serve(service);
 
-        println!("API server listen on port {}", self.port);
+        println!("API server listen on port {}", port);
 
         if let Err(e) = server.await {
             eprintln!("API server error: {}", e);

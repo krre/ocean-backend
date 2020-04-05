@@ -6,13 +6,13 @@ pub struct Db {
 }
 
 impl Db {
-    pub fn new(config: config::Postgres) -> Db {
+    pub fn new() -> Db {
         let conn = Client::configure()
             .host("localhost")
-            .port(config.port)
-            .dbname(&config.database)
-            .user(&config.username)
-            .password(&config.password)
+            .port(config::CONFIG.postgres.port)
+            .dbname(&config::CONFIG.postgres.database)
+            .user(&config::CONFIG.postgres.username)
+            .password(&config::CONFIG.postgres.password)
             .connect(NoTls)
             .unwrap();
         Db { conn }

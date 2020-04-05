@@ -1,6 +1,10 @@
 use serde_derive::Deserialize;
 use std::fs;
 
+lazy_static! {
+    pub static ref CONFIG: Config = Config::new();
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub server: Server,
