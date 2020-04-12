@@ -1,5 +1,6 @@
 use crate::controller::topic;
 use crate::controller::Controller;
+use crate::db;
 use crate::json_rpc::request;
 use crate::json_rpc::response;
 use hyper::body;
@@ -40,8 +41,10 @@ fn exec(req: request::Request) -> response::Response {
     let name = method[0];
     let method = method[1];
 
+    let db = db::Db::new();
+
     let controller = factory(name).unwrap();
-    let result = controller.exec(method, req.params);
+    let result = controller.exec(&db, method, req.params);
     let response = response::Response {
         id: req.id.unwrap(),
         method: req.method,

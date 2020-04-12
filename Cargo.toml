@@ -17,5 +17,6 @@ dirs = "2.0"
 hyper = "0.13.4"
 tokio = { version = "0.2", features = ["full"] }
 lazy_static = "1.4.0"
-diesel = { version = "1.4.4", features = ["postgres"] }
+diesel = { version = "1.4.4", features = ["postgres", "chrono"] }
 diesel_migrations = "1.4.0"
+chrono = "0.4.11"
