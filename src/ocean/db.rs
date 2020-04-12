@@ -1,20 +1,21 @@
 use crate::config;
-use postgres::{Client, NoTls};
+use diesel::pg::PgConnection;
+use diesel::prelude::*;
 
 pub struct Db {
-    pub conn: Client,
+    pub conn: PgConnection,
 }
 
 impl Db {
     pub fn new() -> Db {
-        let conn = Client::configure()
-            .host("localhost")
-            .port(config::CONFIG.postgres.port)
-            .dbname(&config::CONFIG.postgres.database)
-            .user(&config::CONFIG.postgres.username)
-            .password(&config::CONFIG.postgres.password)
-            .connect(NoTls)
-            .unwrap();
+        let database_url = format!(
+            "postgres://{}:{}@localhost/{}",
+            config::CONFIG.postgres.username,
+            config::CONFIG.postgres.password,
+            config::CONFIG.postgres.database
+        );
+        let conn = PgConnection::establish(&database_url)
+            .expect(&format!("Error connecting to {}", database_url));
         Db { conn }
     }
 }
