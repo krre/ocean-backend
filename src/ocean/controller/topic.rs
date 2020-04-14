@@ -33,6 +33,14 @@ impl Topic {
 
         None
     }
+
+    fn get(&self, db: &db::Db, _params: Option<serde_json::Value>) -> Option<serde_json::Value> {
+        use crate::model::schema::topics::dsl::*;
+
+        let list = topics.load::<topic::Topic>(&db.conn).unwrap();
+        let result = serde_json::to_value(&list).unwrap();
+        Some(result)
+    }
 }
 
 impl Controller for Topic {
@@ -48,6 +56,7 @@ impl Controller for Topic {
     ) -> Option<serde_json::Value> {
         match method {
             "create" => self.create(db, params),
+            "get" => self.get(db, params),
             _ => {
                 println!("method {} not found", method);
                 None
