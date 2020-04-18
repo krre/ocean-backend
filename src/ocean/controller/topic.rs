@@ -37,10 +37,22 @@ impl Topic {
         Some(result)
     }
 
-    fn get(&self, db: &db::Db, _params: Option<serde_json::Value>) -> Option<serde_json::Value> {
+    fn get(&self, db: &db::Db, params: Option<serde_json::Value>) -> Option<serde_json::Value> {
         use crate::model::schema::topics::dsl::*;
 
-        let list = topics.load::<topic::Topic>(&db.conn).unwrap();
+        let list = {
+            if let Some(p) = params {
+                let topic_id = p["id"].as_i64().unwrap() as i32;
+                topics
+                    .filter(id.eq(topic_id))
+                    .limit(1)
+                    .load::<topic::Topic>(&db.conn)
+                    .unwrap()
+            } else {
+                topics.load::<topic::Topic>(&db.conn).unwrap()
+            }
+        };
+
         let result = serde_json::to_value(&list).unwrap();
         Some(result)
     }
