@@ -5,6 +5,7 @@ use crate::json_rpc::request;
 use crate::json_rpc::response;
 use hyper::body;
 use hyper::body::Buf;
+use hyper::header;
 use hyper::{Body, Method, Request, Response, StatusCode};
 use serde_json;
 
@@ -33,7 +34,13 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
 
     println!("Response: {}", raw_resp);
 
-    Ok(Response::new(Body::from(raw_resp)))
+    let mut response = Response::new(Body::from(raw_resp));
+    response.headers_mut().insert(
+        "Access-Control-Allow-Origin",
+        header::HeaderValue::from_static("*"),
+    );
+
+    Ok(response)
 }
 
 fn exec(req: request::Request) -> response::Response {
