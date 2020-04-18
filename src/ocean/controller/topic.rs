@@ -30,8 +30,6 @@ impl Topic {
             .get_result(&db.conn)
             .unwrap();
 
-        println!("{}", result.id);
-
         let result = json!({
             "id": result.id
         });
