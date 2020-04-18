@@ -26,7 +26,8 @@ pub fn time_to_json(t: NaiveDateTime) -> String {
 
 mod date_serializer {
     use super::*;
-    use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+    // use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+    use serde::{Serialize, Serializer};
 
     pub fn serialize<S: Serializer>(
         time: &NaiveDateTime,
@@ -35,12 +36,12 @@ mod date_serializer {
         time_to_json(time.clone()).serialize(serializer)
     }
 
-    pub fn deserialize<'de, D: Deserializer<'de>>(
-        deserializer: D,
-    ) -> Result<NaiveDateTime, D::Error> {
-        let time: &str = Deserialize::deserialize(deserializer)?;
-        Ok(DateTime::parse_from_rfc3339(time)
-            .map_err(D::Error::custom)?
-            .naive_utc())
-    }
+    // pub fn deserialize<'de, D: Deserializer<'de>>(
+    //     deserializer: D,
+    // ) -> Result<NaiveDateTime, D::Error> {
+    //     let time: &str = Deserialize::deserialize(deserializer)?;
+    //     Ok(DateTime::parse_from_rfc3339(time)
+    //         .map_err(D::Error::custom)?
+    //         .naive_utc())
+    // }
 }
