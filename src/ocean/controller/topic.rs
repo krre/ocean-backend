@@ -4,6 +4,7 @@ use crate::model::topic;
 use diesel::prelude::*;
 use serde::Deserialize;
 use serde_json;
+use serde_json::json;
 
 pub struct Topic {}
 
@@ -31,7 +32,11 @@ impl Topic {
 
         println!("{}", result.id);
 
-        None
+        let result = json!({
+            "id": result.id
+        });
+
+        Some(result)
     }
 
     fn get(&self, db: &db::Db, _params: Option<serde_json::Value>) -> Option<serde_json::Value> {
