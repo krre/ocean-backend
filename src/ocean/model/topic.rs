@@ -11,6 +11,7 @@ pub struct Topic {
     pub create_ts: NaiveDateTime,
     #[serde(with = "date_serializer")]
     pub update_ts: NaiveDateTime,
+    pub user_id: i32,
 }
 
 #[derive(Insertable)]
@@ -18,6 +19,7 @@ pub struct Topic {
 pub struct NewTopic<'a> {
     pub title: &'a str,
     pub description: &'a str,
+    pub user_id: i32,
 }
 
 pub fn time_to_json(t: NaiveDateTime) -> String {

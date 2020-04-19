@@ -12,6 +12,7 @@ pub struct Topic {}
 struct CreateRequest {
     title: String,
     description: String,
+    user_id: i32,
 }
 
 #[derive(Deserialize)]
@@ -28,6 +29,7 @@ impl Topic {
         let new_topic = topic::NewTopic {
             title: &request.title,
             description: &request.description,
+            user_id: request.user_id,
         };
         let result: topic::Topic = diesel::insert_into(topics)
             .values(&new_topic)
