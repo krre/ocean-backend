@@ -14,6 +14,11 @@ struct CreateRequest {
     description: String,
 }
 
+#[derive(Deserialize)]
+struct DeleteRequest {
+    id: Vec<i32>,
+}
+
 impl Topic {
     fn create(&self, db: &db::Db, params: Option<serde_json::Value>) -> Option<serde_json::Value> {
         let request: CreateRequest = serde_json::from_value(params.unwrap()).unwrap();
@@ -56,6 +61,17 @@ impl Topic {
         let result = serde_json::to_value(&list).unwrap();
         Some(result)
     }
+
+    fn remove(&self, db: &db::Db, params: Option<serde_json::Value>) -> Option<serde_json::Value> {
+        use crate::model::schema::topics::dsl::*;
+
+        let delete_request: DeleteRequest = serde_json::from_value(params.unwrap()).unwrap();
+
+        diesel::delete(topics.filter(id.eq_any(delete_request.id)))
+            .execute(&db.conn)
+            .unwrap();
+        None
+    }
 }
 
 impl Controller for Topic {
@@ -72,6 +88,7 @@ impl Controller for Topic {
         match method {
             "create" => self.create(db, params),
             "get" => self.get(db, params),
+            "remove" => self.remove(db, params),
             _ => {
                 println!("method {} not found", method);
                 None
