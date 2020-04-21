@@ -12,11 +12,14 @@ table! {
 table! {
     users (id) {
         id -> Int4,
-        name -> Text,
+        name -> Nullable<Text>,
+        password -> Text,
         create_ts -> Timestamptz,
         update_ts -> Timestamptz,
     }
 }
+
+joinable!(topics -> users (user_id));
 
 allow_tables_to_appear_in_same_query!(
     topics,

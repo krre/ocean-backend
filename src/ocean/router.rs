@@ -1,4 +1,5 @@
 use crate::controller::topic;
+use crate::controller::user;
 use crate::controller::Controller;
 use crate::db;
 use crate::json_rpc::request;
@@ -62,9 +63,10 @@ fn exec(req: request::Request) -> response::Response {
     response
 }
 
-fn factory(name: &str) -> Option<Box<impl Controller>> {
+fn factory(name: &str) -> Option<Box<dyn Controller>> {
     match name {
-        "topic" => Some(Box::new(topic::Topic::new())),
+        "topic" => Some(Box::new(topic::Topic {})),
+        "user" => Some(Box::new(user::User {})),
         _ => None,
     }
 }

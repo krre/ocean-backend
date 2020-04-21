@@ -2,9 +2,9 @@ use crate::db;
 use serde_json;
 
 pub mod topic;
+pub mod user;
 
 pub trait Controller {
-    fn new() -> Self;
     fn exec(
         &self,
         db: &db::Db,

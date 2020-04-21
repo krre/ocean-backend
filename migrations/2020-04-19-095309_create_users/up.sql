@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS users (
     id serial NOT NULL PRIMARY KEY,
-    name text NOT NULL,
+    name text,
+    password text NOT NULL,
     create_ts timestamptz NOT NULL DEFAULT now(),
     update_ts timestamptz NOT NULL DEFAULT now()
 );

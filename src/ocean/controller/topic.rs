@@ -77,10 +77,6 @@ impl Topic {
 }
 
 impl Controller for Topic {
-    fn new() -> Topic {
-        Topic {}
-    }
-
     fn exec(
         &self,
         db: &db::Db,
