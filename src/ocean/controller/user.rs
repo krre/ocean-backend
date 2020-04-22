@@ -1,5 +1,6 @@
 use super::Controller;
 use crate::db;
+use crate::json_rpc;
 use crate::model::user;
 use diesel::prelude::*;
 use serde::Deserialize;
@@ -12,6 +13,12 @@ pub struct User {}
 #[derive(Deserialize)]
 struct CreateRequest {
     name: Option<String>,
+    password: String,
+}
+
+#[derive(Deserialize)]
+struct AuthRequest {
+    id: i32,
     password: String,
 }
 
@@ -47,6 +54,33 @@ impl User {
 
         Some(result)
     }
+
+    fn auth(&self, db: &db::Db, params: Option<serde_json::Value>) -> Option<serde_json::Value> {
+        let request: AuthRequest = serde_json::from_value(params.unwrap()).unwrap();
+
+        use crate::model::schema::users::dsl::*;
+
+        let result = users
+            .filter(id.eq(request.id))
+            .load::<user::User>(&db.conn)
+            .unwrap();
+
+        let request_token = sha1_token(request.id, request.password);
+
+        if result.len() == 0 || result[0].token != request_token {
+            let error = json_rpc::response::Error {
+                code: 42,
+                message: "User with id and password not found".to_string(),
+                data: None,
+            };
+
+            let result = serde_json::to_value(&error).unwrap();
+            Some(result)
+        } else {
+            let result = json!({ "token": request_token });
+            Some(result)
+        }
+    }
 }
 
 impl Controller for User {
@@ -58,6 +92,7 @@ impl Controller for User {
     ) -> Option<serde_json::Value> {
         match method {
             "create" => self.create(db, params),
+            "auth" => self.auth(db, params),
             _ => {
                 println!("method {} not found", method);
                 None
