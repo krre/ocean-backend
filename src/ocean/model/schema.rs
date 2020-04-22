@@ -13,7 +13,7 @@ table! {
     users (id) {
         id -> Int4,
         name -> Nullable<Text>,
-        password -> Text,
+        token -> Text,
         create_ts -> Timestamptz,
         update_ts -> Timestamptz,
     }

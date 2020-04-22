@@ -7,7 +7,7 @@ use serde::Serialize;
 pub struct User {
     pub id: i32,
     pub name: Option<String>,
-    pub password: String,
+    pub token: String,
     #[serde(with = "date_serializer")]
     pub create_ts: NaiveDateTime,
     #[serde(with = "date_serializer")]
@@ -16,7 +16,7 @@ pub struct User {
 
 #[derive(Insertable)]
 #[table_name = "users"]
-pub struct NewUser<'a> {
+pub struct NewUser {
     pub name: Option<String>,
-    pub password: &'a str,
+    pub token: String,
 }
