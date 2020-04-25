@@ -35,7 +35,6 @@ impl Config {
         }
 
         let config_text = fs::read_to_string(config_path).unwrap();
-        let config: Config = toml::from_str(&config_text).unwrap();
-        config
+        toml::from_str(&config_text).unwrap()
     }
 }
