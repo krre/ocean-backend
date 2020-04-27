@@ -53,14 +53,12 @@ fn exec(req: request::Request) -> response::Response {
 
     let controller = factory(name).unwrap();
     let result = controller.exec(&db, method, req.params);
-    let response = response::Response {
+    response::Response {
         id: req.id.unwrap(),
         method: req.method,
         result: result,
         error: None,
-    };
-
-    response
+    }
 }
 
 fn factory(name: &str) -> Option<Box<dyn Controller>> {
