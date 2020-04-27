@@ -11,7 +11,7 @@ use hyper::{Body, Method, Request, Response, StatusCode};
 use serde_json;
 
 pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
-    if req.method() != Method::POST || req.uri().path() != "/dive" {
+    if req.method() != Method::POST || req.uri().path() != "/api" {
         println!(
             "Bad request: method: {}, URL: {}",
             req.method().as_str(),
