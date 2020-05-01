@@ -29,7 +29,7 @@ impl Error {
         }
     }
 
-    pub fn from_api_error(err: api::error::Error) -> Error {
+    pub fn from_api_error(err: &api::error::Error) -> Error {
         Self::new(err.code(), err.message(), err.data())
     }
 }

@@ -64,8 +64,15 @@ fn exec(req: request::Request) -> response::Response {
     match result {
         Ok(r) => resp.result = r,
         Err(e) => {
-            let api_err: api::error::Error = *e.downcast().unwrap();
-            resp.error = Some(response::Error::from_api_error(api_err))
+            let api_err = e.downcast_ref::<api::error::Error>();
+
+            if let Some(i) = api_err {
+                resp.error = Some(response::Error::from_api_error(i));
+            } else {
+                println!("{}", e);
+                let server_err = api::error::Error::new(api::error::INTERNAL_SERVER_ERROR, None);
+                resp.error = Some(response::Error::from_api_error(&server_err));
+            }
         }
     };
 
