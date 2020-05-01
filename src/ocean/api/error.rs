@@ -1,7 +1,6 @@
+use std::collections::HashMap;
 use std::error;
 use std::fmt;
-
-use std::collections::HashMap;
 
 pub type ErrorCode = i32;
 
@@ -26,18 +25,42 @@ lazy_static! {
     };
 }
 
-pub fn message(code: ErrorCode) -> String {
-    ERROR_MESSAGES.get(&code).unwrap().to_string()
+#[derive(Debug, Clone)]
+pub struct Error {
+    code: ErrorCode,
+    message: String,
+    data: Option<String>,
 }
 
-#[derive(Debug)]
-struct Error {
-    code: ErrorCode,
+impl Error {
+    pub fn new(code: ErrorCode, data: Option<String>) -> Self {
+        Error {
+            code,
+            message: ERROR_MESSAGES.get(&code).unwrap().to_string(),
+            data,
+        }
+    }
+
+    pub fn code(&self) -> ErrorCode {
+        self.code
+    }
+
+    pub fn message(&self) -> String {
+        self.message.clone()
+    }
+
+    pub fn data(&self) -> Option<String> {
+        self.data.clone()
+    }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "API error")
+        write!(
+            f,
+            "API error: code: {}, message: {}",
+            self.code, self.message
+        )
     }
 }
 
