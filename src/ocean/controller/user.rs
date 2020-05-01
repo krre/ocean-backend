@@ -1,4 +1,5 @@
 use super::Controller;
+use crate::api;
 use crate::db;
 use crate::json_rpc;
 use crate::model::user;
@@ -23,7 +24,11 @@ struct AuthRequest {
 }
 
 impl User {
-    fn create(&self, db: &db::Db, params: Option<serde_json::Value>) -> Option<serde_json::Value> {
+    fn create(
+        &self,
+        db: &db::Db,
+        params: Option<serde_json::Value>,
+    ) -> Result<Option<serde_json::Value>, api::error::Error> {
         let request: CreateRequest = serde_json::from_value(params.unwrap()).unwrap();
 
         use crate::model::schema::users::dsl::*;
@@ -52,10 +57,14 @@ impl User {
             "token": user_token
         });
 
-        Some(result)
+        Ok(Some(result))
     }
 
-    fn auth(&self, db: &db::Db, params: Option<serde_json::Value>) -> Option<serde_json::Value> {
+    fn auth(
+        &self,
+        db: &db::Db,
+        params: Option<serde_json::Value>,
+    ) -> Result<Option<serde_json::Value>, api::error::Error> {
         let request: AuthRequest = serde_json::from_value(params.unwrap()).unwrap();
 
         use crate::model::schema::users::dsl::*;
@@ -75,10 +84,10 @@ impl User {
             };
 
             let result = serde_json::to_value(&error).unwrap();
-            Some(result)
+            Ok(Some(result))
         } else {
             let result = json!({ "token": request_token });
-            Some(result)
+            Ok(Some(result))
         }
     }
 }
@@ -89,14 +98,14 @@ impl Controller for User {
         db: &db::Db,
         method: &str,
         params: Option<serde_json::Value>,
-    ) -> Option<serde_json::Value> {
+    ) -> Result<Option<serde_json::Value>, api::error::Error> {
         match method {
             "create" => self.create(db, params),
             "auth" => self.auth(db, params),
-            _ => {
-                println!("method {} not found", method);
-                None
-            }
+            _ => Err(api::error::Error::new(
+                api::error::METHOD_NOT_FOUND,
+                Some(method.to_string()),
+            )),
         }
     }
 }

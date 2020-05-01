@@ -1,4 +1,5 @@
 use super::Controller;
+use crate::api;
 use crate::db;
 use crate::model::topic;
 use diesel::prelude::*;
@@ -21,7 +22,11 @@ struct DeleteRequest {
 }
 
 impl Topic {
-    fn create(&self, db: &db::Db, params: Option<serde_json::Value>) -> Option<serde_json::Value> {
+    fn create(
+        &self,
+        db: &db::Db,
+        params: Option<serde_json::Value>,
+    ) -> Result<Option<serde_json::Value>, api::error::Error> {
         let request: CreateRequest = serde_json::from_value(params.unwrap()).unwrap();
 
         use crate::model::schema::topics::dsl::*;
@@ -41,10 +46,14 @@ impl Topic {
             "id": result.id
         });
 
-        Some(result)
+        Ok(Some(result))
     }
 
-    fn get(&self, db: &db::Db, params: Option<serde_json::Value>) -> Option<serde_json::Value> {
+    fn get(
+        &self,
+        db: &db::Db,
+        params: Option<serde_json::Value>,
+    ) -> Result<Option<serde_json::Value>, api::error::Error> {
         use crate::model::schema::topics::dsl::*;
 
         let list = {
@@ -61,10 +70,14 @@ impl Topic {
         };
 
         let result = serde_json::to_value(&list).unwrap();
-        Some(result)
+        Ok(Some(result))
     }
 
-    fn remove(&self, db: &db::Db, params: Option<serde_json::Value>) -> Option<serde_json::Value> {
+    fn remove(
+        &self,
+        db: &db::Db,
+        params: Option<serde_json::Value>,
+    ) -> Result<Option<serde_json::Value>, api::error::Error> {
         use crate::model::schema::topics::dsl::*;
 
         let delete_request: DeleteRequest = serde_json::from_value(params.unwrap()).unwrap();
@@ -72,7 +85,7 @@ impl Topic {
         diesel::delete(topics.filter(id.eq_any(delete_request.id)))
             .execute(&db.conn)
             .unwrap();
-        None
+        Ok(None)
     }
 }
 
@@ -82,15 +95,15 @@ impl Controller for Topic {
         db: &db::Db,
         method: &str,
         params: Option<serde_json::Value>,
-    ) -> Option<serde_json::Value> {
+    ) -> Result<Option<serde_json::Value>, api::error::Error> {
         match method {
             "create" => self.create(db, params),
             "get" => self.get(db, params),
             "remove" => self.remove(db, params),
-            _ => {
-                println!("method {} not found", method);
-                None
-            }
+            _ => Err(api::error::Error::new(
+                api::error::METHOD_NOT_FOUND,
+                Some(method.to_string()),
+            )),
         }
     }
 }

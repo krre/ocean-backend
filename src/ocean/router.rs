@@ -53,11 +53,20 @@ fn exec(req: request::Request) -> response::Response {
 
     let controller = factory(name).unwrap();
     let result = controller.exec(&db, method, req.params);
-    response::Response {
-        id: req.id.unwrap(),
-        method: req.method,
-        result: result,
-        error: None,
+
+    match result {
+        Ok(r) => response::Response {
+            id: req.id.unwrap(),
+            method: req.method,
+            result: r,
+            error: None,
+        },
+        Err(e) => response::Response {
+            id: req.id.unwrap(),
+            method: req.method,
+            result: None,
+            error: Some(response::Error::from_api_error(e)),
+        },
     }
 }
 
