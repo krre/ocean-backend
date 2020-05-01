@@ -1,13 +1,13 @@
 use crate::config;
 use crate::router;
 use hyper::service::{make_service_fn, service_fn};
-use hyper::Server;
+use hyper::Server as HyperServer;
 
-pub struct ApiServer {}
+pub struct Server;
 
-impl ApiServer {
-    pub fn new() -> ApiServer {
-        ApiServer {}
+impl Server {
+    pub fn new() -> Server {
+        Server {}
     }
 
     pub async fn listen(&self) {
@@ -18,7 +18,7 @@ impl ApiServer {
             Ok::<_, hyper::Error>(service_fn(move |req| router::route(req)))
         });
 
-        let server = Server::bind(&addr).serve(service);
+        let server = HyperServer::bind(&addr).serve(service);
 
         println!("API server listen on port {}", port);
 

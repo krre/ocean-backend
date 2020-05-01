@@ -4,7 +4,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate diesel;
 
-pub mod api_server;
+pub mod api;
 pub mod app;
 pub mod config;
 pub mod controller;

@@ -1,6 +1,6 @@
-use crate::api_server;
+use crate::api::server;
 
-pub struct App {}
+pub struct App;
 
 impl App {
     pub fn new() -> App {
@@ -8,7 +8,7 @@ impl App {
     }
 
     pub async fn start(&self) {
-        let server = api_server::ApiServer::new();
+        let server = server::Server::new();
         server.listen().await;
     }
 }
