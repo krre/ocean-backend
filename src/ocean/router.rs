@@ -1,3 +1,4 @@
+use crate::api;
 use crate::controller::topic;
 use crate::controller::user;
 use crate::controller::Controller;
@@ -62,7 +63,10 @@ fn exec(req: request::Request) -> response::Response {
 
     match result {
         Ok(r) => resp.result = r,
-        Err(e) => resp.error = Some(response::Error::from_api_error(e)),
+        Err(e) => {
+            let api_err: api::error::Error = *e.downcast().unwrap();
+            resp.error = Some(response::Error::from_api_error(api_err))
+        }
     };
 
     resp

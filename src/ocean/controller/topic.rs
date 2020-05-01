@@ -6,8 +6,9 @@ use diesel::prelude::*;
 use serde::Deserialize;
 use serde_json;
 use serde_json::json;
+use std::error::Error;
 
-pub struct Topic {}
+pub struct Topic;
 
 #[derive(Deserialize)]
 struct CreateRequest {
@@ -26,8 +27,8 @@ impl Topic {
         &self,
         db: &db::Db,
         params: Option<serde_json::Value>,
-    ) -> Result<Option<serde_json::Value>, api::error::Error> {
-        let request: CreateRequest = serde_json::from_value(params.unwrap()).unwrap();
+    ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
+        let request: CreateRequest = serde_json::from_value(params.unwrap())?;
 
         use crate::model::schema::topics::dsl::*;
 
@@ -39,8 +40,7 @@ impl Topic {
         let result: topic::Topic = diesel::insert_into(topics)
             .values(&new_topic)
             // .returning(id)
-            .get_result(&db.conn)
-            .unwrap();
+            .get_result(&db.conn)?;
 
         let result = json!({
             "id": result.id
@@ -53,7 +53,7 @@ impl Topic {
         &self,
         db: &db::Db,
         params: Option<serde_json::Value>,
-    ) -> Result<Option<serde_json::Value>, api::error::Error> {
+    ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
         use crate::model::schema::topics::dsl::*;
 
         let list = {
@@ -62,14 +62,13 @@ impl Topic {
                 topics
                     .filter(id.eq(topic_id))
                     .limit(1)
-                    .load::<topic::Topic>(&db.conn)
-                    .unwrap()
+                    .load::<topic::Topic>(&db.conn)?
             } else {
-                topics.load::<topic::Topic>(&db.conn).unwrap()
+                topics.load::<topic::Topic>(&db.conn)?
             }
         };
 
-        let result = serde_json::to_value(&list).unwrap();
+        let result = serde_json::to_value(&list)?;
         Ok(Some(result))
     }
 
@@ -77,14 +76,12 @@ impl Topic {
         &self,
         db: &db::Db,
         params: Option<serde_json::Value>,
-    ) -> Result<Option<serde_json::Value>, api::error::Error> {
+    ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
         use crate::model::schema::topics::dsl::*;
 
-        let delete_request: DeleteRequest = serde_json::from_value(params.unwrap()).unwrap();
+        let delete_request: DeleteRequest = serde_json::from_value(params.unwrap())?;
 
-        diesel::delete(topics.filter(id.eq_any(delete_request.id)))
-            .execute(&db.conn)
-            .unwrap();
+        diesel::delete(topics.filter(id.eq_any(delete_request.id))).execute(&db.conn)?;
         Ok(None)
     }
 }
@@ -95,15 +92,15 @@ impl Controller for Topic {
         db: &db::Db,
         method: &str,
         params: Option<serde_json::Value>,
-    ) -> Result<Option<serde_json::Value>, api::error::Error> {
+    ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
         match method {
             "create" => self.create(db, params),
             "get" => self.get(db, params),
             "remove" => self.remove(db, params),
-            _ => Err(api::error::Error::new(
+            _ => Err(Box::new(api::error::Error::new(
                 api::error::METHOD_NOT_FOUND,
                 Some(method.to_string()),
-            )),
+            ))),
         }
     }
 }

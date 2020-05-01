@@ -8,8 +8,9 @@ use serde::Deserialize;
 use serde_json;
 use serde_json::json;
 use sha1;
+use std::error::Error;
 
-pub struct User {}
+pub struct User;
 
 #[derive(Deserialize)]
 struct CreateRequest {
@@ -28,8 +29,8 @@ impl User {
         &self,
         db: &db::Db,
         params: Option<serde_json::Value>,
-    ) -> Result<Option<serde_json::Value>, api::error::Error> {
-        let request: CreateRequest = serde_json::from_value(params.unwrap()).unwrap();
+    ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
+        let request: CreateRequest = serde_json::from_value(params.unwrap())?;
 
         use crate::model::schema::users::dsl::*;
 
@@ -41,16 +42,14 @@ impl User {
         let result: user::User = diesel::insert_into(users)
             .values(&new_user)
             // .returning(id)
-            .get_result(&db.conn)
-            .unwrap();
+            .get_result(&db.conn)?;
 
         let user_id = result.id;
         let user_token = &sha1_token(user_id, request.password);
 
         diesel::update(users.filter(id.eq(user_id)))
             .set(token.eq(user_token))
-            .execute(&db.conn)
-            .unwrap();
+            .execute(&db.conn)?;
 
         let result = json!({
             "id": user_id,
@@ -64,15 +63,14 @@ impl User {
         &self,
         db: &db::Db,
         params: Option<serde_json::Value>,
-    ) -> Result<Option<serde_json::Value>, api::error::Error> {
-        let request: AuthRequest = serde_json::from_value(params.unwrap()).unwrap();
+    ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
+        let request: AuthRequest = serde_json::from_value(params.unwrap())?;
 
         use crate::model::schema::users::dsl::*;
 
         let result = users
             .filter(id.eq(request.id))
-            .load::<user::User>(&db.conn)
-            .unwrap();
+            .load::<user::User>(&db.conn)?;
 
         let request_token = sha1_token(request.id, request.password);
 
@@ -83,11 +81,10 @@ impl User {
                 data: None,
             };
 
-            let result = serde_json::to_value(&error).unwrap();
+            let result = serde_json::to_value(&error)?;
             Ok(Some(result))
         } else {
-            let result = json!({ "token": request_token });
-            Ok(Some(result))
+            Ok(Some(json!({ "token": request_token })))
         }
     }
 }
@@ -98,14 +95,14 @@ impl Controller for User {
         db: &db::Db,
         method: &str,
         params: Option<serde_json::Value>,
-    ) -> Result<Option<serde_json::Value>, api::error::Error> {
+    ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
         match method {
             "create" => self.create(db, params),
             "auth" => self.auth(db, params),
-            _ => Err(api::error::Error::new(
+            _ => Err(Box::new(api::error::Error::new(
                 api::error::METHOD_NOT_FOUND,
                 Some(method.to_string()),
-            )),
+            ))),
         }
     }
 }
