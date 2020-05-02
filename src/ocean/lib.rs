@@ -11,4 +11,3 @@ pub mod controller;
 pub mod db;
 pub mod json_rpc;
 pub mod model;
-pub mod router;
