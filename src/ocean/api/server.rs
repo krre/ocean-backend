@@ -1,7 +1,7 @@
 use crate::config;
 use crate::router;
+use hyper;
 use hyper::service::{make_service_fn, service_fn};
-use hyper::Server as HyperServer;
 
 pub struct Server;
 
@@ -18,7 +18,7 @@ impl Server {
             Ok::<_, hyper::Error>(service_fn(move |req| router::route(req)))
         });
 
-        let server = HyperServer::bind(&addr).serve(service);
+        let server = hyper::Server::bind(&addr).serve(service);
 
         println!("API server listen on port {}", port);
 
