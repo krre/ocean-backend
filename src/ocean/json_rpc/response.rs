@@ -1,4 +1,4 @@
-use crate::json_rpc::error::Error;
+use crate::json_rpc::Error;
 use serde::Serialize;
 use serde_json;
 

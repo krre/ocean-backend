@@ -75,7 +75,7 @@ impl User {
         let request_token = sha1_token(request.id, request.password);
 
         if result.len() == 0 || result[0].token != request_token {
-            let error = json_rpc::error::Error {
+            let error = json_rpc::Error {
                 code: 42,
                 message: "User with id and password not found".to_string(),
                 data: None,
