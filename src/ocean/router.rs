@@ -3,8 +3,7 @@ use crate::controller::topic;
 use crate::controller::user;
 use crate::controller::Controller;
 use crate::db;
-use crate::json_rpc::request;
-use crate::json_rpc::response;
+use crate::json_rpc;
 use hyper::body;
 use hyper::body::Buf;
 use hyper::header;
@@ -30,7 +29,7 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
 
     println!("Request: {}", raw_req);
 
-    let json_rpc_req: request::Request = serde_json::from_slice(bytes).unwrap();
+    let json_rpc_req: json_rpc::request::Request = serde_json::from_slice(bytes).unwrap();
     let json_rpc_resp = exec(json_rpc_req);
     let raw_resp = serde_json::to_string(&json_rpc_resp).unwrap();
 
@@ -45,7 +44,7 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     Ok(response)
 }
 
-fn exec(req: request::Request) -> response::Response {
+fn exec(req: json_rpc::request::Request) -> json_rpc::response::Response {
     let method: Vec<&str> = req.method.split('.').collect();
     let name = method[0];
     let method = method[1];
@@ -54,7 +53,7 @@ fn exec(req: request::Request) -> response::Response {
 
     let controller = factory(name).unwrap();
     let result = controller.exec(&db, method, req.params);
-    let mut resp = response::Response {
+    let mut resp = json_rpc::response::Response {
         id: req.id.unwrap(),
         method: req.method,
         result: None,
@@ -67,11 +66,11 @@ fn exec(req: request::Request) -> response::Response {
             let api_err = e.downcast_ref::<api::error::Error>();
 
             if let Some(i) = api_err {
-                resp.error = Some(response::Error::from_api_error(i));
+                resp.error = Some(json_rpc::error::Error::from_api_error(i));
             } else {
                 println!("{}", e);
                 let server_err = api::error::Error::new(api::error::INTERNAL_SERVER_ERROR, None);
-                resp.error = Some(response::Error::from_api_error(&server_err));
+                resp.error = Some(json_rpc::error::Error::from_api_error(&server_err));
             }
         }
     };
