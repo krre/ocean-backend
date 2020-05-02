@@ -45,20 +45,22 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
 }
 
 fn exec(req: json_rpc::Request) -> json_rpc::Response {
+    let mut resp = json_rpc::Response::default();
+
+    if let Some(id) = req.id {
+        resp.id = id;
+    }
+
     let method: Vec<&str> = req.method.split('.').collect();
     let name = method[0];
     let method = method[1];
+
+    resp.method = method.into();
 
     let db = db::Db::new();
 
     let controller = factory(name).unwrap();
     let result = controller.exec(&db, method, req.params);
-    let mut resp = json_rpc::Response {
-        id: req.id.unwrap(),
-        method: req.method,
-        result: None,
-        error: None,
-    };
 
     match result {
         Ok(r) => resp.result = r,

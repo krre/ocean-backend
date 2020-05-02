@@ -11,3 +11,14 @@ pub struct Response {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<Error>,
 }
+
+impl Default for Response {
+    fn default() -> Self {
+        Response {
+            id: "".to_string(),
+            method: "".to_string(),
+            result: None,
+            error: None,
+        }
+    }
+}
