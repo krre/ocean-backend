@@ -27,7 +27,7 @@ lazy_static! {
     };
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Error {
     code: ErrorCode,
     message: String,
