@@ -1,7 +1,5 @@
 use crate::api;
-use crate::controller::topic;
-use crate::controller::user;
-use crate::controller::Controller;
+use crate::controller;
 use crate::db;
 use crate::json_rpc;
 use hyper::body;
@@ -9,6 +7,21 @@ use hyper::body::Buf;
 use hyper::header;
 use hyper::{Body, Method, Request, Response, StatusCode};
 use serde_json;
+use std::collections::HashMap;
+
+lazy_static! {
+    static ref METHODS: HashMap<String, Rh> = {
+        let mut m = HashMap::new();
+        m.insert("topic.create".to_string(), Rh(controller::topic::create));
+        m.insert("topic.get".to_string(), Rh(controller::topic::get));
+        m.insert("topic.remove".to_string(), Rh(controller::topic::remove));
+        m.insert("user.create".to_string(), Rh(controller::user::create));
+        m.insert("user.auth".to_string(), Rh(controller::user::auth));
+        m
+    };
+}
+
+struct Rh(controller::RequestHandler);
 
 pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     if req.method() != Method::POST || req.uri().path() != "/api" {
@@ -61,39 +74,34 @@ fn exec(req: json_rpc::Request) -> json_rpc::Response {
         resp.id = id;
     }
 
-    let method: Vec<&str> = req.method.split('.').collect();
-    let name = method[0];
-    let method = method[1];
+    let method = req.method;
+    resp.method = method.clone();
 
-    resp.method = method.into();
+    match METHODS.get(&method) {
+        Some(func) => {
+            let db = db::Db::new();
+            let data = controller::RequestData::new(db, req.params);
+            let result = func.0(data);
 
-    let db = db::Db::new();
-
-    let controller = factory(name).unwrap();
-    let result = controller.exec(&db, method, req.params);
-
-    match result {
-        Ok(r) => resp.result = r,
-        Err(e) => {
-            let api_err = e.downcast_ref::<api::error::Error>();
-
-            if let Some(i) = api_err {
-                resp.error = Some(json_rpc::Error::from_api_error(i));
-            } else {
-                println!("{}", e);
-                let server_err = api::error::Error::new(api::error::INTERNAL_SERVER_ERROR, None);
-                resp.error = Some(json_rpc::Error::from_api_error(&server_err));
-            }
+            match result {
+                Ok(r) => resp.result = r,
+                Err(e) => {
+                    let api_err = e.downcast_ref::<api::error::Error>();
+                    if let Some(i) = api_err {
+                        resp.error = Some(json_rpc::Error::from_api_error(i));
+                    } else {
+                        println!("{}", e);
+                        let server_err =
+                            api::error::Error::new(api::error::INTERNAL_SERVER_ERROR, None);
+                        resp.error = Some(json_rpc::Error::from_api_error(&server_err));
+                    }
+                }
+            };
         }
-    };
-
-    resp
-}
-
-fn factory(name: &str) -> Option<Box<dyn Controller>> {
-    match name {
-        "topic" => Some(Box::new(topic::Topic {})),
-        "user" => Some(Box::new(user::User {})),
-        _ => None,
+        None => {
+            let server_err = api::error::Error::new(api::error::METHOD_NOT_FOUND, Some(method));
+            resp.error = Some(json_rpc::Error::from_api_error(&server_err));
+        }
     }
+    resp
 }

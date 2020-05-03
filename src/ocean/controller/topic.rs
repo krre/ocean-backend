@@ -1,106 +1,71 @@
-use super::Controller;
-use crate::api;
-use crate::db;
+use super::*;
 use crate::model::topic;
 use diesel::prelude::*;
 use serde::Deserialize;
 use serde_json;
 use serde_json::json;
-use std::error::Error;
 
-pub struct Topic;
-
-impl Topic {
-    fn create(
-        &self,
-        db: &db::Db,
-        params: Option<serde_json::Value>,
-    ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
-        #[derive(Deserialize)]
-        struct Req {
-            title: String,
-            description: String,
-            user_id: i32,
-        }
-
-        let req = serde_json::from_value::<Req>(params.unwrap())?;
-
-        use crate::model::schema::topics::dsl::*;
-
-        let new_topic = topic::NewTopic {
-            title: &req.title,
-            description: &req.description,
-            user_id: req.user_id,
-        };
-        let result: topic::Topic = diesel::insert_into(topics)
-            .values(&new_topic)
-            // .returning(id)
-            .get_result(&db.conn)?;
-
-        let result = json!({
-            "id": result.id
-        });
-
-        Ok(Some(result))
+// topic.create
+pub fn create(data: RequestData) -> RequestResult {
+    #[derive(Deserialize)]
+    struct Req {
+        title: String,
+        description: String,
+        user_id: i32,
     }
 
-    fn get(
-        &self,
-        db: &db::Db,
-        params: Option<serde_json::Value>,
-    ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
-        use crate::model::schema::topics::dsl::*;
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-        let list = {
-            if let Some(p) = params {
-                let topic_id = p["id"].as_i64().unwrap() as i32;
-                topics
-                    .filter(id.eq(topic_id))
-                    .limit(1)
-                    .load::<topic::Topic>(&db.conn)?
-            } else {
-                topics.load::<topic::Topic>(&db.conn)?
-            }
-        };
+    use crate::model::schema::topics::dsl::*;
 
-        let result = serde_json::to_value(&list)?;
-        Ok(Some(result))
-    }
+    let new_topic = topic::NewTopic {
+        title: &req.title,
+        description: &req.description,
+        user_id: req.user_id,
+    };
+    let result: topic::Topic = diesel::insert_into(topics)
+        .values(&new_topic)
+        // .returning(id)
+        .get_result(&data.db.conn)?;
 
-    fn remove(
-        &self,
-        db: &db::Db,
-        params: Option<serde_json::Value>,
-    ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
-        #[derive(Deserialize)]
-        struct Req {
-            id: Vec<i32>,
-        }
+    let result = json!({
+        "id": result.id
+    });
 
-        let req = serde_json::from_value::<Req>(params.unwrap())?;
-
-        use crate::model::schema::topics::dsl::*;
-
-        diesel::delete(topics.filter(id.eq_any(req.id))).execute(&db.conn)?;
-        Ok(None)
-    }
+    Ok(Some(result))
 }
 
-impl Controller for Topic {
-    fn exec(
-        &self,
-        db: &db::Db,
-        method: &str,
-        params: Option<serde_json::Value>,
-    ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
-        match method {
-            "create" => self.create(db, params),
-            "get" => self.get(db, params),
-            "remove" => self.remove(db, params),
-            _ => Err(api::make_error_data(
-                api::error::METHOD_NOT_FOUND,
-                method.to_string(),
-            )),
+// topic.get
+pub fn get(data: RequestData) -> RequestResult {
+    use crate::model::schema::topics::dsl::*;
+
+    let list = {
+        if let Some(p) = data.params {
+            let topic_id = p["id"].as_i64().unwrap() as i32;
+            topics
+                .filter(id.eq(topic_id))
+                .limit(1)
+                .load::<topic::Topic>(&data.db.conn)?
+        } else {
+            topics.load::<topic::Topic>(&data.db.conn)?
         }
+    };
+
+    let result = serde_json::to_value(&list)?;
+    Ok(Some(result))
+}
+
+// topic.remove
+pub fn remove(data: RequestData) -> RequestResult {
+    #[derive(Deserialize)]
+    struct Req {
+        id: Vec<i32>,
     }
+
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+
+    use crate::model::schema::topics::dsl::*;
+
+    diesel::delete(topics.filter(id.eq_any(req.id))).execute(&data.db.conn)?;
+    Ok(None)
 }
