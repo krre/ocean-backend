@@ -72,10 +72,7 @@ impl User {
         let request_token = sha1_token(req.id, req.password);
 
         if result.len() == 0 || result[0].token != request_token {
-            Err(Box::new(api::Error::new(
-                api::error::WRONG_USER_PASSWORD,
-                None,
-            )))
+            Err(api::make_error(api::error::WRONG_USER_PASSWORD))
         } else {
             Ok(Some(json!({ "token": request_token })))
         }
@@ -92,10 +89,10 @@ impl Controller for User {
         match method {
             "create" => self.create(db, params),
             "auth" => self.auth(db, params),
-            _ => Err(Box::new(api::error::Error::new(
+            _ => Err(api::make_error_data(
                 api::error::METHOD_NOT_FOUND,
-                Some(method.to_string()),
-            ))),
+                method.to_string(),
+            )),
         }
     }
 }

@@ -57,6 +57,8 @@ impl Error {
     }
 }
 
+impl error::Error for Error {}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -67,4 +69,10 @@ impl fmt::Display for Error {
     }
 }
 
-impl error::Error for Error {}
+pub fn make_error(code: ErrorCode) -> Box<dyn error::Error> {
+    Box::new(Error::new(code, None))
+}
+
+pub fn make_error_data(code: ErrorCode, data: String) -> Box<dyn error::Error> {
+    Box::new(Error::new(code, Some(data)))
+}

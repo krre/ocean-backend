@@ -97,10 +97,10 @@ impl Controller for Topic {
             "create" => self.create(db, params),
             "get" => self.get(db, params),
             "remove" => self.remove(db, params),
-            _ => Err(Box::new(api::error::Error::new(
+            _ => Err(api::make_error_data(
                 api::error::METHOD_NOT_FOUND,
-                Some(method.to_string()),
-            ))),
+                method.to_string(),
+            )),
         }
     }
 }
