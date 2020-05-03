@@ -6,6 +6,7 @@ use hyper::body;
 use hyper::body::Buf;
 use hyper::header;
 use hyper::{Body, Method, Request, Response, StatusCode};
+use log::{error, info};
 use serde_json;
 use std::collections::HashMap;
 
@@ -25,7 +26,7 @@ struct Rh(controller::RequestHandler);
 
 pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     if req.method() != Method::POST || req.uri().path() != "/api" {
-        println!(
+        info!(
             "Bad request: method: {}, URL: {}",
             req.method().as_str(),
             req.uri().path()
@@ -40,7 +41,7 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     let bytes = whole_body.bytes();
     let raw_req = String::from_utf8(bytes.to_vec()).unwrap();
 
-    println!("Request: {}", raw_req);
+    info!("Request: {}", raw_req);
 
     let json_rpc_req = serde_json::from_slice::<json_rpc::Request>(bytes);
 
@@ -56,7 +57,7 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     };
 
     let raw_resp = serde_json::to_string(&json_rpc_resp).unwrap();
-    println!("Response: {}", raw_resp);
+    info!("Response: {}", raw_resp);
 
     let mut response = Response::new(Body::from(raw_resp));
     response.headers_mut().insert(
@@ -90,7 +91,7 @@ fn exec(req: json_rpc::Request) -> json_rpc::Response {
                     if let Some(i) = api_err {
                         resp.error = Some(json_rpc::Error::from_api_error(i));
                     } else {
-                        println!("{}", e);
+                        error!("{}", e);
                         let server_err =
                             api::error::Error::new(api::error::INTERNAL_SERVER_ERROR, None);
                         resp.error = Some(json_rpc::Error::from_api_error(&server_err));

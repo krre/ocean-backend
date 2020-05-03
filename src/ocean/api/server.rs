@@ -2,6 +2,7 @@ use super::router;
 use crate::config;
 use hyper;
 use hyper::service::{make_service_fn, service_fn};
+use log::{error, info};
 
 pub struct Server;
 
@@ -20,10 +21,10 @@ impl Server {
 
         let server = hyper::Server::bind(&addr).serve(service);
 
-        println!("API server listen on port {}", port);
+        info!("API server listen on port {}", port);
 
         if let Err(e) = server.await {
-            eprintln!("API server error: {}", e);
+            error!("API server error: {}", e);
         }
     }
 }
