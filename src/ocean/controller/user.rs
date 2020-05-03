@@ -12,30 +12,24 @@ use std::error::Error;
 
 pub struct User;
 
-#[derive(Deserialize)]
-struct CreateRequest {
-    name: Option<String>,
-    password: String,
-}
-
-#[derive(Deserialize)]
-struct AuthRequest {
-    id: i32,
-    password: String,
-}
-
 impl User {
     fn create(
         &self,
         db: &db::Db,
         params: Option<serde_json::Value>,
     ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
-        let request: CreateRequest = serde_json::from_value(params.unwrap())?;
+        #[derive(Deserialize)]
+        struct Req {
+            name: Option<String>,
+            password: String,
+        }
+
+        let req = serde_json::from_value::<Req>(params.unwrap())?;
 
         use crate::model::schema::users::dsl::*;
 
         let new_user = user::NewUser {
-            name: request.name,
+            name: req.name,
             token: "dummy".to_string(),
         };
 
@@ -45,7 +39,7 @@ impl User {
             .get_result(&db.conn)?;
 
         let user_id = result.id;
-        let user_token = &sha1_token(user_id, request.password);
+        let user_token = &sha1_token(user_id, req.password);
 
         diesel::update(users.filter(id.eq(user_id)))
             .set(token.eq(user_token))
@@ -64,15 +58,19 @@ impl User {
         db: &db::Db,
         params: Option<serde_json::Value>,
     ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
-        let request: AuthRequest = serde_json::from_value(params.unwrap())?;
+        #[derive(Deserialize)]
+        struct Req {
+            id: i32,
+            password: String,
+        }
+
+        let req = serde_json::from_value::<Req>(params.unwrap())?;
 
         use crate::model::schema::users::dsl::*;
 
-        let result = users
-            .filter(id.eq(request.id))
-            .load::<user::User>(&db.conn)?;
+        let result = users.filter(id.eq(req.id)).load::<user::User>(&db.conn)?;
 
-        let request_token = sha1_token(request.id, request.password);
+        let request_token = sha1_token(req.id, req.password);
 
         if result.len() == 0 || result[0].token != request_token {
             let error = json_rpc::Error {

@@ -10,32 +10,27 @@ use std::error::Error;
 
 pub struct Topic;
 
-#[derive(Deserialize)]
-struct CreateRequest {
-    title: String,
-    description: String,
-    user_id: i32,
-}
-
-#[derive(Deserialize)]
-struct DeleteRequest {
-    id: Vec<i32>,
-}
-
 impl Topic {
     fn create(
         &self,
         db: &db::Db,
         params: Option<serde_json::Value>,
     ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
-        let request: CreateRequest = serde_json::from_value(params.unwrap())?;
+        #[derive(Deserialize)]
+        struct Req {
+            title: String,
+            description: String,
+            user_id: i32,
+        }
+
+        let req = serde_json::from_value::<Req>(params.unwrap())?;
 
         use crate::model::schema::topics::dsl::*;
 
         let new_topic = topic::NewTopic {
-            title: &request.title,
-            description: &request.description,
-            user_id: request.user_id,
+            title: &req.title,
+            description: &req.description,
+            user_id: req.user_id,
         };
         let result: topic::Topic = diesel::insert_into(topics)
             .values(&new_topic)
@@ -77,11 +72,16 @@ impl Topic {
         db: &db::Db,
         params: Option<serde_json::Value>,
     ) -> Result<Option<serde_json::Value>, Box<dyn Error>> {
+        #[derive(Deserialize)]
+        struct Req {
+            id: Vec<i32>,
+        }
+
+        let req = serde_json::from_value::<Req>(params.unwrap())?;
+
         use crate::model::schema::topics::dsl::*;
 
-        let delete_request: DeleteRequest = serde_json::from_value(params.unwrap())?;
-
-        diesel::delete(topics.filter(id.eq_any(delete_request.id))).execute(&db.conn)?;
+        diesel::delete(topics.filter(id.eq_any(req.id))).execute(&db.conn)?;
         Ok(None)
     }
 }
