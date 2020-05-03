@@ -1,7 +1,6 @@
 use super::Controller;
 use crate::api;
 use crate::db;
-use crate::json_rpc;
 use crate::model::user;
 use diesel::prelude::*;
 use serde::Deserialize;
@@ -73,14 +72,10 @@ impl User {
         let request_token = sha1_token(req.id, req.password);
 
         if result.len() == 0 || result[0].token != request_token {
-            let error = json_rpc::Error {
-                code: 42,
-                message: "User with id and password not found".to_string(),
-                data: None,
-            };
-
-            let result = serde_json::to_value(&error)?;
-            Ok(Some(result))
+            Err(Box::new(api::Error::new(
+                api::error::WRONG_USER_PASSWORD,
+                None,
+            )))
         } else {
             Ok(Some(json!({ "token": request_token })))
         }

@@ -12,7 +12,7 @@ pub const PARAMETER_NOT_FOUND: ErrorCode = 4;
 pub const INTERNAL_SERVER_ERROR: ErrorCode = 5;
 
 // User (100..199)
-pub const INVALID_PAIR_ID_PASSWORD_: ErrorCode = 100;
+pub const WRONG_USER_PASSWORD: ErrorCode = 100;
 
 lazy_static! {
     static ref ERROR_MESSAGES: HashMap<ErrorCode, &'static str> = {
@@ -21,8 +21,9 @@ lazy_static! {
         m.insert(CONTROLLER_NOT_FOUND, "Controller not found");
         m.insert(METHOD_NOT_FOUND, "Method not found");
         m.insert(PARAMETER_NOT_FOUND, "Parameter not found");
-        m.insert(INVALID_PAIR_ID_PASSWORD_, "Invalid pair `id / password`");
         m.insert(INTERNAL_SERVER_ERROR, "Internal server error");
+
+        m.insert(WRONG_USER_PASSWORD, "Wrong user password`");
         m
     };
 }
