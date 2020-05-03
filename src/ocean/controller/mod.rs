@@ -5,7 +5,7 @@ use std::error::Error;
 pub mod topic;
 pub mod user;
 
-pub type RequestResult = Result<Option<serde_json::Value>, Box<dyn Error + 'static>>;
+pub type RequestResult = Result<Option<serde_json::Value>, Box<dyn Error>>;
 pub type RequestHandler = fn(RequestData) -> RequestResult;
 
 pub struct RequestData {
