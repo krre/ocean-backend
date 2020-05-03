@@ -29,10 +29,20 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
 
     println!("Request: {}", raw_req);
 
-    let json_rpc_req: json_rpc::Request = serde_json::from_slice(bytes).unwrap();
-    let json_rpc_resp = exec(json_rpc_req);
-    let raw_resp = serde_json::to_string(&json_rpc_resp).unwrap();
+    let json_rpc_req = serde_json::from_slice::<json_rpc::Request>(bytes);
 
+    let json_rpc_resp = if let Ok(r) = json_rpc_req {
+        exec(r)
+    } else {
+        let mut resp = json_rpc::Response::default();
+        resp.error = Some(json_rpc::Error::from_api_error(&api::Error::new(
+            api::error::PARSE_ERROR,
+            Some(json_rpc_req.err().unwrap().to_string()),
+        )));
+        resp
+    };
+
+    let raw_resp = serde_json::to_string(&json_rpc_resp).unwrap();
     println!("Response: {}", raw_resp);
 
     let mut response = Response::new(Body::from(raw_resp));
