@@ -3,9 +3,7 @@ use crate::api;
 use crate::model::user;
 use diesel::prelude::*;
 use serde::Deserialize;
-use serde_json;
 use serde_json::json;
-use sha1;
 
 // user.create
 pub fn create(data: RequestData) -> RequestResult {
@@ -62,7 +60,7 @@ pub fn auth(data: RequestData) -> RequestResult {
 
     let request_token = sha1_token(req.id, req.password);
 
-    if result.len() == 0 || result[0].token != request_token {
+    if result.is_empty() || result[0].token != request_token {
         Err(api::make_error(api::error::WRONG_USER_PASSWORD))
     } else {
         Ok(Some(json!({ "token": request_token })))

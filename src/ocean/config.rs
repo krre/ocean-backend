@@ -26,7 +26,7 @@ pub struct Postgres {
 }
 
 impl Config {
-    pub fn new() -> Config {
+    pub fn new() -> Self {
         let mut config_path = dirs::config_dir().unwrap();
         config_path.push("ocean/ocean.toml");
 
@@ -36,5 +36,11 @@ impl Config {
 
         let config_text = fs::read_to_string(config_path).unwrap();
         toml::from_str(&config_text).unwrap()
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self::new()
     }
 }

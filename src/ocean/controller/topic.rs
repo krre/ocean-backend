@@ -2,7 +2,6 @@ use super::*;
 use crate::model::topic;
 use diesel::prelude::*;
 use serde::Deserialize;
-use serde_json;
 use serde_json::json;
 
 // topic.create

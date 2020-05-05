@@ -1,5 +1,4 @@
 use crate::db;
-use serde_json;
 use std::error::Error;
 
 pub mod topic;

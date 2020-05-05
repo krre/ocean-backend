@@ -7,7 +7,6 @@ use hyper::body::Buf;
 use hyper::header;
 use hyper::{Body, Method, Request, Response, StatusCode};
 use log::{error, info};
-use serde_json;
 use std::collections::HashMap;
 
 lazy_static! {

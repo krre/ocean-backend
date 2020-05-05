@@ -39,7 +39,7 @@ impl Error {
     pub fn new(code: ErrorCode, data: Option<String>) -> Self {
         Error {
             code,
-            message: ERROR_MESSAGES.get(&code).unwrap().to_string(),
+            message: (*ERROR_MESSAGES.get(&code).unwrap()).to_string(),
             data,
         }
     }

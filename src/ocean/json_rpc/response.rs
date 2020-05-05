@@ -1,6 +1,5 @@
 use crate::json_rpc::Error;
 use serde::Serialize;
-use serde_json;
 
 #[derive(Serialize)]
 pub struct Response {

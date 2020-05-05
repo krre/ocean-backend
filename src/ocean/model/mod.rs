@@ -17,7 +17,7 @@ mod date_serializer {
         time: &NaiveDateTime,
         serializer: S,
     ) -> Result<S::Ok, S::Error> {
-        time_to_json(time.clone()).serialize(serializer)
+        time_to_json(*time).serialize(serializer)
     }
 
     // pub fn deserialize<'de, D: Deserializer<'de>>(

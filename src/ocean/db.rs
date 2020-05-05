@@ -15,7 +15,13 @@ impl Db {
             config::CONFIG.postgres.database
         );
         let conn = PgConnection::establish(&database_url)
-            .expect(&format!("Error connecting to {}", database_url));
+            .unwrap_or_else(|_| panic!("Error connecting to {}", database_url));
         Db { conn }
+    }
+}
+
+impl Default for Db {
+    fn default() -> Self {
+        Self::new()
     }
 }
