@@ -14,7 +14,7 @@ lazy_static! {
         let mut m = HashMap::new();
         m.insert("topic.create".to_string(), Rh(controller::topic::create));
         m.insert("topic.get".to_string(), Rh(controller::topic::get));
-        m.insert("topic.remove".to_string(), Rh(controller::topic::remove));
+        m.insert("topic.delete".to_string(), Rh(controller::topic::delete));
         m.insert("user.create".to_string(), Rh(controller::user::create));
         m.insert("user.auth".to_string(), Rh(controller::user::auth));
         m

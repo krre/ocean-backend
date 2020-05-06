@@ -54,8 +54,8 @@ pub fn get(data: RequestData) -> RequestResult {
     Ok(Some(result))
 }
 
-// topic.remove
-pub fn remove(data: RequestData) -> RequestResult {
+// topic.delete
+pub fn delete(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         id: Vec<i32>,
