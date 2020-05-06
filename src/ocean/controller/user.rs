@@ -22,12 +22,11 @@ pub fn create(data: RequestData) -> RequestResult {
         token: "dummy".to_string(),
     };
 
-    let result: user::User = diesel::insert_into(users)
+    let user_id = diesel::insert_into(users)
         .values(&new_user)
-        // .returning(id)
-        .get_result(&data.db.conn)?;
+        .returning(id)
+        .get_result::<i32>(&data.db.conn)?;
 
-    let user_id = result.id;
     let user_token = &sha1_token(user_id, req.password);
 
     diesel::update(users.filter(id.eq(user_id)))

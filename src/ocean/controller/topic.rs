@@ -22,14 +22,12 @@ pub fn create(data: RequestData) -> RequestResult {
         description: &req.description,
         user_id: req.user_id,
     };
-    let result: topic::Topic = diesel::insert_into(topics)
+    let topic_id = diesel::insert_into(topics)
         .values(&new_topic)
-        // .returning(id)
-        .get_result(&data.db.conn)?;
+        .returning(id)
+        .get_result::<i32>(&data.db.conn)?;
 
-    let result = json!({
-        "id": result.id
-    });
+    let result = json!({ "id": topic_id });
 
     Ok(Some(result))
 }
