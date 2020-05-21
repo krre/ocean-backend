@@ -10,6 +10,7 @@ pub const CONTROLLER_NOT_FOUND: ErrorCode = 2;
 pub const METHOD_NOT_FOUND: ErrorCode = 3;
 pub const PARAMETER_NOT_FOUND: ErrorCode = 4;
 pub const INTERNAL_SERVER_ERROR: ErrorCode = 5;
+pub const INVALID_PARAMETER: ErrorCode = 6;
 
 // User (100..199)
 pub const WRONG_USER_PASSWORD: ErrorCode = 100;
@@ -22,6 +23,7 @@ lazy_static! {
         m.insert(METHOD_NOT_FOUND, "Method not found");
         m.insert(PARAMETER_NOT_FOUND, "Parameter not found");
         m.insert(INTERNAL_SERVER_ERROR, "Internal server error");
+        m.insert(INVALID_PARAMETER, "Invalid parameter");
 
         m.insert(WRONG_USER_PASSWORD, "Wrong user password`");
         m

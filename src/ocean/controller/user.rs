@@ -71,3 +71,23 @@ fn sha1_token(id: i32, password: String) -> String {
     sha.update((id.to_string() + &password).as_bytes());
     sha.digest().to_string()
 }
+
+// user.get
+pub fn get(data: RequestData) -> RequestResult {
+    use crate::model::schema::users::dsl::*;
+
+    let list = {
+        if let Some(p) = data.params {
+            let user_token = p["token"].as_str().unwrap();
+            users
+                .filter(token.eq(user_token))
+                .limit(1)
+                .load::<user::User>(&data.db.conn)?
+        } else {
+            return Err(api::make_error(api::error::INVALID_PARAMETER));
+        }
+    };
+
+    let result = serde_json::to_value(&list)?;
+    Ok(Some(result))
+}
