@@ -18,6 +18,7 @@ lazy_static! {
         m.insert("user.create".to_string(), Rh(controller::user::create));
         m.insert("user.auth".to_string(), Rh(controller::user::auth));
         m.insert("user.get".to_string(), Rh(controller::user::get));
+        m.insert("user.update".to_string(), Rh(controller::user::update));
         m
     };
 }

@@ -91,3 +91,40 @@ pub fn get(data: RequestData) -> RequestResult {
     let result = serde_json::to_value(&list)?;
     Ok(Some(result))
 }
+
+// user.update
+pub fn update(data: RequestData) -> RequestResult {
+    use crate::model::schema::users;
+    use crate::model::schema::users::dsl::*;
+
+    #[derive(Deserialize)]
+    struct Req {
+        id: i32,
+        name: String,
+        password: Option<String>,
+    }
+
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+
+    #[derive(AsChangeset)]
+    #[table_name = "users"]
+    pub struct UpdateUser {
+        pub name: String,
+        pub token: Option<String>,
+    }
+
+    let mut update_user = UpdateUser {
+        name: req.name,
+        token: None,
+    };
+
+    if let Some(p) = req.password {
+        update_user.token = Some(sha1_token(req.id, p));
+    }
+
+    diesel::update(users.filter(id.eq(req.id)))
+        .set(&update_user)
+        .execute(&data.db.conn)?;
+
+    Ok(None)
+}
