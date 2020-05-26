@@ -44,7 +44,9 @@ pub fn get(data: RequestData) -> RequestResult {
                 .limit(1)
                 .load::<topic::Topic>(&data.db.conn)?
         } else {
-            topics.load::<topic::Topic>(&data.db.conn)?
+            topics
+                .order(id.desc())
+                .load::<topic::Topic>(&data.db.conn)?
         }
     };
 
