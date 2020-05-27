@@ -32,23 +32,27 @@ pub fn create(data: RequestData) -> RequestResult {
     Ok(Some(result))
 }
 
-// topic.get
-pub fn get(data: RequestData) -> RequestResult {
+// topic.getOne
+pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::topics::dsl::*;
 
-    let list = {
-        if let Some(p) = data.params {
-            let topic_id = p["id"].as_i64().unwrap() as i32;
-            topics
-                .filter(id.eq(topic_id))
-                .limit(1)
-                .load::<topic::Topic>(&data.db.conn)?
-        } else {
-            topics
-                .order(id.desc())
-                .load::<topic::Topic>(&data.db.conn)?
-        }
-    };
+    let topic_id = data.params.unwrap()["id"].as_i64().unwrap() as i32;
+    let record = topics
+        .filter(id.eq(topic_id))
+        .limit(1)
+        .load::<topic::Topic>(&data.db.conn)?;
+
+    let result = serde_json::to_value(&record)?;
+    Ok(Some(result))
+}
+
+// topic.getAll
+pub fn get_all(data: RequestData) -> RequestResult {
+    use crate::model::schema::topics::dsl::*;
+
+    let list = topics
+        .order(id.desc())
+        .load::<topic::Topic>(&data.db.conn)?;
 
     let result = serde_json::to_value(&list)?;
     Ok(Some(result))
