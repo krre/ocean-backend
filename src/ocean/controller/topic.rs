@@ -1,5 +1,6 @@
 use super::*;
 use crate::model::topic;
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::Deserialize;
 use serde_json::json;
@@ -48,11 +49,21 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
 // topic.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
-    use crate::model::schema::topics::dsl::*;
+    use crate::model::schema::*;
 
-    let list = topics
-        .order(id.desc())
-        .load::<topic::Topic>(&data.db.conn)?;
+    // struct Resp {
+    //     id: i32,
+    //     title: String,
+    //     create_ts: NaiveDateTime,
+    //     name: Option<String>,
+    // };
+
+    let list = topics::table
+        .inner_join(users::table)
+        .select((topics::id, topics::title, topics::create_ts, users::name))
+        .order(topics::id.desc())
+        .load::<(i32, String, NaiveDateTime, Option<String>)>(&data.db.conn)?;
+    // .load::<Resp>(&data.db.conn)?;
 
     let result = serde_json::to_value(&list)?;
     Ok(Some(result))
