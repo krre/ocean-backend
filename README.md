@@ -1,2 +1,2 @@
 # Ocean
-Backend for Ocean project
+Backend for [Ocean](http://ocean-mandela.org) project
