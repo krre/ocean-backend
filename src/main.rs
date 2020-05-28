@@ -8,7 +8,8 @@ embed_migrations!("migrations");
 
 #[tokio::main]
 async fn main() {
-    env_logger::init();
+    env_logger::builder().format_timestamp(None).init();
+
     info!("Ocean started");
 
     let db = db::Db::new();
