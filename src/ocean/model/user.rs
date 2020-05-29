@@ -12,6 +12,7 @@ pub struct User {
     pub create_ts: NaiveDateTime,
     #[serde(with = "date_serializer")]
     pub update_ts: NaiveDateTime,
+    pub group_id: i32,
 }
 
 #[derive(Insertable)]
@@ -19,4 +20,5 @@ pub struct User {
 pub struct NewUser {
     pub name: Option<String>,
     pub token: String,
+    pub group_id: i32,
 }

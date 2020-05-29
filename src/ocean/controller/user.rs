@@ -20,6 +20,7 @@ pub fn create(data: RequestData) -> RequestResult {
     let new_user = user::NewUser {
         name: req.name,
         token: "dummy".to_string(),
+        group_id: 2,
     };
 
     let user_id = diesel::insert_into(users)
