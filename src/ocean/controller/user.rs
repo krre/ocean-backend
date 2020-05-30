@@ -45,6 +45,11 @@ pub fn create(data: RequestData) -> RequestResult {
 
 // user.auth
 pub fn auth(data: RequestData) -> RequestResult {
+    use crate::model::schema::user_groups;
+    use crate::model::schema::user_groups::dsl::*;
+    use crate::model::schema::users;
+    use crate::model::schema::users::dsl::*;
+
     #[derive(Deserialize)]
     struct Req {
         id: i32,
@@ -53,10 +58,8 @@ pub fn auth(data: RequestData) -> RequestResult {
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    use crate::model::schema::users::dsl::*;
-
     let result = users
-        .filter(id.eq(req.id))
+        .filter(users::id.eq(req.id))
         .load::<user::User>(&data.db.conn)?;
 
     let request_token = sha1_token(req.id, req.password);
@@ -64,7 +67,14 @@ pub fn auth(data: RequestData) -> RequestResult {
     if result.is_empty() || result[0].token != request_token {
         Err(api::make_error(api::error::WRONG_USER_PASSWORD))
     } else {
-        Ok(Some(json!({ "token": request_token })))
+        let user_group = user_groups
+            .filter(user_groups::id.eq(result[0].group_id))
+            .limit(1)
+            .load::<user_group::UserGroup>(&data.db.conn)?;
+
+        Ok(Some(
+            json!({ "token": request_token, "code": user_group[0].code }),
+        ))
     }
 }
 
