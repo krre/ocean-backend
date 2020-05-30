@@ -20,6 +20,10 @@ lazy_static! {
         m.insert("user.auth".to_string(), Rh(controller::user::auth));
         m.insert("user.getOne".to_string(), Rh(controller::user::get_one));
         m.insert("user.update".to_string(), Rh(controller::user::update));
+        m.insert(
+            "user.changePassword".to_string(),
+            Rh(controller::user::change_password),
+        );
         m
     };
 }

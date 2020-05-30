@@ -1,6 +1,7 @@
 use super::*;
 use crate::api;
 use crate::model::user;
+use crate::model::user_group;
 use diesel::prelude::*;
 use serde::Deserialize;
 use serde_json::json;
@@ -90,6 +91,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
 // user.update
 pub fn update(data: RequestData) -> RequestResult {
+    use crate::model::schema::user_groups::dsl::*;
     use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
 
@@ -97,7 +99,44 @@ pub fn update(data: RequestData) -> RequestResult {
     struct Req {
         id: i32,
         name: String,
-        password: Option<String>,
+        code: String,
+    }
+
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+
+    let groups = user_groups
+        .filter(code.eq(req.code))
+        .limit(1)
+        .load::<user_group::UserGroup>(&data.db.conn)?;
+
+    #[derive(AsChangeset)]
+    #[table_name = "users"]
+    pub struct UpdateUser {
+        pub name: String,
+        pub group_id: i32,
+    }
+
+    let update_user = UpdateUser {
+        name: req.name,
+        group_id: groups[0].id,
+    };
+
+    diesel::update(users.filter(users::id.eq(req.id)))
+        .set(&update_user)
+        .execute(&data.db.conn)?;
+
+    Ok(None)
+}
+
+// user.changePassword
+pub fn change_password(data: RequestData) -> RequestResult {
+    use crate::model::schema::users;
+    use crate::model::schema::users::dsl::*;
+
+    #[derive(Deserialize)]
+    struct Req {
+        id: i32,
+        password: String,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -105,18 +144,12 @@ pub fn update(data: RequestData) -> RequestResult {
     #[derive(AsChangeset)]
     #[table_name = "users"]
     pub struct UpdateUser {
-        pub name: String,
-        pub token: Option<String>,
+        pub token: String,
     }
 
-    let mut update_user = UpdateUser {
-        name: req.name,
-        token: None,
+    let update_user = UpdateUser {
+        token: sha1_token(req.id, req.password),
     };
-
-    if let Some(p) = req.password {
-        update_user.token = Some(sha1_token(req.id, p));
-    }
 
     diesel::update(users.filter(id.eq(req.id)))
         .set(&update_user)
