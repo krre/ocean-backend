@@ -72,9 +72,9 @@ pub fn auth(data: RequestData) -> RequestResult {
             .limit(1)
             .load::<user_group::UserGroup>(&data.db.conn)?;
 
-        Ok(Some(
-            json!({ "token": request_token, "code": user_group[0].code }),
-        ))
+        Ok(Some(json!({ "token": request_token,
+             "code": user_group[0].code,
+             "name": result[0].name })))
     }
 }
 
