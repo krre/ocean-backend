@@ -76,16 +76,29 @@ fn sha1_token(id: i32, password: String) -> String {
 
 // user.getOne
 pub fn get_one(data: RequestData) -> RequestResult {
+    use crate::model::schema::user_groups;
+    use crate::model::schema::user_groups::dsl::*;
     use crate::model::schema::users::dsl::*;
 
     let params = data.params.unwrap();
     let user_token = params["token"].as_str().unwrap();
-    let record = users
+    let user = users
         .filter(token.eq(user_token))
         .limit(1)
         .load::<user::User>(&data.db.conn)?;
 
-    let result = serde_json::to_value(&record)?;
+    let user_group = user_groups
+        .filter(user_groups::id.eq(user[0].id))
+        .limit(1)
+        .load::<user_group::UserGroup>(&data.db.conn)?;
+
+    let result = json!({
+        "id": user[0].id,
+        "name": user[0].name,
+        "code": user_group[0].code,
+        "create_ts": user[0].create_ts
+    });
+
     Ok(Some(result))
 }
 
