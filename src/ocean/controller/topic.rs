@@ -60,9 +60,15 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     let list = topics::table
         .inner_join(users::table)
-        .select((topics::id, topics::title, topics::create_ts, users::name))
+        .select((
+            topics::id,
+            topics::title,
+            topics::create_ts,
+            users::name,
+            users::id,
+        ))
         .order(topics::id.desc())
-        .load::<(i32, String, NaiveDateTime, Option<String>)>(&data.db.conn)?;
+        .load::<(i32, String, NaiveDateTime, Option<String>, i32)>(&data.db.conn)?;
     // .load::<Resp>(&data.db.conn)?;
 
     let result = serde_json::to_value(&list)?;
