@@ -130,7 +130,6 @@ pub fn update(data: RequestData) -> RequestResult {
 
 // user.changePassword
 pub fn change_password(data: RequestData) -> RequestResult {
-    use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
 
     #[derive(Deserialize)]
@@ -140,20 +139,13 @@ pub fn change_password(data: RequestData) -> RequestResult {
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
-
-    #[derive(AsChangeset)]
-    #[table_name = "users"]
-    pub struct UpdateUser {
-        pub token: String,
-    }
-
-    let update_user = UpdateUser {
-        token: sha1_token(req.id, req.password),
-    };
+    let user_token = sha1_token(req.id, req.password);
 
     diesel::update(users.filter(id.eq(req.id)))
-        .set(&update_user)
+        .set(token.eq(user_token.clone()))
         .execute(&data.db.conn)?;
 
-    Ok(None)
+    let result = json!({ "token": user_token });
+
+    Ok(Some(result))
 }
