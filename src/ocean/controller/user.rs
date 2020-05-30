@@ -82,13 +82,14 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
     let params = data.params.unwrap();
     let user_token = params["token"].as_str().unwrap();
+
     let user = users
         .filter(token.eq(user_token))
         .limit(1)
         .load::<user::User>(&data.db.conn)?;
 
     let user_group = user_groups
-        .filter(user_groups::id.eq(user[0].id))
+        .filter(user_groups::id.eq(user[0].group_id))
         .limit(1)
         .load::<user_group::UserGroup>(&data.db.conn)?;
 
