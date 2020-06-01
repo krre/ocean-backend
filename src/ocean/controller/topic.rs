@@ -33,6 +33,41 @@ pub fn create(data: RequestData) -> RequestResult {
     Ok(Some(result))
 }
 
+// topic.update
+pub fn update(data: RequestData) -> RequestResult {
+    use crate::model::schema::topics;
+    use crate::model::schema::topics::dsl::*;
+    #[derive(Deserialize)]
+    struct Req {
+        id: i32,
+        title: String,
+        description: String,
+        user_id: i32,
+    }
+
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+
+    #[derive(AsChangeset)]
+    #[table_name = "topics"]
+    pub struct UpdateTopic {
+        title: String,
+        description: String,
+        user_id: i32,
+    }
+
+    let update_topic = UpdateTopic {
+        title: req.title,
+        description: req.description,
+        user_id: req.user_id,
+    };
+
+    diesel::update(topics.filter(topics::id.eq(req.id)))
+        .set(&update_topic)
+        .execute(&data.db.conn)?;
+
+    Ok(None)
+}
+
 // topic.getOne
 pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::topics::dsl::*;

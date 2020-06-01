@@ -13,6 +13,7 @@ lazy_static! {
     static ref METHODS: HashMap<String, Rh> = {
         let mut m = HashMap::new();
         m.insert("topic.create".to_string(), Rh(controller::topic::create));
+        m.insert("topic.update".to_string(), Rh(controller::topic::update));
         m.insert("topic.getOne".to_string(), Rh(controller::topic::get_one));
         m.insert("topic.getAll".to_string(), Rh(controller::topic::get_all));
         m.insert("topic.delete".to_string(), Rh(controller::topic::delete));
