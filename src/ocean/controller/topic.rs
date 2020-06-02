@@ -11,6 +11,7 @@ pub fn create(data: RequestData) -> RequestResult {
     struct Req {
         title: String,
         description: String,
+        links: serde_json::Value,
         user_id: i32,
     }
 
@@ -21,6 +22,7 @@ pub fn create(data: RequestData) -> RequestResult {
     let new_topic = topic::NewTopic {
         title: &req.title,
         description: &req.description,
+        links: Some(req.links),
         user_id: req.user_id,
     };
     let topic_id = diesel::insert_into(topics)
@@ -42,22 +44,16 @@ pub fn update(data: RequestData) -> RequestResult {
         id: i32,
         title: String,
         description: String,
+        links: serde_json::Value,
         user_id: i32,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    #[derive(AsChangeset)]
-    #[table_name = "topics"]
-    pub struct UpdateTopic {
-        title: String,
-        description: String,
-        user_id: i32,
-    }
-
-    let update_topic = UpdateTopic {
+    let update_topic = topic::UpdateTopic {
         title: req.title,
         description: req.description,
+        links: Some(req.links),
         user_id: req.user_id,
     };
 
