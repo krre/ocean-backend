@@ -8,6 +8,7 @@ table! {
         user_id -> Int4,
         links -> Nullable<Jsonb>,
         videos -> Nullable<Jsonb>,
+        images -> Nullable<Jsonb>,
     }
 }
 

@@ -11,6 +11,7 @@ pub fn create(data: RequestData) -> RequestResult {
     struct Req {
         title: String,
         description: String,
+        images: serde_json::Value,
         videos: serde_json::Value,
         links: serde_json::Value,
         user_id: i32,
@@ -23,6 +24,7 @@ pub fn create(data: RequestData) -> RequestResult {
     let new_topic = topic::NewTopic {
         title: &req.title,
         description: &req.description,
+        images: Some(req.images),
         videos: Some(req.videos),
         links: Some(req.links),
         user_id: req.user_id,
@@ -46,6 +48,7 @@ pub fn update(data: RequestData) -> RequestResult {
         id: i32,
         title: String,
         description: String,
+        images: serde_json::Value,
         videos: serde_json::Value,
         links: serde_json::Value,
         user_id: i32,
@@ -56,6 +59,7 @@ pub fn update(data: RequestData) -> RequestResult {
     let update_topic = topic::UpdateTopic {
         title: req.title,
         description: req.description,
+        images: Some(req.images),
         videos: Some(req.videos),
         links: Some(req.links),
         user_id: req.user_id,
