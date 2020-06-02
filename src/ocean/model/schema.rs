@@ -7,6 +7,7 @@ table! {
         update_ts -> Timestamptz,
         user_id -> Int4,
         links -> Nullable<Jsonb>,
+        videos -> Nullable<Jsonb>,
     }
 }
 

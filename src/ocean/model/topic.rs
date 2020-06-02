@@ -14,6 +14,7 @@ pub struct Topic {
     pub update_ts: NaiveDateTime,
     pub user_id: i32,
     pub links: Option<serde_json::Value>,
+    pub videos: Option<serde_json::Value>,
 }
 
 #[derive(Insertable)]
@@ -21,6 +22,7 @@ pub struct Topic {
 pub struct NewTopic<'a> {
     pub title: &'a str,
     pub description: &'a str,
+    pub videos: Option<serde_json::Value>,
     pub links: Option<serde_json::Value>,
     pub user_id: i32,
 }
@@ -30,6 +32,7 @@ pub struct NewTopic<'a> {
 pub struct UpdateTopic {
     pub title: String,
     pub description: String,
+    pub videos: Option<serde_json::Value>,
     pub links: Option<serde_json::Value>,
     pub user_id: i32,
 }
