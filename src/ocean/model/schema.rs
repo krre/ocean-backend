@@ -6,6 +6,7 @@ table! {
         create_ts -> Timestamptz,
         update_ts -> Timestamptz,
         user_id -> Int4,
+        links -> Nullable<Jsonb>,
     }
 }
 
