@@ -90,6 +90,10 @@ pub fn get_one(data: RequestData) -> RequestResult {
 pub fn get_all(data: RequestData) -> RequestResult {
     use crate::model::schema::*;
 
+    let params = data.params.unwrap();
+    let offset = params["offset"].as_i64().unwrap();
+    let limit = params["limit"].as_i64().unwrap();
+
     // struct Resp {
     //     id: i32,
     //     title: String,
@@ -107,6 +111,8 @@ pub fn get_all(data: RequestData) -> RequestResult {
             users::id,
         ))
         .order(topics::id.desc())
+        .offset(offset)
+        .limit(limit)
         .load::<(i32, String, NaiveDateTime, Option<String>, i32)>(&data.db.conn)?;
     // .load::<Resp>(&data.db.conn)?;
 
