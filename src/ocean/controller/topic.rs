@@ -1,8 +1,10 @@
 use super::*;
+use crate::model::date_serializer;
 use crate::model::topic;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::Deserialize;
+use serde::Serialize;
 use serde_json::json;
 
 // topic.create
@@ -88,35 +90,53 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
 // topic.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
-    use crate::model::schema::*;
+    use crate::model::schema::topics;
+    use crate::model::schema::topics::dsl::*;
+    use crate::model::schema::users;
+    use crate::model::schema::users::dsl::*;
 
-    let params = data.params.unwrap();
-    let offset = params["offset"].as_i64().unwrap();
-    let limit = params["limit"].as_i64().unwrap();
+    #[derive(Deserialize)]
+    struct Req {
+        offset: i64,
+        limit: i64,
+    }
 
-    // struct Resp {
-    //     id: i32,
-    //     title: String,
-    //     create_ts: NaiveDateTime,
-    //     name: Option<String>,
-    // };
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    let list = topics::table
-        .inner_join(users::table)
-        .select((
-            topics::id,
-            topics::title,
-            topics::create_ts,
-            users::name,
-            users::id,
-        ))
+    #[derive(Queryable, Serialize)]
+    struct TopicResp {
+        id: i32,
+        title: String,
+        #[serde(with = "date_serializer")]
+        create_ts: NaiveDateTime,
+        name: Option<String>,
+        user_id: i32,
+    }
+
+    let list = topics
+        .inner_join(users)
+        .select((topics::id, title, topics::create_ts, users::name, users::id))
         .order(topics::id.desc())
-        .offset(offset)
-        .limit(limit)
-        .load::<(i32, String, NaiveDateTime, Option<String>, i32)>(&data.db.conn)?;
-    // .load::<Resp>(&data.db.conn)?;
+        .offset(req.offset)
+        .limit(req.limit)
+        .load::<TopicResp>(&data.db.conn)?;
 
-    let result = serde_json::to_value(&list)?;
+    let total_count: i64 = topics
+        .select(diesel::dsl::count_star())
+        .first(&data.db.conn)?;
+
+    #[derive(Serialize)]
+    struct Resp {
+        total_count: i64,
+        topics: Vec<TopicResp>,
+    };
+
+    let resp = serde_json::to_value(&Resp {
+        total_count: total_count,
+        topics: list,
+    })?;
+
+    let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
 }
 

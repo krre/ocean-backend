@@ -9,7 +9,7 @@ pub fn time_to_json(t: NaiveDateTime) -> String {
     DateTime::<Utc>::from_utc(t, Utc).to_rfc3339()
 }
 
-mod date_serializer {
+pub mod date_serializer {
     use super::*;
     // use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
     use serde::{Serialize, Serializer};
