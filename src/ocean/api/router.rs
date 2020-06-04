@@ -12,11 +12,26 @@ use std::collections::HashMap;
 lazy_static! {
     static ref METHODS: HashMap<String, Rh> = {
         let mut m = HashMap::new();
-        m.insert("topic.create".to_string(), Rh(controller::topic::create));
-        m.insert("topic.update".to_string(), Rh(controller::topic::update));
-        m.insert("topic.getOne".to_string(), Rh(controller::topic::get_one));
-        m.insert("topic.getAll".to_string(), Rh(controller::topic::get_all));
-        m.insert("topic.delete".to_string(), Rh(controller::topic::delete));
+        m.insert(
+            "mandela.create".to_string(),
+            Rh(controller::mandela::create),
+        );
+        m.insert(
+            "mandela.update".to_string(),
+            Rh(controller::mandela::update),
+        );
+        m.insert(
+            "mandela.getOne".to_string(),
+            Rh(controller::mandela::get_one),
+        );
+        m.insert(
+            "mandela.getAll".to_string(),
+            Rh(controller::mandela::get_all),
+        );
+        m.insert(
+            "mandela.delete".to_string(),
+            Rh(controller::mandela::delete),
+        );
         m.insert("user.create".to_string(), Rh(controller::user::create));
         m.insert("user.auth".to_string(), Rh(controller::user::auth));
         m.insert("user.getOne".to_string(), Rh(controller::user::get_one));

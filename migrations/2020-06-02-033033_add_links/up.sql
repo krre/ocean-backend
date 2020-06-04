@@ -1,1 +1,0 @@
-ALTER TABLE topics ADD COLUMN IF NOT EXISTS links JSONB DEFAULT '[]'::jsonb;

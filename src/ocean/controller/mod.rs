@@ -1,7 +1,7 @@
 use crate::db;
 use std::error::Error;
 
-pub mod topic;
+pub mod mandela;
 pub mod user;
 
 pub type RequestResult = Result<Option<serde_json::Value>, Box<dyn Error>>;

@@ -1,13 +1,13 @@
 use super::*;
 use crate::model::date_serializer;
-use crate::model::topic;
+use crate::model::mandela;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;
 
-// topic.create
+// mandela.create
 pub fn create(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
@@ -21,30 +21,30 @@ pub fn create(data: RequestData) -> RequestResult {
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    use crate::model::schema::topics::dsl::*;
+    use crate::model::schema::mandels::dsl::*;
 
-    let new_topic = topic::NewTopic {
+    let new_mandela = mandela::NewMandela {
         title: &req.title,
         description: &req.description,
-        images: Some(req.images),
-        videos: Some(req.videos),
-        links: Some(req.links),
+        images: req.images,
+        videos: req.videos,
+        links: req.links,
         user_id: req.user_id,
     };
-    let topic_id = diesel::insert_into(topics)
-        .values(&new_topic)
+    let mandela_id = diesel::insert_into(mandels)
+        .values(&new_mandela)
         .returning(id)
         .get_result::<i32>(&data.db.conn)?;
 
-    let result = json!({ "id": topic_id });
+    let result = json!({ "id": mandela_id });
 
     Ok(Some(result))
 }
 
-// topic.update
+// mandela.update
 pub fn update(data: RequestData) -> RequestResult {
-    use crate::model::schema::topics;
-    use crate::model::schema::topics::dsl::*;
+    use crate::model::schema::mandels;
+    use crate::model::schema::mandels::dsl::*;
     #[derive(Deserialize)]
     struct Req {
         id: i32,
@@ -58,40 +58,40 @@ pub fn update(data: RequestData) -> RequestResult {
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    let update_topic = topic::UpdateTopic {
+    let update_mandela = mandela::UpdateMandela {
         title: req.title,
         description: req.description,
-        images: Some(req.images),
-        videos: Some(req.videos),
-        links: Some(req.links),
+        images: req.images,
+        videos: req.videos,
+        links: req.links,
         user_id: req.user_id,
     };
 
-    diesel::update(topics.filter(topics::id.eq(req.id)))
-        .set(&update_topic)
+    diesel::update(mandels.filter(mandels::id.eq(req.id)))
+        .set(&update_mandela)
         .execute(&data.db.conn)?;
 
     Ok(None)
 }
 
-// topic.getOne
+// mandela.getOne
 pub fn get_one(data: RequestData) -> RequestResult {
-    use crate::model::schema::topics::dsl::*;
+    use crate::model::schema::mandels::dsl::*;
 
-    let topic_id = data.params.unwrap()["id"].as_i64().unwrap() as i32;
-    let record = topics
-        .filter(id.eq(topic_id))
+    let mandela_id = data.params.unwrap()["id"].as_i64().unwrap() as i32;
+    let record = mandels
+        .filter(id.eq(mandela_id))
         .limit(1)
-        .load::<topic::Topic>(&data.db.conn)?;
+        .load::<mandela::Mandela>(&data.db.conn)?;
 
     let result = serde_json::to_value(&record)?;
     Ok(Some(result))
 }
 
-// topic.getAll
+// mandela.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
-    use crate::model::schema::topics;
-    use crate::model::schema::topics::dsl::*;
+    use crate::model::schema::mandels;
+    use crate::model::schema::mandels::dsl::*;
     use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
 
@@ -104,7 +104,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
     #[derive(Queryable, Serialize)]
-    struct TopicResp {
+    struct MandelaResp {
         id: i32,
         title: String,
         #[serde(with = "date_serializer")]
@@ -113,34 +113,40 @@ pub fn get_all(data: RequestData) -> RequestResult {
         user_id: i32,
     }
 
-    let list = topics
+    let list = mandels
         .inner_join(users)
-        .select((topics::id, title, topics::create_ts, users::name, users::id))
-        .order(topics::id.desc())
+        .select((
+            mandels::id,
+            title,
+            mandels::create_ts,
+            users::name,
+            users::id,
+        ))
+        .order(mandels::id.desc())
         .offset(req.offset)
         .limit(req.limit)
-        .load::<TopicResp>(&data.db.conn)?;
+        .load::<MandelaResp>(&data.db.conn)?;
 
-    let total_count: i64 = topics
+    let total_count: i64 = mandels
         .select(diesel::dsl::count_star())
         .first(&data.db.conn)?;
 
     #[derive(Serialize)]
     struct Resp {
         total_count: i64,
-        topics: Vec<TopicResp>,
+        mandels: Vec<MandelaResp>,
     };
 
     let resp = serde_json::to_value(&Resp {
         total_count: total_count,
-        topics: list,
+        mandels: list,
     })?;
 
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
 }
 
-// topic.delete
+// mandela.delete
 pub fn delete(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
@@ -149,8 +155,8 @@ pub fn delete(data: RequestData) -> RequestResult {
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    use crate::model::schema::topics::dsl::*;
+    use crate::model::schema::mandels::dsl::*;
 
-    diesel::delete(topics.filter(id.eq_any(req.id))).execute(&data.db.conn)?;
+    diesel::delete(mandels.filter(id.eq_any(req.id))).execute(&data.db.conn)?;
     Ok(None)
 }

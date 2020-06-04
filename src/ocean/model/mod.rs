@@ -1,7 +1,7 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 
+pub mod mandela;
 pub mod schema;
-pub mod topic;
 pub mod user;
 pub mod user_group;
 

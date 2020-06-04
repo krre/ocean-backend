@@ -1,1 +1,0 @@
-ALTER TABLE topics ADD COLUMN IF NOT EXISTS videos JSONB DEFAULT '[]'::jsonb;

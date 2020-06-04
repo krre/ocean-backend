@@ -1,14 +1,14 @@
 table! {
-    topics (id) {
+    mandels (id) {
         id -> Int4,
         title -> Text,
         description -> Text,
+        user_id -> Int4,
+        images -> Jsonb,
+        videos -> Jsonb,
+        links -> Jsonb,
         create_ts -> Timestamptz,
         update_ts -> Timestamptz,
-        user_id -> Int4,
-        links -> Nullable<Jsonb>,
-        videos -> Nullable<Jsonb>,
-        images -> Nullable<Jsonb>,
     }
 }
 
@@ -25,17 +25,17 @@ table! {
         id -> Int4,
         name -> Nullable<Text>,
         token -> Text,
+        group_id -> Int4,
         create_ts -> Timestamptz,
         update_ts -> Timestamptz,
-        group_id -> Int4,
     }
 }
 
-joinable!(topics -> users (user_id));
+joinable!(mandels -> users (user_id));
 joinable!(users -> user_groups (group_id));
 
 allow_tables_to_appear_in_same_query!(
-    topics,
+    mandels,
     user_groups,
     users,
 );
