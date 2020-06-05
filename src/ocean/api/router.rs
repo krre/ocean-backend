@@ -44,6 +44,10 @@ lazy_static! {
             "comment.create".to_string(),
             Rh(controller::comment::create),
         );
+        m.insert(
+            "comment.getAll".to_string(),
+            Rh(controller::comment::get_all),
+        );
         m
     };
 }
