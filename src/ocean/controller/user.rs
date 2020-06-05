@@ -8,30 +8,37 @@ use serde_json::json;
 
 // user.create
 pub fn create(data: RequestData) -> RequestResult {
+    use crate::model::schema::user_groups::dsl::*;
+    use crate::model::schema::users;
+    use crate::model::schema::users::dsl::*;
     #[derive(Deserialize)]
     struct Req {
         name: Option<String>,
         password: String,
+        code: String,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    use crate::model::schema::users::dsl::*;
+    let groups = user_groups
+        .filter(code.eq(req.code))
+        .limit(1)
+        .load::<user_group::UserGroup>(&data.db.conn)?;
 
     let new_user = user::NewUser {
         name: req.name,
         token: "dummy".to_string(),
-        group_id: 2,
+        group_id: groups[0].id,
     };
 
     let user_id = diesel::insert_into(users)
         .values(&new_user)
-        .returning(id)
+        .returning(users::id)
         .get_result::<i32>(&data.db.conn)?;
 
     let user_token = &sha1_token(user_id, req.password);
 
-    diesel::update(users.filter(id.eq(user_id)))
+    diesel::update(users.filter(users::id.eq(user_id)))
         .set(token.eq(user_token))
         .execute(&data.db.conn)?;
 
