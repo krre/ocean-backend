@@ -1,5 +1,6 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 
+pub mod comment;
 pub mod mandela;
 pub mod schema;
 pub mod user;

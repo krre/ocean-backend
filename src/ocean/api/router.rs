@@ -40,6 +40,10 @@ lazy_static! {
             "user.changePassword".to_string(),
             Rh(controller::user::change_password),
         );
+        m.insert(
+            "comment.create".to_string(),
+            Rh(controller::comment::create),
+        );
         m
     };
 }

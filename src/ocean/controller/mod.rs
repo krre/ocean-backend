@@ -1,6 +1,7 @@
 use crate::db;
 use std::error::Error;
 
+pub mod comment;
 pub mod mandela;
 pub mod user;
 
