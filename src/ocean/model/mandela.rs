@@ -20,9 +20,9 @@ pub struct Mandela {
 
 #[derive(Insertable)]
 #[table_name = "mandels"]
-pub struct NewMandela<'a> {
-    pub title: &'a str,
-    pub description: &'a str,
+pub struct NewMandela {
+    pub title: String,
+    pub description: String,
     pub user_id: i32,
     pub images: serde_json::Value,
     pub videos: serde_json::Value,

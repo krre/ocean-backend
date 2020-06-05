@@ -24,8 +24,8 @@ pub fn create(data: RequestData) -> RequestResult {
     use crate::model::schema::mandels::dsl::*;
 
     let new_mandela = mandela::NewMandela {
-        title: &req.title,
-        description: &req.description,
+        title: req.title,
+        description: req.description,
         images: req.images,
         videos: req.videos,
         links: req.links,
