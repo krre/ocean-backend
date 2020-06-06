@@ -90,10 +90,12 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
 // mandela.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
+    use crate::model::schema::comments::dsl::*;
     use crate::model::schema::mandels;
     use crate::model::schema::mandels::dsl::*;
     use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
+    use diesel::dsl::*;
 
     #[derive(Deserialize)]
     struct Req {
@@ -109,11 +111,12 @@ pub fn get_all(data: RequestData) -> RequestResult {
         title: String,
         #[serde(with = "date_serializer")]
         create_ts: NaiveDateTime,
-        name: Option<String>,
+        user_name: Option<String>,
         user_id: i32,
+        comment_count: i32,
     }
 
-    let list = mandels
+    let mut list = mandels
         .inner_join(users)
         .select((
             mandels::id,
@@ -121,15 +124,22 @@ pub fn get_all(data: RequestData) -> RequestResult {
             mandels::create_ts,
             users::name,
             users::id,
+            mandels::id, // Hack to fill by anything the last value
         ))
         .order(mandels::id.desc())
         .offset(req.offset)
         .limit(req.limit)
         .load::<MandelaResp>(&data.db.conn)?;
 
-    let total_count: i64 = mandels
-        .select(diesel::dsl::count_star())
-        .first(&data.db.conn)?;
+    for elem in &mut list {
+        let comment_count: i64 = comments
+            .filter(mandela_id.eq(elem.id))
+            .select(count_star())
+            .first(&data.db.conn)?;
+        elem.comment_count = comment_count as i32;
+    }
+
+    let total_count: i64 = mandels.select(count_star()).first(&data.db.conn)?;
 
     #[derive(Serialize)]
     struct Resp {
