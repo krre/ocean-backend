@@ -68,3 +68,22 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
 }
+
+// comment.update
+pub fn update(data: RequestData) -> RequestResult {
+    use crate::model::schema::comments::dsl::*;
+
+    #[derive(Deserialize)]
+    struct Req {
+        id: i32,
+        message: String,
+    }
+
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+
+    diesel::update(comments.filter(id.eq(req.id)))
+        .set(message.eq(req.message))
+        .execute(&data.db.conn)?;
+
+    Ok(None)
+}

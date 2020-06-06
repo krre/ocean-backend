@@ -48,6 +48,10 @@ lazy_static! {
             "comment.getAll".to_string(),
             Rh(controller::comment::get_all),
         );
+        m.insert(
+            "comment.update".to_string(),
+            Rh(controller::comment::update),
+        );
         m
     };
 }
