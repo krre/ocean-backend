@@ -52,6 +52,10 @@ lazy_static! {
             "comment.update".to_string(),
             Rh(controller::comment::update),
         );
+        m.insert(
+            "comment.delete".to_string(),
+            Rh(controller::comment::delete),
+        );
         m
     };
 }

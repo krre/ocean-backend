@@ -87,3 +87,12 @@ pub fn update(data: RequestData) -> RequestResult {
 
     Ok(None)
 }
+
+// comment.delete
+pub fn delete(data: RequestData) -> RequestResult {
+    use crate::model::schema::comments::dsl::*;
+    let comment_id = data.params.unwrap()["id"].as_i64().unwrap() as i32;
+
+    diesel::delete(comments.filter(id.eq(comment_id))).execute(&data.db.conn)?;
+    Ok(None)
+}
