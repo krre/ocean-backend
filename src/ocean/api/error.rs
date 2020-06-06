@@ -25,7 +25,7 @@ lazy_static! {
         m.insert(INTERNAL_SERVER_ERROR, "Internal server error");
         m.insert(INVALID_PARAMETER, "Invalid parameter");
 
-        m.insert(WRONG_USER_PASSWORD, "Wrong user password`");
+        m.insert(WRONG_USER_PASSWORD, "Wrong user password");
         m
     };
 }
