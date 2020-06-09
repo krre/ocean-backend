@@ -11,7 +11,11 @@ use serde_json::json;
 pub fn create(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
+        title_mode: i32,
         title: String,
+        what: String,
+        before: String,
+        after: String,
         description: String,
         images: serde_json::Value,
         videos: serde_json::Value,
@@ -24,7 +28,11 @@ pub fn create(data: RequestData) -> RequestResult {
     use crate::model::schema::mandels::dsl::*;
 
     let new_mandela = mandela::NewMandela {
+        title_mode: req.title_mode,
         title: req.title,
+        what: req.what,
+        before: req.before,
+        after: req.after,
         description: req.description,
         images: req.images,
         videos: req.videos,
@@ -48,7 +56,11 @@ pub fn update(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         id: i32,
+        title_mode: i32,
         title: String,
+        what: String,
+        before: String,
+        after: String,
         description: String,
         images: serde_json::Value,
         videos: serde_json::Value,
@@ -59,7 +71,11 @@ pub fn update(data: RequestData) -> RequestResult {
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
     let update_mandela = mandela::UpdateMandela {
+        title_mode: req.title_mode,
         title: req.title,
+        what: req.what,
+        before: req.before,
+        after: req.after,
         description: req.description,
         images: req.images,
         videos: req.videos,
@@ -108,7 +124,11 @@ pub fn get_all(data: RequestData) -> RequestResult {
     #[derive(Queryable, Serialize)]
     struct MandelaResp {
         id: i32,
+        title_mode: i32,
         title: String,
+        what: String,
+        before: String,
+        after: String,
         #[serde(with = "date_serializer")]
         create_ts: NaiveDateTime,
         user_name: Option<String>,
@@ -120,7 +140,11 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .inner_join(users)
         .select((
             mandels::id,
+            title_mode,
             title,
+            what,
+            before,
+            after,
             mandels::create_ts,
             users::name,
             users::id,

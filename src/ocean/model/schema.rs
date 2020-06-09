@@ -20,6 +20,10 @@ table! {
         links -> Jsonb,
         create_ts -> Timestamptz,
         update_ts -> Timestamptz,
+        title_mode -> Int4,
+        what -> Text,
+        before -> Text,
+        after -> Text,
     }
 }
 
