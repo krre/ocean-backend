@@ -28,6 +28,16 @@ table! {
 }
 
 table! {
+    marks (id) {
+        id -> Int4,
+        mandela_id -> Int4,
+        user_id -> Int4,
+        method -> Int4,
+        create_ts -> Timestamptz,
+    }
+}
+
+table! {
     user_groups (id) {
         id -> Int4,
         name -> Nullable<Text>,
@@ -49,11 +59,14 @@ table! {
 joinable!(comments -> mandels (mandela_id));
 joinable!(comments -> users (user_id));
 joinable!(mandels -> users (user_id));
+joinable!(marks -> mandels (mandela_id));
+joinable!(marks -> users (user_id));
 joinable!(users -> user_groups (group_id));
 
 allow_tables_to_appear_in_same_query!(
     comments,
     mandels,
+    marks,
     user_groups,
     users,
 );
