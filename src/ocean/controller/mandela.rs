@@ -106,9 +106,12 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
 // mandela.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
+    use crate::model::schema::comments;
     use crate::model::schema::comments::dsl::*;
     use crate::model::schema::mandels;
     use crate::model::schema::mandels::dsl::*;
+    use crate::model::schema::marks;
+    use crate::model::schema::marks::dsl::*;
     use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
     use diesel::dsl::*;
@@ -134,10 +137,12 @@ pub fn get_all(data: RequestData) -> RequestResult {
         user_name: Option<String>,
         user_id: i32,
         comment_count: i32,
+        mark_id: Option<i32>,
     }
 
     let mut list = mandels
         .inner_join(users)
+        .left_join(marks)
         .select((
             mandels::id,
             title_mode,
@@ -149,6 +154,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
             users::name,
             users::id,
             mandels::id, // Hack to fill by anything the last value
+            marks::id.nullable(),
         ))
         .order(mandels::id.desc())
         .offset(req.offset)
@@ -157,7 +163,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     for elem in &mut list {
         let comment_count: i64 = comments
-            .filter(mandela_id.eq(elem.id))
+            .filter(comments::mandela_id.eq(elem.id))
             .select(count_star())
             .first(&data.db.conn)?;
         elem.comment_count = comment_count as i32;
