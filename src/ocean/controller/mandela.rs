@@ -92,13 +92,54 @@ pub fn update(data: RequestData) -> RequestResult {
 
 // mandela.getOne
 pub fn get_one(data: RequestData) -> RequestResult {
+    use crate::model::schema::mandels;
     use crate::model::schema::mandels::dsl::*;
+    use crate::model::schema::marks;
+    use crate::model::schema::marks::dsl::*;
 
-    let mandela_id = data.params.unwrap()["id"].as_i64().unwrap() as i32;
+    let md_id = data.params.unwrap()["id"].as_i64().unwrap() as i32;
+
+    #[derive(Queryable, Serialize)]
+    pub struct Mandela {
+        id: i32,
+        title: String,
+        title_mode: i32,
+        description: String,
+        user_id: i32,
+        images: serde_json::Value,
+        videos: serde_json::Value,
+        links: serde_json::Value,
+        #[serde(with = "date_serializer")]
+        create_ts: NaiveDateTime,
+        #[serde(with = "date_serializer")]
+        update_ts: NaiveDateTime,
+        what: String,
+        before: String,
+        after: String,
+        mark_id: Option<i32>,
+    }
+
     let record = mandels
-        .filter(id.eq(mandela_id))
+        .left_join(marks)
+        .select((
+            mandels::id,
+            title,
+            title_mode,
+            description,
+            mandels::user_id,
+            images,
+            videos,
+            links,
+            mandels::create_ts,
+            update_ts,
+            what,
+            before,
+            after,
+            marks::id.nullable(),
+        ))
+        .filter(mandels::id.eq(md_id))
         .limit(1)
-        .load::<mandela::Mandela>(&data.db.conn)?;
+        .load::<Mandela>(&data.db.conn)?;
 
     let result = serde_json::to_value(&record)?;
     Ok(Some(result))
