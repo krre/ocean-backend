@@ -32,7 +32,6 @@ table! {
         id -> Int4,
         mandela_id -> Int4,
         user_id -> Int4,
-        method -> Int4,
         create_ts -> Timestamptz,
     }
 }
