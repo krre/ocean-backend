@@ -158,6 +158,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     struct Req {
         offset: i64,
         limit: i64,
+        user_id: Option<i32>,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -177,9 +178,15 @@ pub fn get_all(data: RequestData) -> RequestResult {
         mark_ts: Option<NaiveDateTime>,
     }
 
+    let mark_user_id = if let Some(i) = req.user_id { i } else { 0 };
+
     let mut list = mandels
         .inner_join(users)
-        .left_join(marks)
+        .left_join(
+            marks.on(marks::user_id
+                .eq(mark_user_id)
+                .and(marks::mandela_id.eq(mandels::id))),
+        )
         .select((
             mandels::id,
             title_mode,
