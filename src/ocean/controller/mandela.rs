@@ -170,6 +170,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         offset: i64,
         limit: i64,
         user_id: Option<i32>,
+        filter: Option<i8>,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -190,8 +191,15 @@ pub fn get_all(data: RequestData) -> RequestResult {
     }
 
     let mark_user_id = if let Some(i) = req.user_id { i } else { 0 };
+    const SHOW_ALL: i8 = 0;
 
-    let mut list = mandels
+    let filter = if let Some(i) = req.filter {
+        i
+    } else {
+        SHOW_ALL
+    };
+
+    let query = mandels
         .inner_join(users)
         .left_join(
             marks.on(marks::user_id
@@ -210,11 +218,22 @@ pub fn get_all(data: RequestData) -> RequestResult {
             users::id,
             mandels::id, // Hack to fill by anything the last value
             marks::create_ts.nullable(),
-        ))
-        .order(mandels::id.desc())
-        .offset(req.offset)
-        .limit(req.limit)
-        .load::<MandelaResp>(&data.db.conn)?;
+        ));
+
+    let mut list = if filter == SHOW_ALL {
+        query
+            .order(mandels::id.desc())
+            .offset(req.offset)
+            .limit(req.limit)
+            .load::<MandelaResp>(&data.db.conn)?
+    } else {
+        query
+            .filter(marks::create_ts.is_null())
+            .order(mandels::id.desc())
+            .offset(req.offset)
+            .limit(req.limit)
+            .load::<MandelaResp>(&data.db.conn)?
+    };
 
     for elem in &mut list {
         let comment_count: i64 = comments
