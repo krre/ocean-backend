@@ -174,7 +174,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         user_name: Option<String>,
         user_id: i32,
         comment_count: i32,
-        mark_id: Option<i32>,
+        mark_ts: Option<NaiveDateTime>,
     }
 
     let mut list = mandels
@@ -191,7 +191,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
             users::name,
             users::id,
             mandels::id, // Hack to fill by anything the last value
-            marks::id.nullable(),
+            marks::create_ts.nullable(),
         ))
         .order(mandels::id.desc())
         .offset(req.offset)
@@ -235,5 +235,36 @@ pub fn delete(data: RequestData) -> RequestResult {
     use crate::model::schema::mandels::dsl::*;
 
     diesel::delete(mandels.filter(id.eq_any(req.id))).execute(&data.db.conn)?;
+    Ok(None)
+}
+
+// mandela.mark
+pub fn mark(data: RequestData) -> RequestResult {
+    #[derive(Deserialize)]
+    struct Req {
+        id: i32,
+        user_id: i32,
+    }
+
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+
+    use crate::model::schema::marks;
+    use crate::model::schema::marks::dsl::*;
+
+    #[derive(Insertable)]
+    #[table_name = "marks"]
+    pub struct NewMark {
+        mandela_id: i32,
+        user_id: i32,
+    };
+
+    let new_mark = NewMark {
+        mandela_id: req.id,
+        user_id: req.user_id,
+    };
+
+    diesel::insert_into(marks)
+        .values(&new_mark)
+        .execute(&data.db.conn)?;
     Ok(None)
 }
