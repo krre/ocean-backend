@@ -96,7 +96,14 @@ pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::marks;
     use crate::model::schema::marks::dsl::*;
 
-    let md_id = data.params.unwrap()["id"].as_i64().unwrap() as i32;
+    #[derive(Deserialize)]
+    struct Req {
+        id: i32,
+        user_id: Option<i32>,
+    }
+
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let mark_user_id = if let Some(i) = req.user_id { i } else { 0 };
 
     #[derive(Queryable, Serialize)]
     pub struct Mandela {
@@ -117,7 +124,11 @@ pub fn get_one(data: RequestData) -> RequestResult {
     }
 
     let record = mandels
-        .left_join(marks)
+        .left_join(
+            marks.on(marks::user_id
+                .eq(mark_user_id)
+                .and(marks::mandela_id.eq(mandels::id))),
+        )
         .select((
             mandels::id,
             title,
@@ -134,7 +145,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
             after,
             marks::create_ts.nullable(),
         ))
-        .filter(mandels::id.eq(md_id))
+        .filter(mandels::id.eq(req.id))
         .limit(1)
         .load::<Mandela>(&data.db.conn)?;
 
