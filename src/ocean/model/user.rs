@@ -1,4 +1,3 @@
-use crate::model::date_serializer;
 use crate::model::schema::users;
 use chrono::NaiveDateTime;
 use serde::Serialize;
@@ -9,9 +8,7 @@ pub struct User {
     pub name: Option<String>,
     pub token: String,
     pub group_id: i32,
-    #[serde(with = "date_serializer")]
     pub create_ts: NaiveDateTime,
-    #[serde(with = "date_serializer")]
     pub update_ts: NaiveDateTime,
 }
 

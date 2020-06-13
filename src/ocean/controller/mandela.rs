@@ -1,5 +1,4 @@
 use super::*;
-use crate::model::date_serializer;
 use crate::model::mandela;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -109,14 +108,12 @@ pub fn get_one(data: RequestData) -> RequestResult {
         images: serde_json::Value,
         videos: serde_json::Value,
         links: serde_json::Value,
-        #[serde(with = "date_serializer")]
         create_ts: NaiveDateTime,
-        #[serde(with = "date_serializer")]
         update_ts: NaiveDateTime,
         what: String,
         before: String,
         after: String,
-        mark_id: Option<i32>,
+        mark_ts: Option<NaiveDateTime>,
     }
 
     let record = mandels
@@ -135,7 +132,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
             what,
             before,
             after,
-            marks::id.nullable(),
+            marks::create_ts.nullable(),
         ))
         .filter(mandels::id.eq(md_id))
         .limit(1)
@@ -173,7 +170,6 @@ pub fn get_all(data: RequestData) -> RequestResult {
         what: String,
         before: String,
         after: String,
-        #[serde(with = "date_serializer")]
         create_ts: NaiveDateTime,
         user_name: Option<String>,
         user_id: i32,
