@@ -55,12 +55,24 @@ table! {
     }
 }
 
+table! {
+    votes (id) {
+        id -> Int4,
+        mandela_id -> Int4,
+        user_id -> Int4,
+        vote -> Int2,
+        create_ts -> Timestamptz,
+    }
+}
+
 joinable!(comments -> mandels (mandela_id));
 joinable!(comments -> users (user_id));
 joinable!(mandels -> users (user_id));
 joinable!(marks -> mandels (mandela_id));
 joinable!(marks -> users (user_id));
 joinable!(users -> user_groups (group_id));
+joinable!(votes -> mandels (mandela_id));
+joinable!(votes -> users (user_id));
 
 allow_tables_to_appear_in_same_query!(
     comments,
@@ -68,4 +80,5 @@ allow_tables_to_appear_in_same_query!(
     marks,
     user_groups,
     users,
+    votes,
 );
