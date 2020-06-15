@@ -33,6 +33,7 @@ lazy_static! {
             Rh(controller::mandela::delete),
         );
         m.insert("mandela.mark".to_string(), Rh(controller::mandela::mark));
+        m.insert("mandela.vote".to_string(), Rh(controller::mandela::vote));
         m.insert("user.create".to_string(), Rh(controller::user::create));
         m.insert("user.auth".to_string(), Rh(controller::user::auth));
         m.insert("user.getOne".to_string(), Rh(controller::user::get_one));

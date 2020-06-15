@@ -316,3 +316,37 @@ pub fn mark(data: RequestData) -> RequestResult {
         .execute(&data.db.conn)?;
     Ok(None)
 }
+
+// mandela.vote
+pub fn vote(data: RequestData) -> RequestResult {
+    #[derive(Deserialize)]
+    struct Req {
+        id: i32,
+        user_id: i32,
+        vote: i16,
+    }
+
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+
+    use crate::model::schema::votes;
+    use crate::model::schema::votes::dsl::*;
+
+    #[derive(Insertable)]
+    #[table_name = "votes"]
+    pub struct NewVote {
+        mandela_id: i32,
+        user_id: i32,
+        vote: i16,
+    };
+
+    let new_vote = NewVote {
+        mandela_id: req.id,
+        user_id: req.user_id,
+        vote: req.vote,
+    };
+
+    diesel::insert_into(votes)
+        .values(&new_vote)
+        .execute(&data.db.conn)?;
+    Ok(None)
+}
