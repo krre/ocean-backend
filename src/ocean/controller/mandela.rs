@@ -148,36 +148,56 @@ pub fn get_one(data: RequestData) -> RequestResult {
         .filter(mandels::id.eq(req.id))
         .first::<Mandela>(&data.db.conn)?;
 
+    use crate::model::schema::votes;
+    use crate::model::schema::votes::dsl::*;
     use diesel::dsl::*;
     use diesel::sql_types::Int2;
     use diesel::sql_types::Int4;
     use diesel::sql_types::Int8;
     #[derive(QueryableByName, Serialize)]
-    struct VoteCount {
+    struct Votes {
         #[sql_type = "Int2"]
         vote: i16,
         #[sql_type = "Int8"]
         count: i64,
     }
 
-    let vote_counts = sql_query(
-        "SELECT vote, COUNT (*) as count FROM votes AS v
-        JOIN mandels AS m ON m.id = v.mandela_id
-        WHERE m.id = $1
-        GROUP BY vote",
-    )
-    .bind::<Int4, _>(req.id)
-    .load::<VoteCount>(&data.db.conn)?;
+    let mandela_votes: Option<Vec<Votes>> = if let Some(i) = req.user_id {
+        let vote_exist = select(exists(
+            votes.filter(votes::mandela_id.eq(req.id).and(votes::user_id.eq(i))),
+        ))
+        .get_result::<bool>(&data.db.conn)
+        .unwrap();
+
+        let v: Option<Vec<Votes>> = if vote_exist {
+            let votes_count = sql_query(
+                "SELECT vote, COUNT (*) as count FROM votes AS v
+            JOIN mandels AS m ON m.id = v.mandela_id
+            WHERE m.id = $1
+            GROUP BY vote",
+            )
+            .bind::<Int4, _>(req.id)
+            .load::<Votes>(&data.db.conn)
+            .unwrap();
+            Some(votes_count)
+        } else {
+            None
+        };
+
+        v
+    } else {
+        None
+    };
 
     #[derive(Serialize)]
     struct MandelaResp {
         mandela: Mandela,
-        votes: Vec<VoteCount>,
+        votes: Option<Vec<Votes>>,
     }
 
     let resp = MandelaResp {
         mandela: mandela_record,
-        votes: vote_counts,
+        votes: mandela_votes,
     };
 
     let result = serde_json::to_value(&resp)?;
