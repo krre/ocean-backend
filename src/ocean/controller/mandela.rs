@@ -123,7 +123,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         mark_ts: Option<NaiveDateTime>,
     }
 
-    let record = mandels
+    let mandela_record = mandels
         .left_join(
             marks.on(marks::user_id
                 .eq(mark_user_id)
@@ -146,10 +146,41 @@ pub fn get_one(data: RequestData) -> RequestResult {
             marks::create_ts.nullable(),
         ))
         .filter(mandels::id.eq(req.id))
-        .limit(1)
-        .load::<Mandela>(&data.db.conn)?;
+        .first::<Mandela>(&data.db.conn)?;
 
-    let result = serde_json::to_value(&record)?;
+    use diesel::dsl::*;
+    use diesel::sql_types::Int2;
+    use diesel::sql_types::Int4;
+    use diesel::sql_types::Int8;
+    #[derive(QueryableByName, Serialize)]
+    struct VoteCount {
+        #[sql_type = "Int2"]
+        vote: i16,
+        #[sql_type = "Int8"]
+        count: i64,
+    }
+
+    let vote_counts = sql_query(
+        "SELECT vote, COUNT (*) as count FROM votes AS v
+        JOIN mandels AS m ON m.id = v.mandela_id
+        WHERE m.id = $1
+        GROUP BY vote",
+    )
+    .bind::<Int4, _>(req.id)
+    .load::<VoteCount>(&data.db.conn)?;
+
+    #[derive(Serialize)]
+    struct MandelaResp {
+        mandela: Mandela,
+        votes: Vec<VoteCount>,
+    }
+
+    let resp = MandelaResp {
+        mandela: mandela_record,
+        votes: vote_counts,
+    };
+
+    let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
 }
 
