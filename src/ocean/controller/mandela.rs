@@ -2,9 +2,19 @@ use super::*;
 use crate::model::mandela;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel::sql_types::Int2;
+use diesel::sql_types::Int8;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;
+
+#[derive(QueryableByName, Serialize)]
+struct Votes {
+    #[sql_type = "Int2"]
+    vote: i16,
+    #[sql_type = "Int8"]
+    count: i64,
+}
 
 // mandela.create
 pub fn create(data: RequestData) -> RequestResult {
@@ -89,6 +99,21 @@ pub fn update(data: RequestData) -> RequestResult {
     Ok(None)
 }
 
+fn get_poll(db: &db::Db, mandela_id: i32) -> Vec<Votes> {
+    use diesel::dsl::*;
+    use diesel::sql_types::Int4;
+
+    sql_query(
+        "SELECT vote, COUNT (*) as count FROM votes AS v
+    JOIN mandels AS m ON m.id = v.mandela_id
+    WHERE m.id = $1
+    GROUP BY vote",
+    )
+    .bind::<Int4, _>(mandela_id)
+    .load::<Votes>(&db.conn)
+    .unwrap()
+}
+
 // mandela.getOne
 pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::mandels;
@@ -151,16 +176,6 @@ pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::votes;
     use crate::model::schema::votes::dsl::*;
     use diesel::dsl::*;
-    use diesel::sql_types::Int2;
-    use diesel::sql_types::Int4;
-    use diesel::sql_types::Int8;
-    #[derive(QueryableByName, Serialize)]
-    struct Votes {
-        #[sql_type = "Int2"]
-        vote: i16,
-        #[sql_type = "Int8"]
-        count: i64,
-    }
 
     let mandela_votes: Option<Vec<Votes>> = if let Some(i) = req.user_id {
         let vote_exist = select(exists(
@@ -170,15 +185,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         .unwrap();
 
         let v: Option<Vec<Votes>> = if vote_exist {
-            let votes_count = sql_query(
-                "SELECT vote, COUNT (*) as count FROM votes AS v
-            JOIN mandels AS m ON m.id = v.mandela_id
-            WHERE m.id = $1
-            GROUP BY vote",
-            )
-            .bind::<Int4, _>(req.id)
-            .load::<Votes>(&data.db.conn)
-            .unwrap();
+            let votes_count = get_poll(&data.db, req.id);
             Some(votes_count)
         } else {
             None
@@ -399,5 +406,8 @@ pub fn vote(data: RequestData) -> RequestResult {
     diesel::insert_into(votes)
         .values(&new_vote)
         .execute(&data.db.conn)?;
-    Ok(None)
+
+    let votes_count = get_poll(&data.db, req.id);
+    let result = serde_json::to_value(&votes_count)?;
+    Ok(Some(result))
 }
