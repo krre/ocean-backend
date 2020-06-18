@@ -248,8 +248,10 @@ pub fn get_all(data: RequestData) -> RequestResult {
         mark_ts: Option<NaiveDateTime>,
     }
 
-    let mark_user_id = if let Some(i) = req.user_id { i } else { 0 };
+    let req_user_id = if let Some(i) = req.user_id { i } else { 0 };
     const SHOW_ALL: i8 = 0;
+    const SHOW_NEW: i8 = 1;
+    const SHOW_MINE: i8 = 2;
 
     let filter = if let Some(i) = req.filter {
         i
@@ -261,7 +263,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .inner_join(users)
         .left_join(
             marks.on(marks::user_id
-                .eq(mark_user_id)
+                .eq(req_user_id)
                 .and(marks::mandela_id.eq(mandels::id))),
         )
         .select((
@@ -284,13 +286,22 @@ pub fn get_all(data: RequestData) -> RequestResult {
             .offset(req.offset)
             .limit(req.limit)
             .load::<MandelaResp>(&data.db.conn)?
-    } else {
+    } else if filter == SHOW_NEW {
         query
             .filter(marks::create_ts.is_null())
             .order(mandels::id.desc())
             .offset(req.offset)
             .limit(req.limit)
             .load::<MandelaResp>(&data.db.conn)?
+    } else if filter == SHOW_MINE {
+        query
+            .filter(mandels::user_id.eq(req_user_id))
+            .order(mandels::id.desc())
+            .offset(req.offset)
+            .limit(req.limit)
+            .load::<MandelaResp>(&data.db.conn)?
+    } else {
+        panic!("Unknown query filter");
     };
 
     for elem in &mut list {
