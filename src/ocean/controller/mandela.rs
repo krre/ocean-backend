@@ -313,26 +313,33 @@ pub fn get_all(data: RequestData) -> RequestResult {
     }
 
     let total_count: i64 = mandels.select(count_star()).first(&data.db.conn)?;
-    let new_count = if let Some(i) = req.user_id {
+    let mut new_count = 0;
+    let mut mine_count = 0;
+
+    if let Some(i) = req.user_id {
         let mark_count: i64 = marks
             .select(count_star())
             .filter(marks::user_id.eq(i))
             .first(&data.db.conn)?;
-        total_count - mark_count
-    } else {
-        0
-    };
+        new_count = total_count - mark_count;
+        mine_count = mandels
+            .select(count_star())
+            .filter(mandels::user_id.eq(i))
+            .first(&data.db.conn)?;
+    }
 
     #[derive(Serialize)]
     struct Resp {
         total_count: i64,
         new_count: i64,
+        mine_count: i64,
         mandels: Vec<MandelaResp>,
     };
 
     let resp = serde_json::to_value(&Resp {
         total_count: total_count,
         new_count: new_count,
+        mine_count: mine_count,
         mandels: list,
     })?;
 
