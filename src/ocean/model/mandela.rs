@@ -1,4 +1,5 @@
 use crate::model::schema::mandels;
+use chrono::NaiveDateTime;
 
 #[derive(Insertable)]
 #[table_name = "mandels"]
@@ -28,4 +29,5 @@ pub struct UpdateMandela {
     pub videos: serde_json::Value,
     pub links: serde_json::Value,
     pub user_id: i32,
+    pub update_ts: NaiveDateTime,
 }

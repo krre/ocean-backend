@@ -1,5 +1,6 @@
 use super::*;
 use crate::model::mandela;
+use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel::sql_types::Int2;
@@ -90,6 +91,7 @@ pub fn update(data: RequestData) -> RequestResult {
         videos: req.videos,
         links: req.links,
         user_id: req.user_id,
+        update_ts: Utc::now().naive_utc(),
     };
 
     diesel::update(mandels.filter(mandels::id.eq(req.id)))
