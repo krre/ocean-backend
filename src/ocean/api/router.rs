@@ -62,6 +62,10 @@ lazy_static! {
             "search.getById".to_string(),
             Rh(controller::search::get_by_id),
         );
+        m.insert(
+            "search.getByContent".to_string(),
+            Rh(controller::search::get_by_content),
+        );
         m
     };
 }
