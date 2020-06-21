@@ -120,6 +120,8 @@ pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::mandels::dsl::*;
     use crate::model::schema::marks;
     use crate::model::schema::marks::dsl::*;
+    use crate::model::schema::users;
+    use crate::model::schema::users::dsl::*;
 
     #[derive(Deserialize)]
     struct Req {
@@ -137,6 +139,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         title_mode: i32,
         description: String,
         user_id: i32,
+        user_name: Option<String>,
         images: serde_json::Value,
         videos: serde_json::Value,
         links: serde_json::Value,
@@ -149,6 +152,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     }
 
     let mandela_record = mandels
+        .inner_join(users)
         .left_join(
             marks.on(marks::user_id
                 .eq(mark_user_id)
@@ -160,11 +164,12 @@ pub fn get_one(data: RequestData) -> RequestResult {
             title_mode,
             description,
             mandels::user_id,
+            users::name,
             images,
             videos,
             links,
             mandels::create_ts,
-            update_ts,
+            mandels::update_ts,
             what,
             before,
             after,
