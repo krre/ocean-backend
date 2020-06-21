@@ -1,5 +1,7 @@
 use super::*;
 use crate::model::comment;
+use chrono::prelude::*;
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
@@ -71,6 +73,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
 // comment.update
 pub fn update(data: RequestData) -> RequestResult {
+    use crate::model::schema::comments;
     use crate::model::schema::comments::dsl::*;
 
     #[derive(Deserialize)]
@@ -81,8 +84,20 @@ pub fn update(data: RequestData) -> RequestResult {
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
+    #[derive(AsChangeset)]
+    #[table_name = "comments"]
+    pub struct UpdateComment {
+        pub message: String,
+        pub update_ts: NaiveDateTime,
+    }
+
+    let update_comment = UpdateComment {
+        message: req.message,
+        update_ts: Utc::now().naive_utc(),
+    };
+
     diesel::update(comments.filter(id.eq(req.id)))
-        .set(message.eq(req.message))
+        .set(&update_comment)
         .execute(&data.db.conn)?;
 
     Ok(None)
