@@ -2,6 +2,8 @@ use super::*;
 use crate::api;
 use crate::model::user;
 use crate::model::user_group;
+use chrono::prelude::*;
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::Deserialize;
 use serde_json::json;
@@ -145,11 +147,13 @@ pub fn update(data: RequestData) -> RequestResult {
     pub struct UpdateUser {
         pub name: String,
         pub group_id: i32,
+        pub update_ts: NaiveDateTime,
     }
 
     let update_user = UpdateUser {
         name: req.name,
         group_id: groups[0].id,
+        update_ts: Utc::now().naive_utc(),
     };
 
     diesel::update(users.filter(users::id.eq(req.id)))
