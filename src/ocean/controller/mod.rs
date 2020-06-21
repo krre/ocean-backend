@@ -3,6 +3,7 @@ use std::error::Error;
 
 pub mod comment;
 pub mod mandela;
+pub mod search;
 pub mod user;
 
 pub type RequestResult = Result<Option<serde_json::Value>, Box<dyn Error>>;

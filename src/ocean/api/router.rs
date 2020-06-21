@@ -58,6 +58,10 @@ lazy_static! {
             "comment.delete".to_string(),
             Rh(controller::comment::delete),
         );
+        m.insert(
+            "search.getById".to_string(),
+            Rh(controller::search::get_by_id),
+        );
         m
     };
 }
