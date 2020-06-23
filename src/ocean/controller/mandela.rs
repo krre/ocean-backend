@@ -226,15 +226,25 @@ pub fn get_one(data: RequestData) -> RequestResult {
         None
     };
 
+    use crate::model::schema::categories;
+    use crate::model::schema::categories::dsl::*;
+
+    let category_numbers = categories
+        .select(categories::number)
+        .filter(categories::mandela_id.eq(req.id))
+        .load(&data.db.conn)?;
+
     #[derive(Serialize)]
     struct MandelaResp {
         mandela: Mandela,
         votes: Option<Vec<Votes>>,
+        categories: Vec<i16>,
     }
 
     let resp = MandelaResp {
         mandela: mandela_record,
         votes: mandela_votes,
+        categories: category_numbers,
     };
 
     let result = serde_json::to_value(&resp)?;
