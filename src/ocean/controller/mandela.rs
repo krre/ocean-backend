@@ -17,6 +17,60 @@ struct Votes {
     count: i64,
 }
 
+fn update_categories(
+    conn: &PgConnection,
+    mandela_id: i32,
+    category_numbers: Vec<i16>,
+) -> RequestResult {
+    use crate::model::schema::categories;
+
+    #[derive(Queryable, Serialize, Debug)]
+    pub struct CategoryNumber {
+        id: i32,
+        number: i16,
+    }
+
+    let current_numbers = categories::table
+        .select((categories::id, categories::number))
+        .filter(categories::mandela_id.eq(mandela_id))
+        .load::<CategoryNumber>(conn)?;
+
+    let mut insert_numbers = category_numbers.clone();
+
+    for category in current_numbers.iter() {
+        if !category_numbers.contains(&category.number) {
+            diesel::delete(categories::table.filter(categories::id.eq(category.id)))
+                .execute(conn)?;
+        } else {
+            let index = insert_numbers
+                .iter()
+                .position(|&r| r == category.number)
+                .unwrap();
+            insert_numbers.remove(index);
+        }
+    }
+
+    #[derive(Insertable, Deserialize)]
+    #[table_name = "categories"]
+    pub struct NewCategoryNumber {
+        mandela_id: i32,
+        number: i16,
+    }
+
+    for number in insert_numbers.into_iter() {
+        let new_category_number = NewCategoryNumber {
+            mandela_id: mandela_id,
+            number: number,
+        };
+
+        diesel::insert_into(categories::table)
+            .values(&new_category_number)
+            .execute(conn)?;
+    }
+
+    Ok(None)
+}
+
 // mandela.create
 pub fn create(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
@@ -55,27 +109,8 @@ pub fn create(data: RequestData) -> RequestResult {
         .returning(id)
         .get_result::<i32>(&data.db.conn)?;
 
-    use crate::model::schema::categories;
-
     let category_numbers: Vec<i16> = serde_json::from_value(req.categories).unwrap();
-
-    #[derive(Insertable, Deserialize)]
-    #[table_name = "categories"]
-    pub struct NewCategoryNumber {
-        mandela_id: i32,
-        number: i16,
-    }
-
-    for number in category_numbers.into_iter() {
-        let new_category_number = NewCategoryNumber {
-            mandela_id: mandela_id,
-            number: number,
-        };
-
-        diesel::insert_into(categories::table)
-            .values(&new_category_number)
-            .execute(&data.db.conn)?;
-    }
+    update_categories(&data.db.conn, mandela_id, category_numbers)?;
 
     let result = json!({ "id": mandela_id });
 
@@ -98,6 +133,7 @@ pub fn update(data: RequestData) -> RequestResult {
         images: serde_json::Value,
         videos: serde_json::Value,
         links: serde_json::Value,
+        categories: serde_json::Value,
         user_id: i32,
     }
 
@@ -120,6 +156,9 @@ pub fn update(data: RequestData) -> RequestResult {
     diesel::update(mandels.filter(mandels::id.eq(req.id)))
         .set(&update_mandela)
         .execute(&data.db.conn)?;
+
+    let category_numbers: Vec<i16> = serde_json::from_value(req.categories).unwrap();
+    update_categories(&data.db.conn, req.id, category_numbers)?;
 
     Ok(None)
 }
