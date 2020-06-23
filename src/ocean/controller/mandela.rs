@@ -30,6 +30,7 @@ pub fn create(data: RequestData) -> RequestResult {
         images: serde_json::Value,
         videos: serde_json::Value,
         links: serde_json::Value,
+        categories: serde_json::Value,
         user_id: i32,
     }
 
@@ -53,6 +54,28 @@ pub fn create(data: RequestData) -> RequestResult {
         .values(&new_mandela)
         .returning(id)
         .get_result::<i32>(&data.db.conn)?;
+
+    use crate::model::schema::categories;
+
+    let category_numbers: Vec<i16> = serde_json::from_value(req.categories).unwrap();
+
+    #[derive(Insertable, Deserialize)]
+    #[table_name = "categories"]
+    pub struct NewCategoryNumber {
+        mandela_id: i32,
+        number: i16,
+    }
+
+    for number in category_numbers.into_iter() {
+        let new_category_number = NewCategoryNumber {
+            mandela_id: mandela_id,
+            number: number,
+        };
+
+        diesel::insert_into(categories::table)
+            .values(&new_category_number)
+            .execute(&data.db.conn)?;
+    }
 
     let result = json!({ "id": mandela_id });
 
