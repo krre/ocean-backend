@@ -391,17 +391,27 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let total_count: i64 = mandels.select(count_star()).first(&data.db.conn)?;
     let mut new_count = 0;
     let mut mine_count = 0;
+    let mut category_count = 0;
 
     if let Some(i) = req.user_id {
-        let mark_count: i64 = marks
-            .select(count_star())
-            .filter(marks::user_id.eq(i))
-            .first(&data.db.conn)?;
-        new_count = total_count - mark_count;
-        mine_count = mandels
-            .select(count_star())
-            .filter(mandels::user_id.eq(i))
-            .first(&data.db.conn)?;
+        if filter == SHOW_NEW {
+            let mark_count: i64 = marks
+                .select(count_star())
+                .filter(marks::user_id.eq(i))
+                .first(&data.db.conn)?;
+            new_count = total_count - mark_count;
+        } else if filter == SHOW_MINE {
+            mine_count = mandels
+                .select(count_star())
+                .filter(mandels::user_id.eq(i))
+                .first(&data.db.conn)?;
+        } else if filter == SHOW_CATEGORY {
+            category_count = mandels
+                .select(count_star())
+                .inner_join(categories)
+                .filter(number.eq(req.category.unwrap()))
+                .first(&data.db.conn)?;
+        }
     }
 
     #[derive(Serialize)]
@@ -409,6 +419,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         total_count: i64,
         new_count: i64,
         mine_count: i64,
+        category_count: i64,
         mandels: Vec<MandelaResp>,
     };
 
@@ -416,6 +427,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         total_count: total_count,
         new_count: new_count,
         mine_count: mine_count,
+        category_count: category_count,
         mandels: list,
     })?;
 
