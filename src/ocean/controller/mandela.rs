@@ -308,9 +308,9 @@ pub fn get_all(data: RequestData) -> RequestResult {
     struct Req {
         offset: i64,
         limit: i64,
-        category: i16,
         user_id: Option<i32>,
         filter: Option<i8>,
+        category: Option<i16>,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -334,6 +334,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     const SHOW_ALL: i8 = 0;
     const SHOW_NEW: i8 = 1;
     const SHOW_MINE: i8 = 2;
+    const SHOW_CATEGORY: i8 = 3;
 
     let filter = if let Some(i) = req.filter {
         i
@@ -368,10 +369,8 @@ pub fn get_all(data: RequestData) -> RequestResult {
         query = query.filter(marks::create_ts.is_null())
     } else if filter == SHOW_MINE {
         query = query.filter(mandels::user_id.eq(req_user_id))
-    };
-
-    if req.category >= 0 {
-        query = query.filter(categories::number.eq(req.category));
+    } else if filter == SHOW_CATEGORY {
+        query = query.filter(categories::number.eq(req.category.unwrap()));
     }
 
     let mut list = query
