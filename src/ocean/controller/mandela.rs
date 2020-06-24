@@ -338,7 +338,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         SHOW_ALL
     };
 
-    let query = mandels
+    let mut query = mandels
         .inner_join(users)
         .left_join(
             marks.on(marks::user_id
@@ -353,35 +353,24 @@ pub fn get_all(data: RequestData) -> RequestResult {
             before,
             after,
             mandels::create_ts,
-            users::name,
+            users::name.nullable(),
             users::id,
             mandels::id, // Hack to fill by anything the last value
             marks::create_ts.nullable(),
-        ));
+        ))
+        .into_boxed();
 
-    let mut list = if filter == SHOW_ALL {
-        query
-            .order(mandels::id.desc())
-            .offset(req.offset)
-            .limit(req.limit)
-            .load::<MandelaResp>(&data.db.conn)?
-    } else if filter == SHOW_NEW {
-        query
-            .filter(marks::create_ts.is_null())
-            .order(mandels::id.desc())
-            .offset(req.offset)
-            .limit(req.limit)
-            .load::<MandelaResp>(&data.db.conn)?
+    if filter == SHOW_NEW {
+        query = query.filter(marks::create_ts.is_null())
     } else if filter == SHOW_MINE {
-        query
-            .filter(mandels::user_id.eq(req_user_id))
-            .order(mandels::id.desc())
-            .offset(req.offset)
-            .limit(req.limit)
-            .load::<MandelaResp>(&data.db.conn)?
-    } else {
-        panic!("Unknown query filter");
+        query = query.filter(mandels::user_id.eq(req_user_id))
     };
+
+    let mut list = query
+        .order(mandels::id.desc())
+        .offset(req.offset)
+        .limit(req.limit)
+        .load::<MandelaResp>(&data.db.conn)?;
 
     for elem in &mut list {
         let comment_count: i64 = comments
