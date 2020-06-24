@@ -292,6 +292,8 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
 // mandela.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
+    use crate::model::schema::categories;
+    use crate::model::schema::categories::dsl::*;
     use crate::model::schema::comments;
     use crate::model::schema::comments::dsl::*;
     use crate::model::schema::mandels;
@@ -306,6 +308,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     struct Req {
         offset: i64,
         limit: i64,
+        category: i16,
         user_id: Option<i32>,
         filter: Option<i8>,
     }
@@ -345,6 +348,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
                 .eq(req_user_id)
                 .and(marks::mandela_id.eq(mandels::id))),
         )
+        .left_join(categories.on(categories::mandela_id.eq(mandels::id)))
         .select((
             mandels::id,
             title_mode,
@@ -366,8 +370,13 @@ pub fn get_all(data: RequestData) -> RequestResult {
         query = query.filter(mandels::user_id.eq(req_user_id))
     };
 
+    if req.category >= 0 {
+        query = query.filter(categories::number.eq(req.category));
+    }
+
     let mut list = query
         .order(mandels::id.desc())
+        .group_by((mandels::id, users::name, users::id, marks::create_ts))
         .offset(req.offset)
         .limit(req.limit)
         .load::<MandelaResp>(&data.db.conn)?;
