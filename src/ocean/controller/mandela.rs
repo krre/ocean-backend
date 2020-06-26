@@ -311,6 +311,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         user_id: Option<i32>,
         filter: Option<i8>,
         category: Option<i16>,
+        sort: i8,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -350,6 +351,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
                 .and(marks::mandela_id.eq(mandels::id))),
         )
         .left_join(categories.on(categories::mandela_id.eq(mandels::id)))
+        .left_join(comments.on(comments::mandela_id.eq(mandels::id)))
         .select((
             mandels::id,
             title_mode,
@@ -373,9 +375,18 @@ pub fn get_all(data: RequestData) -> RequestResult {
         query = query.filter(categories::number.eq(req.category.unwrap()));
     }
 
+    query = query.group_by((mandels::id, users::name, users::id, marks::create_ts));
+
+    const SORT_MANDELA: i8 = 0;
+    const SORT_COMMENT: i8 = 1;
+
+    if req.sort == SORT_MANDELA {
+        query = query.order(mandels::id.desc());
+    } else if req.sort == SORT_COMMENT {
+        query = query.order(max(comments::create_ts).desc().nulls_last());
+    }
+
     let mut list = query
-        .order(mandels::id.desc())
-        .group_by((mandels::id, users::name, users::id, marks::create_ts))
         .offset(req.offset)
         .limit(req.limit)
         .load::<MandelaResp>(&data.db.conn)?;
