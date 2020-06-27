@@ -3,6 +3,7 @@ use std::error::Error;
 
 pub mod comment;
 pub mod mandela;
+pub mod rating;
 pub mod search;
 pub mod user;
 
