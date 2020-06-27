@@ -1,5 +1,4 @@
 use super::*;
-use diesel::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -12,41 +11,43 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    println!("{}", req.vote);
+    use diesel::prelude::*;
+    use diesel::sql_types::Int2;
+    use diesel::sql_types::Int4;
+    use diesel::sql_types::Int8;
+    use diesel::sql_types::Text;
 
-    #[derive(Queryable, Serialize)]
+    #[derive(QueryableByName, Serialize)]
     struct Mandela {
+        #[sql_type = "Int4"]
         id: i32,
+        #[sql_type = "Int4"]
         title_mode: i32,
+        #[sql_type = "Text"]
         title: String,
+        #[sql_type = "Text"]
         what: String,
+        #[sql_type = "Text"]
         before: String,
+        #[sql_type = "Text"]
         after: String,
-        // count: i64,
+        #[sql_type = "Int8"]
+        count: i64,
     }
 
-    use crate::model::schema::mandels;
-    use crate::model::schema::mandels::dsl::*;
-    use crate::model::schema::votes;
-    use crate::model::schema::votes::dsl::*;
     use diesel::dsl::*;
 
-    let list = mandels
-        .left_join(votes.on(votes::mandela_id.eq(mandels::id)))
-        .select((
-            mandels::id,
-            title_mode,
-            title,
-            what,
-            before,
-            after,
-            // count(vote),
-        ))
-        .filter(vote.eq(req.vote))
-        .order_by(count(vote).desc())
-        .group_by(mandels::id)
-        .limit(50)
-        .load::<Mandela>(&data.db.conn)?;
+    let list = sql_query(
+        "SELECT m.id, title_mode, title, what, before, after, count(*)
+        FROM mandels AS m
+        LEFT JOIN votes AS v on v.mandela_id = m.id
+        WHERE vote = $1
+        GROUP BY m.id
+        ORDER BY count DESC
+        LIMIT 50",
+    )
+    .bind::<Int2, _>(req.vote)
+    .load::<Mandela>(&data.db.conn)?;
 
     let result = serde_json::to_value(&list)?;
     Ok(Some(result))
