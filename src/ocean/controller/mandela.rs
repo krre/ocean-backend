@@ -405,13 +405,12 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let mut category_count = 0;
 
     if let Some(i) = req.user_id {
-        if filter == SHOW_NEW {
-            let mark_count: i64 = marks
-                .select(count_star())
-                .filter(marks::user_id.eq(i))
-                .first(&data.db.conn)?;
-            new_count = total_count - mark_count;
-        } else if filter == SHOW_MINE {
+        let mark_count: i64 = marks
+            .select(count_star())
+            .filter(marks::user_id.eq(i))
+            .first(&data.db.conn)?;
+        new_count = total_count - mark_count;
+        if filter == SHOW_MINE {
             mine_count = mandels
                 .select(count_star())
                 .filter(mandels::user_id.eq(i))
