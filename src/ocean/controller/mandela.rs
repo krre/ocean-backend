@@ -244,25 +244,21 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
     use crate::model::schema::votes;
     use crate::model::schema::votes::dsl::*;
-    use diesel::dsl::*;
 
-    let mandela_votes: Option<Vec<Votes>> = if let Some(i) = req.user_id {
-        let vote_exist = select(exists(
-            votes.filter(votes::mandela_id.eq(req.id).and(votes::user_id.eq(i))),
-        ))
-        .get_result::<bool>(&data.db.conn)
-        .unwrap();
+    let mut mandela_vote: Option<i16> = None;
+    let mut mandela_votes: Option<Vec<Votes>> = None;
 
-        let v: Option<Vec<Votes>> = if vote_exist {
+    if let Some(i) = req.user_id {
+        mandela_vote = votes
+            .select(votes::vote)
+            .filter(votes::mandela_id.eq(req.id).and(votes::user_id.eq(i)))
+            .get_result::<i16>(&data.db.conn)
+            .optional()?;
+
+        if let Some(_) = mandela_vote {
             let votes_count = get_poll(&data.db, req.id);
-            Some(votes_count)
-        } else {
-            None
-        };
-
-        v
-    } else {
-        None
+            mandela_votes = Some(votes_count);
+        }
     };
 
     use crate::model::schema::categories;
@@ -277,12 +273,14 @@ pub fn get_one(data: RequestData) -> RequestResult {
     struct MandelaResp {
         mandela: Mandela,
         votes: Option<Vec<Votes>>,
+        vote: Option<i16>,
         categories: Vec<i16>,
     }
 
     let resp = MandelaResp {
         mandela: mandela_record,
         votes: mandela_votes,
+        vote: mandela_vote,
         categories: category_numbers,
     };
 
