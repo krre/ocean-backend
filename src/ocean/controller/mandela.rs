@@ -500,10 +500,7 @@ pub fn vote(data: RequestData) -> RequestResult {
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    use crate::model::schema::votes;
-    use crate::model::schema::votes::dsl::*;
-
-    #[derive(Insertable)]
+    #[derive(Insertable, AsChangeset)]
     #[table_name = "votes"]
     pub struct NewVote {
         mandela_id: i32,
@@ -517,9 +514,24 @@ pub fn vote(data: RequestData) -> RequestResult {
         vote: req.vote,
     };
 
-    diesel::insert_into(votes)
-        .values(&new_vote)
-        .execute(&data.db.conn)?;
+    use crate::model::schema::votes;
+    use crate::model::schema::votes::dsl::*;
+
+    let vote_id = votes
+        .select(id)
+        .filter(mandela_id.eq(req.id).and(user_id.eq(req.user_id)))
+        .first::<i32>(&data.db.conn)
+        .optional()?;
+
+    if let Some(i) = vote_id {
+        diesel::update(votes.filter(votes::id.eq(i)))
+            .set(&new_vote)
+            .execute(&data.db.conn)?;
+    } else {
+        diesel::insert_into(votes)
+            .values(&new_vote)
+            .execute(&data.db.conn)?;
+    }
 
     let votes_count = get_poll(&data.db, req.id);
     let result = serde_json::to_value(&votes_count)?;
