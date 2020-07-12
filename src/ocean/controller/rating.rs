@@ -52,3 +52,33 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let result = serde_json::to_value(&list)?;
     Ok(Some(result))
 }
+
+// rating.getUsers
+pub fn get_users(data: RequestData) -> RequestResult {
+    use diesel::prelude::*;
+    use diesel::sql_types::Int8;
+    use diesel::sql_types::Text;
+
+    #[derive(QueryableByName, Serialize)]
+    struct User {
+        #[sql_type = "Text"]
+        name: String,
+        #[sql_type = "Int8"]
+        count: i64,
+    }
+
+    use diesel::dsl::*;
+
+    let list = sql_query(
+        "SELECT u.name, count(m.*)
+        FROM users AS u
+        INNER JOIN mandels as m on m.user_id = u.id
+        GROUP BY u.name
+        ORDER BY count DESC
+        LIMIT 50",
+    )
+    .load::<User>(&data.db.conn)?;
+
+    let result = serde_json::to_value(&list)?;
+    Ok(Some(result))
+}
