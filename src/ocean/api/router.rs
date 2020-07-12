@@ -66,7 +66,10 @@ lazy_static! {
             "search.getByContent".to_string(),
             Rh(controller::search::get_by_content),
         );
-        m.insert("rating.getAll".to_string(), Rh(controller::rating::get_all));
+        m.insert(
+            "rating.getMandels".to_string(),
+            Rh(controller::rating::get_mandels),
+        );
         m.insert(
             "rating.getUsers".to_string(),
             Rh(controller::rating::get_users),

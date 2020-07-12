@@ -2,8 +2,8 @@ use super::*;
 use serde::Deserialize;
 use serde::Serialize;
 
-// rating.getAll
-pub fn get_all(data: RequestData) -> RequestResult {
+// rating.getMandels
+pub fn get_mandels(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         vote: i16,
