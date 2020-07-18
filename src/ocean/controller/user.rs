@@ -16,7 +16,6 @@ pub fn create(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         name: Option<String>,
-        password: String,
         code: String,
     }
 
@@ -29,7 +28,6 @@ pub fn create(data: RequestData) -> RequestResult {
 
     let new_user = user::NewUser {
         name: req.name,
-        token: "dummy".to_string(),
         group_id: groups[0].id,
     };
 
@@ -38,15 +36,8 @@ pub fn create(data: RequestData) -> RequestResult {
         .returning(users::id)
         .get_result::<i32>(&data.db.conn)?;
 
-    let user_token = &sha1_token(user_id, req.password);
-
-    diesel::update(users.filter(users::id.eq(user_id)))
-        .set(token.eq(user_token))
-        .execute(&data.db.conn)?;
-
     let result = json!({
         "id": user_id,
-        "token": user_token
     });
 
     Ok(Some(result))
