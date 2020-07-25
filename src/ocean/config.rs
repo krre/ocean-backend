@@ -9,6 +9,7 @@ lazy_static! {
 pub struct Config {
     pub server: Server,
     pub postgres: Postgres,
+    pub telegram_bot: TelegramBot,
 }
 
 #[derive(Debug, Deserialize)]
@@ -23,6 +24,14 @@ pub struct Postgres {
     pub username: String,
     pub password: String,
     pub database: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct TelegramBot {
+    pub interval: i64,
+    pub token: String,
+    pub url: String,
+    pub enabled: bool,
 }
 
 impl Config {

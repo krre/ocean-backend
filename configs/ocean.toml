@@ -7,3 +7,9 @@ port = 5432
 username = "ocean"
 password = ""
 database = "ocean"
+
+[telegram_bot]
+interval = 600
+token = ""
+url = "https://api.telegram.org"
+enabled = true

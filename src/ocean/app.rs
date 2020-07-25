@@ -1,11 +1,15 @@
 use crate::api::server;
+use crate::telegram_bot::TelegramBot;
 
-#[derive(Default)]
-pub struct App;
+pub struct App {
+    _telegram_bot: TelegramBot,
+}
 
 impl App {
     pub fn new() -> Self {
-        App
+        let bot = TelegramBot::new();
+
+        App { _telegram_bot: bot }
     }
 
     pub async fn start(&self) {
