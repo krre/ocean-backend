@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS telegram_chats(
     id serial NOT NULL PRIMARY KEY,
-    chat_id int NOT NULL DEFAULT 0,
+    chat_id int UNIQUE NOT NULL,
     create_ts timestamptz NOT NULL DEFAULT now()
 );
 
