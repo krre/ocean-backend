@@ -45,6 +45,14 @@ table! {
 }
 
 table! {
+    telegram_chats (id) {
+        id -> Int4,
+        chat_id -> Int4,
+        create_ts -> Timestamptz,
+    }
+}
+
+table! {
     user_groups (id) {
         id -> Int4,
         name -> Nullable<Text>,
@@ -60,6 +68,14 @@ table! {
         group_id -> Int4,
         create_ts -> Timestamptz,
         update_ts -> Timestamptz,
+    }
+}
+
+table! {
+    values (id) {
+        id -> Int4,
+        name -> Text,
+        value -> Nullable<Jsonb>,
     }
 }
 
@@ -88,7 +104,9 @@ allow_tables_to_appear_in_same_query!(
     comments,
     mandels,
     marks,
+    telegram_chats,
     user_groups,
     users,
+    values,
     votes,
 );
