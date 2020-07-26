@@ -1,8 +1,11 @@
 use crate::config;
 use chrono;
+use log::{error, info};
 use reqwest;
 use std::collections::HashMap;
 use timer;
+
+pub mod api;
 
 pub struct TelegramBot {
     _guard: timer::Guard,
@@ -27,21 +30,38 @@ impl TelegramBot {
 }
 
 fn get_new_users() {
-    println!("tick!");
-    let res = make_request();
+    let res = send_request("getUpdates");
+
+    if res == serde_json::Value::Null {
+        return;
+    }
+
+    println!("{:?}", res);
 }
 
 #[tokio::main]
-async fn make_request() -> Result<(), Box<dyn std::error::Error>> {
-    let url = make_url("getUpdates");
-    println!("{}", url);
+async fn send_request(method: &str) -> serde_json::Value {
+    let url = make_url(method);
+    let res = send(url).await;
 
-    let resp = reqwest::get("https://httpbin.org/ip")
-        .await?
-        .json::<HashMap<String, String>>()
-        .await?;
-    println!("{:#?}", resp);
-    Ok(())
+    match res {
+        Ok(r) => return r,
+        Err(e) => {
+            error!("Telegram API request error: {:?}", e);
+            return serde_json::Value::Null;
+        }
+    }
+}
+
+async fn send(url: String) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    let resp = reqwest::get(&url).await?.json::<api::Response>().await?;
+
+    if !resp.ok {
+        error!("Telegram API response error: {}", resp.description.unwrap());
+        return Ok(serde_json::Value::Null);
+    }
+
+    Ok(resp.result.unwrap())
 }
 
 fn make_url(method: &str) -> String {
