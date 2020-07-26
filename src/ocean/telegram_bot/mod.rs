@@ -135,22 +135,35 @@ fn find_chat_id(user_chat_id: i32, db: &db::Db) -> bool {
     }
 }
 
-pub fn send_message(chat_id: i32, text: String) {
-    let params = api::SendMessageParams { chat_id, text };
+fn send_message(chat_id: i32, text: String) {
+    let params = api::SendMessageParams {
+        chat_id,
+        text,
+        parse_mode: Some("HTML".into()),
+    };
     send_request("sendMessage", serde_json::to_value(params).unwrap());
 }
 
 pub fn send_message_to_all(text: &String, db: &db::Db) {
     use crate::model::schema::telegram_chats::dsl::*;
 
+    if !config::CONFIG.telegram_bot.enabled {
+        return;
+    }
+
     let chat_ids = telegram_chats
         .select(chat_id)
         .load::<i32>(&db.conn)
         .unwrap();
 
-    for user_chat_id in chat_ids {
-        send_message(user_chat_id, text.clone());
-    }
+    let t = text.clone();
+
+    use std::thread;
+    thread::spawn(move || {
+        for user_chat_id in chat_ids {
+            send_message(user_chat_id, t.clone());
+        }
+    });
 }
 
 #[tokio::main]

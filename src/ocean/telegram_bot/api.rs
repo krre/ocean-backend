@@ -34,4 +34,5 @@ pub struct GetUpdatesParams {
 pub struct SendMessageParams {
     pub chat_id: i32,
     pub text: String,
+    pub parse_mode: Option<String>,
 }
