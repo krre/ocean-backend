@@ -45,18 +45,22 @@ fn get_new_users() {
     for update in &updates {
         offset = update.update_id;
         let text = &update.message.text;
-
-        if text != "/start" {
-            continue;
-        }
-
         let chat_id = update.message.chat.id;
 
-        if insert_chat_id(chat_id, &db) {
-            send_message(
-                chat_id,
-                "Вы успешно подписаны на рассылку уведомлений".into(),
-            );
+        if text == "/start" {
+            if insert_chat_id(chat_id, &db) {
+                send_message(
+                    chat_id,
+                    "Вы успешно подписаны на рассылку уведомлений".into(),
+                );
+            }
+        } else if text == "/stop" {
+            if delete_chat_id(chat_id, &db) {
+                send_message(
+                    chat_id,
+                    "Вы успешно отписаны от рассылки уведомлений".into(),
+                );
+            }
         }
     }
 
@@ -89,14 +93,7 @@ fn update_offset(offset: i32, db: &db::Db) {
 fn insert_chat_id(user_chat_id: i32, db: &db::Db) -> bool {
     use crate::model::schema::telegram_chats::dsl::*;
 
-    let res = telegram_chats
-        .select(id)
-        .filter(chat_id.eq(user_chat_id))
-        .first::<i32>(&db.conn)
-        .optional()
-        .unwrap();
-
-    if let Some(_r) = res {
+    if find_chat_id(user_chat_id, &db) {
         return false;
     }
 
@@ -105,6 +102,37 @@ fn insert_chat_id(user_chat_id: i32, db: &db::Db) -> bool {
         .execute(&db.conn)
         .unwrap();
     true
+}
+
+fn delete_chat_id(user_chat_id: i32, db: &db::Db) -> bool {
+    use crate::model::schema::telegram_chats::dsl::*;
+
+    if !find_chat_id(user_chat_id, &db) {
+        return false;
+    }
+
+    diesel::delete(telegram_chats.filter(chat_id.eq(user_chat_id)))
+        .execute(&db.conn)
+        .unwrap();
+
+    true
+}
+
+fn find_chat_id(user_chat_id: i32, db: &db::Db) -> bool {
+    use crate::model::schema::telegram_chats::dsl::*;
+
+    let res = telegram_chats
+        .select(id)
+        .filter(chat_id.eq(user_chat_id))
+        .first::<i32>(&db.conn)
+        .optional()
+        .unwrap();
+
+    if let Some(_r) = res {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 pub fn send_message(chat_id: i32, text: String) {
