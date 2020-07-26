@@ -1,8 +1,7 @@
 use crate::config;
 use chrono;
-use log::{error, info};
+use log::error;
 use reqwest;
-use std::collections::HashMap;
 use timer;
 
 pub mod api;
@@ -30,19 +29,37 @@ impl TelegramBot {
 }
 
 fn get_new_users() {
-    let res = send_request("getUpdates");
+    let res = send_request("getUpdates", serde_json::Value::Null);
 
     if res == serde_json::Value::Null {
         return;
     }
 
-    println!("{:?}", res);
+    let updates: Vec<api::Update> = serde_json::from_value(res).unwrap();
+
+    for update in updates {
+        let update_id = update.update_id;
+        let text = update.message.text;
+
+        if text != "/start" {
+            continue;
+        }
+
+        let chat_id = update.message.chat.id;
+        // send_message(chat_id, "HELLO".into());
+        println!("{} {} {}", update_id, text, chat_id);
+    }
+}
+
+pub fn send_message(chat_id: i32, text: String) {
+    let params = api::SendMessageParams { chat_id, text };
+    send_request("sendMessage", serde_json::to_value(params).unwrap());
 }
 
 #[tokio::main]
-async fn send_request(method: &str) -> serde_json::Value {
+async fn send_request(method: &str, params: serde_json::Value) -> serde_json::Value {
     let url = make_url(method);
-    let res = send(url).await;
+    let res = send(url, params).await;
 
     match res {
         Ok(r) => return r,
@@ -53,8 +70,19 @@ async fn send_request(method: &str) -> serde_json::Value {
     }
 }
 
-async fn send(url: String) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
-    let resp = reqwest::get(&url).await?.json::<api::Response>().await?;
+async fn send(
+    url: String,
+    params: serde_json::Value,
+) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    let client = reqwest::Client::new();
+
+    let resp = client
+        .post(&url)
+        .json(&params)
+        .send()
+        .await?
+        .json::<api::Response>()
+        .await?;
 
     if !resp.ok {
         error!("Telegram API response error: {}", resp.description.unwrap());
