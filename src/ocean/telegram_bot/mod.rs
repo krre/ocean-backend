@@ -140,6 +140,19 @@ pub fn send_message(chat_id: i32, text: String) {
     send_request("sendMessage", serde_json::to_value(params).unwrap());
 }
 
+pub fn send_message_to_all(text: &String, db: &db::Db) {
+    use crate::model::schema::telegram_chats::dsl::*;
+
+    let chat_ids = telegram_chats
+        .select(chat_id)
+        .load::<i32>(&db.conn)
+        .unwrap();
+
+    for user_chat_id in chat_ids {
+        send_message(user_chat_id, text.clone());
+    }
+}
+
 #[tokio::main]
 async fn send_request(method: &str, params: serde_json::Value) -> serde_json::Value {
     let url = make_url(method);
