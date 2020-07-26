@@ -1,5 +1,7 @@
 use crate::config;
+use crate::db;
 use chrono;
+use diesel::prelude::*;
 use log::error;
 use reqwest;
 use timer;
@@ -29,7 +31,10 @@ impl TelegramBot {
 }
 
 fn get_new_users() {
-    let res = send_request("getUpdates", serde_json::Value::Null);
+    let db = db::Db::new();
+    let mut offset = get_offset(&db) + 1;
+    let params = api::GetUpdatesParams { offset };
+    let res = send_request("getUpdates", serde_json::to_value(params).unwrap());
 
     if res == serde_json::Value::Null {
         return;
@@ -37,9 +42,10 @@ fn get_new_users() {
 
     let updates: Vec<api::Update> = serde_json::from_value(res).unwrap();
 
-    for update in updates {
+    for update in &updates {
+        offset = update.update_id;
         let update_id = update.update_id;
-        let text = update.message.text;
+        let text = &update.message.text;
 
         if text != "/start" {
             continue;
@@ -49,6 +55,31 @@ fn get_new_users() {
         // send_message(chat_id, "HELLO".into());
         println!("{} {} {}", update_id, text, chat_id);
     }
+
+    if updates.len() > 0 {
+        update_offset(offset, &db);
+    }
+}
+
+fn get_offset(db: &db::Db) -> i32 {
+    use crate::model::schema::values::dsl::*;
+    let res = values
+        .select(value)
+        .filter(name.eq("telegram_update_id"))
+        .first::<Option<serde_json::Value>>(&db.conn)
+        .unwrap();
+
+    let offset = res.unwrap();
+    serde_json::from_value(offset).unwrap()
+}
+
+fn update_offset(offset: i32, db: &db::Db) {
+    use crate::model::schema::values::dsl::*;
+    use serde_json::json;
+    diesel::update(values.filter(name.eq("telegram_update_id")))
+        .set(value.eq(json!(offset)))
+        .execute(&db.conn)
+        .unwrap();
 }
 
 pub fn send_message(chat_id: i32, text: String) {

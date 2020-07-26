@@ -26,6 +26,11 @@ pub struct Chat {
 }
 
 #[derive(Serialize, Debug)]
+pub struct GetUpdatesParams {
+    pub offset: i32,
+}
+
+#[derive(Serialize, Debug)]
 pub struct SendMessageParams {
     pub chat_id: i32,
     pub text: String,
