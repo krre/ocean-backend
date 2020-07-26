@@ -44,7 +44,6 @@ fn get_new_users() {
 
     for update in &updates {
         offset = update.update_id;
-        let update_id = update.update_id;
         let text = &update.message.text;
 
         if text != "/start" {
@@ -52,8 +51,13 @@ fn get_new_users() {
         }
 
         let chat_id = update.message.chat.id;
-        // send_message(chat_id, "HELLO".into());
-        println!("{} {} {}", update_id, text, chat_id);
+
+        if insert_chat_id(chat_id, &db) {
+            send_message(
+                chat_id,
+                "Вы успешно подписаны на рассылку уведомлений".into(),
+            );
+        }
     }
 
     if updates.len() > 0 {
@@ -80,6 +84,27 @@ fn update_offset(offset: i32, db: &db::Db) {
         .set(value.eq(json!(offset)))
         .execute(&db.conn)
         .unwrap();
+}
+
+fn insert_chat_id(user_chat_id: i32, db: &db::Db) -> bool {
+    use crate::model::schema::telegram_chats::dsl::*;
+
+    let res = telegram_chats
+        .select(id)
+        .filter(chat_id.eq(user_chat_id))
+        .first::<i32>(&db.conn)
+        .optional()
+        .unwrap();
+
+    if let Some(_r) = res {
+        return false;
+    }
+
+    diesel::insert_into(telegram_chats)
+        .values(chat_id.eq(user_chat_id))
+        .execute(&db.conn)
+        .unwrap();
+    true
 }
 
 pub fn send_message(chat_id: i32, text: String) {
