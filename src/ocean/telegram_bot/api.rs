@@ -32,7 +32,7 @@ pub struct GetUpdatesParams {
 
 #[derive(Serialize, Debug)]
 pub struct SendMessageParams {
-    pub chat_id: i32,
+    pub chat_id: String,
     pub text: String,
     pub parse_mode: Option<String>,
 }

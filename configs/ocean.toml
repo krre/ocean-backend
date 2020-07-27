@@ -9,7 +9,7 @@ password = ""
 database = "ocean"
 
 [telegram_bot]
-interval = 600
 token = ""
 url = "https://api.telegram.org"
+channel = ""
 enabled = true

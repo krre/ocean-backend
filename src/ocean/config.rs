@@ -28,9 +28,9 @@ pub struct Postgres {
 
 #[derive(Debug, Deserialize)]
 pub struct TelegramBot {
-    pub interval: i64,
     pub token: String,
     pub url: String,
+    pub channel: String,
     pub enabled: bool,
 }
 

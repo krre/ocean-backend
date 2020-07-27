@@ -1,20 +1,10 @@
 use crate::api::server;
-use crate::config;
-use crate::telegram_bot::TelegramBot;
 
-pub struct App {
-    _telegram_bot: Option<TelegramBot>,
-}
+pub struct App;
 
 impl App {
     pub fn new() -> Self {
-        let bot = if config::CONFIG.telegram_bot.enabled {
-            Some(TelegramBot::new())
-        } else {
-            None
-        };
-
-        App { _telegram_bot: bot }
+        Self
     }
 
     pub async fn start(&self) {

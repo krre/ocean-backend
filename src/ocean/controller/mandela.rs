@@ -113,13 +113,13 @@ pub fn create(data: RequestData) -> RequestResult {
     let category_numbers: Vec<i16> = serde_json::from_value(req.categories).unwrap();
     update_categories(&data.db.conn, mandela_id, category_numbers)?;
 
-    send_telegram_notify(&new_mandela, mandela_id, &data.db);
+    send_telegram_notify(&new_mandela, mandela_id);
 
     let result = json!({ "id": mandela_id });
     Ok(Some(result))
 }
 
-fn send_telegram_notify(mandela: &mandela::NewMandela, mandela_id: i32, db: &db::Db) {
+fn send_telegram_notify(mandela: &mandela::NewMandela, mandela_id: i32) {
     const TITLE_MODE_SIMPLE: i32 = 0;
     const TITLE_MODE_COMPLEX: i32 = 1;
 
@@ -137,7 +137,7 @@ fn send_telegram_notify(mandela: &mandela::NewMandela, mandela_id: i32, db: &db:
         mandela_id, title
     );
 
-    telegram_bot::send_message_to_all(&text, db);
+    telegram_bot::send_message(text);
 }
 
 // mandela.update
