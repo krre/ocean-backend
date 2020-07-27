@@ -45,14 +45,6 @@ table! {
 }
 
 table! {
-    telegram_chats (id) {
-        id -> Int4,
-        chat_id -> Int4,
-        create_ts -> Timestamptz,
-    }
-}
-
-table! {
     user_groups (id) {
         id -> Int4,
         name -> Nullable<Text>,
@@ -104,7 +96,6 @@ allow_tables_to_appear_in_same_query!(
     comments,
     mandels,
     marks,
-    telegram_chats,
     user_groups,
     users,
     values,
