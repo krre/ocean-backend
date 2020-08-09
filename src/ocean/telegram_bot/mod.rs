@@ -5,14 +5,21 @@ use reqwest;
 pub mod api;
 
 pub fn send_message(text: String) {
+    send_message_to(config::CONFIG.telegram_bot.channel.clone(), text);
+}
+
+pub fn send_admin_message(text: String) {
+    send_message_to(config::CONFIG.telegram_bot.admin_chat_id.clone(), text);
+}
+
+fn send_message_to(chat_id: String, text: String) {
     let params = api::SendMessageParams {
-        chat_id: config::CONFIG.telegram_bot.channel.clone(),
+        chat_id: chat_id,
         text,
         parse_mode: Some("HTML".into()),
     };
 
-    use std::thread;
-    thread::spawn(move || {
+    std::thread::spawn(move || {
         send_request("sendMessage", serde_json::to_value(params).unwrap());
     });
 }

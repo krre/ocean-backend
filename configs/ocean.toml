@@ -1,6 +1,9 @@
 [server]
 port = 21000
 
+[frontend]
+domen = "http://ocean-mandela.info"
+
 [postgres]
 host = "localhost"
 port = 5432
@@ -13,3 +16,5 @@ token = ""
 url = "https://api.telegram.org"
 channel = ""
 enabled = true
+admin_chat_id = ""
+

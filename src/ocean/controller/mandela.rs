@@ -113,31 +113,19 @@ pub fn create(data: RequestData) -> RequestResult {
     let category_numbers: Vec<i16> = serde_json::from_value(req.categories).unwrap();
     update_categories(&data.db.conn, mandela_id, category_numbers)?;
 
-    send_telegram_notify(&new_mandela, mandela_id);
+    let message = format_mandela_title(mandela::MandelaTitle {
+        id: mandela_id,
+        title: new_mandela.title,
+        title_mode: new_mandela.title_mode,
+        what: new_mandela.what,
+        before: new_mandela.before,
+        after: new_mandela.after,
+    });
+
+    telegram_bot::send_message(message);
 
     let result = json!({ "id": mandela_id });
     Ok(Some(result))
-}
-
-fn send_telegram_notify(mandela: &mandela::NewMandela, mandela_id: i32) {
-    const TITLE_MODE_SIMPLE: i32 = 0;
-    const TITLE_MODE_COMPLEX: i32 = 1;
-
-    let title = if mandela.title_mode == TITLE_MODE_SIMPLE {
-        mandela.title.clone()
-    } else if mandela.title_mode == TITLE_MODE_COMPLEX {
-        mandela.what.clone() + ": " + &mandela.before + " / " + &mandela.after
-    } else {
-        "Неизвестная мандела".into()
-    };
-
-    // TODO: Take domen name from settings
-    let text = format!(
-        "<a href='http://ocean-mandela.info/mandela/{}'>{}</a>",
-        mandela_id, title
-    );
-
-    telegram_bot::send_message(text);
 }
 
 // mandela.update

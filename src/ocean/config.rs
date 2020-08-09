@@ -8,6 +8,7 @@ lazy_static! {
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub server: Server,
+    pub frontend: Frontend,
     pub postgres: Postgres,
     pub telegram_bot: TelegramBot,
 }
@@ -15,6 +16,11 @@ pub struct Config {
 #[derive(Debug, Deserialize)]
 pub struct Server {
     pub port: u16,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Frontend {
+    pub domen: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -31,6 +37,7 @@ pub struct TelegramBot {
     pub token: String,
     pub url: String,
     pub channel: String,
+    pub admin_chat_id: String,
     pub enabled: bool,
 }
 
