@@ -44,7 +44,7 @@ pub fn get_mandels(data: RequestData) -> RequestResult {
         WHERE vote = $1
         GROUP BY m.id
         ORDER BY count DESC
-        LIMIT 50",
+        LIMIT 100",
     )
     .bind::<Int2, _>(req.vote)
     .load::<Mandela>(&data.db.conn)?;
