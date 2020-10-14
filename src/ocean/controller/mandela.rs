@@ -419,12 +419,11 @@ pub fn get_all(data: RequestData) -> RequestResult {
             .filter(marks::user_id.eq(i))
             .first(&data.db.conn)?;
         new_count = total_count - mark_count;
-        if filter == SHOW_MINE {
-            mine_count = mandels
-                .select(count_star())
-                .filter(mandels::user_id.eq(i))
-                .first(&data.db.conn)?;
-        } else if filter == SHOW_CATEGORY {
+        mine_count = mandels
+            .select(count_star())
+            .filter(mandels::user_id.eq(i))
+            .first(&data.db.conn)?;
+        if filter == SHOW_CATEGORY {
             category_count = mandels
                 .select(count_star())
                 .inner_join(categories)
