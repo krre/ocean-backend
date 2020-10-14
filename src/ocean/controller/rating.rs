@@ -7,6 +7,8 @@ pub fn get_mandels(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         vote: i16,
+        limit: i32,
+        offset: i32,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -44,9 +46,12 @@ pub fn get_mandels(data: RequestData) -> RequestResult {
         WHERE vote = $1
         GROUP BY m.id
         ORDER BY count DESC
-        LIMIT 100",
+        LIMIT $2
+        OFFSET $3",
     )
     .bind::<Int2, _>(req.vote)
+    .bind::<Int4, _>(req.limit)
+    .bind::<Int4, _>(req.offset)
     .load::<Mandela>(&data.db.conn)?;
 
     let result = serde_json::to_value(&list)?;
