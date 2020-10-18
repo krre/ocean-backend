@@ -3,6 +3,7 @@ use crate::db;
 use crate::model;
 
 pub mod comment;
+pub mod forum;
 pub mod mandela;
 pub mod rating;
 pub mod search;
