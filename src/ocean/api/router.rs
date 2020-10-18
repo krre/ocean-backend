@@ -74,6 +74,7 @@ lazy_static! {
             "rating.getUsers".to_string(),
             Rh(controller::rating::get_users),
         );
+        m.insert("forum.getAll".to_string(), Rh(controller::forum::get_all));
         m.insert(
             "forumCategory.create".to_string(),
             Rh(controller::forum::category::create),
