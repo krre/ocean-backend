@@ -18,6 +18,16 @@ table! {
 }
 
 table! {
+    forum_categories (id) {
+        id -> Int4,
+        name -> Text,
+        order_index -> Int2,
+        create_ts -> Timestamptz,
+        update_ts -> Timestamptz,
+    }
+}
+
+table! {
     mandels (id) {
         id -> Int4,
         title -> Text,
@@ -94,6 +104,7 @@ joinable!(votes -> users (user_id));
 allow_tables_to_appear_in_same_query!(
     categories,
     comments,
+    forum_categories,
     mandels,
     marks,
     user_groups,
