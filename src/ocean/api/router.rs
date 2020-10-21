@@ -83,6 +83,10 @@ lazy_static! {
             "forumCategory.getOne".to_string(),
             Rh(controller::forum::category::get_one),
         );
+        m.insert(
+            "forumCategory.update".to_string(),
+            Rh(controller::forum::category::update),
+        );
         m
     };
 }

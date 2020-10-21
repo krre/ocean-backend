@@ -1,4 +1,6 @@
 use crate::controller::*;
+use chrono::prelude::*;
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
@@ -49,4 +51,39 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
     let result = serde_json::to_value(&forum_category)?;
     Ok(Some(result))
+}
+
+// forumCategory.update
+pub fn update(data: RequestData) -> RequestResult {
+    use crate::model::schema::forum_categories;
+    use crate::model::schema::forum_categories::dsl::*;
+
+    #[derive(Deserialize)]
+    struct Req {
+        id: i32,
+        name: String,
+        order_index: i16,
+    }
+
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+
+    #[derive(AsChangeset)]
+    #[table_name = "forum_categories"]
+    pub struct UpdateForumCategory {
+        pub name: String,
+        pub order_index: i16,
+        pub update_ts: NaiveDateTime,
+    }
+
+    let update_forum_category = UpdateForumCategory {
+        name: req.name,
+        order_index: req.order_index,
+        update_ts: Utc::now().naive_utc(),
+    };
+
+    diesel::update(forum_categories.filter(id.eq(req.id)))
+        .set(&update_forum_category)
+        .execute(&data.db.conn)?;
+
+    Ok(None)
 }
