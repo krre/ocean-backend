@@ -4,6 +4,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 pub mod category;
+pub mod section;
 
 // forum.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
