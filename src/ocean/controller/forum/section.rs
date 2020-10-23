@@ -89,3 +89,31 @@ pub fn update(data: RequestData) -> RequestResult {
 
     Ok(None)
 }
+
+// forumSection.getAll
+pub fn get_all(data: RequestData) -> RequestResult {
+    use crate::model::schema::forum_sections::dsl::*;
+
+    #[derive(Queryable, Serialize)]
+    pub struct Section {
+        id: i32,
+        category_id: i32,
+        name: String,
+        order_index: i16,
+    }
+
+    let list = forum_sections
+        .select((id, category_id, name, order_index))
+        .order(order_index.asc())
+        .load::<Section>(&data.db.conn)?;
+
+    #[derive(Serialize)]
+    struct Resp {
+        sections: Vec<Section>,
+    };
+
+    let resp = serde_json::to_value(&Resp { sections: list })?;
+
+    let result = serde_json::to_value(&resp)?;
+    Ok(Some(result))
+}

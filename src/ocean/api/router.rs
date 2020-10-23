@@ -99,6 +99,10 @@ lazy_static! {
             "forumSection.update".to_string(),
             Rh(controller::forum::section::update),
         );
+        m.insert(
+            "forumSection.getAll".to_string(),
+            Rh(controller::forum::section::get_all),
+        );
         m
     };
 }
