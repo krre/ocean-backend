@@ -16,6 +16,5 @@ pub struct User {
 #[table_name = "users"]
 pub struct NewUser {
     pub name: Option<String>,
-    pub token: String,
     pub group_id: i32,
 }

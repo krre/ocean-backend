@@ -64,6 +64,14 @@ table! {
 }
 
 table! {
+    values (id) {
+        id -> Int4,
+        name -> Text,
+        value -> Nullable<Jsonb>,
+    }
+}
+
+table! {
     votes (id) {
         id -> Int4,
         mandela_id -> Int4,
@@ -90,5 +98,6 @@ allow_tables_to_appear_in_same_query!(
     marks,
     user_groups,
     users,
+    values,
     votes,
 );

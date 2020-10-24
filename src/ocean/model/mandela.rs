@@ -31,3 +31,13 @@ pub struct UpdateMandela {
     pub user_id: i32,
     pub update_ts: NaiveDateTime,
 }
+
+#[derive(Queryable)]
+pub struct MandelaTitle {
+    pub id: i32,
+    pub title_mode: i32,
+    pub title: String,
+    pub what: String,
+    pub before: String,
+    pub after: String,
+}

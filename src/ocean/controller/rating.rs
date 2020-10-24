@@ -7,6 +7,8 @@ pub fn get_mandels(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         vote: i16,
+        limit: i32,
+        offset: i32,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -35,6 +37,12 @@ pub fn get_mandels(data: RequestData) -> RequestResult {
         count: i64,
     }
 
+    #[derive(QueryableByName)]
+    struct TotalCount {
+        #[sql_type = "Int8"]
+        count: i64,
+    }
+
     use diesel::dsl::*;
 
     let list = sql_query(
@@ -44,12 +52,33 @@ pub fn get_mandels(data: RequestData) -> RequestResult {
         WHERE vote = $1
         GROUP BY m.id
         ORDER BY count DESC
-        LIMIT 50",
+        LIMIT $2
+        OFFSET $3",
     )
     .bind::<Int2, _>(req.vote)
+    .bind::<Int4, _>(req.limit)
+    .bind::<Int4, _>(req.offset)
     .load::<Mandela>(&data.db.conn)?;
 
-    let result = serde_json::to_value(&list)?;
+    let total_count = sql_query(
+        "SELECT COUNT(DISTINCT mandela_id) from votes
+        WHERE vote = $1",
+    )
+    .bind::<Int2, _>(req.vote)
+    .load::<TotalCount>(&data.db.conn)?;
+
+    #[derive(Serialize)]
+    struct Resp {
+        total_count: i64,
+        mandels: Vec<Mandela>,
+    };
+
+    let resp = serde_json::to_value(&Resp {
+        total_count: total_count[0].count,
+        mandels: list,
+    })?;
+
+    let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
 }
 

@@ -1,5 +1,6 @@
 use super::*;
 use crate::model::mandela;
+use crate::telegram_bot;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -112,8 +113,18 @@ pub fn create(data: RequestData) -> RequestResult {
     let category_numbers: Vec<i16> = serde_json::from_value(req.categories).unwrap();
     update_categories(&data.db.conn, mandela_id, category_numbers)?;
 
-    let result = json!({ "id": mandela_id });
+    let message = format_mandela_title(mandela::MandelaTitle {
+        id: mandela_id,
+        title: new_mandela.title,
+        title_mode: new_mandela.title_mode,
+        what: new_mandela.what,
+        before: new_mandela.before,
+        after: new_mandela.after,
+    });
 
+    telegram_bot::send_message(message);
+
+    let result = json!({ "id": mandela_id });
     Ok(Some(result))
 }
 
@@ -300,6 +311,8 @@ pub fn get_all(data: RequestData) -> RequestResult {
     use crate::model::schema::marks::dsl::*;
     use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
+    use crate::model::schema::votes;
+    use crate::model::schema::votes::dsl::*;
     use diesel::dsl::*;
 
     #[derive(Deserialize)]
@@ -333,7 +346,8 @@ pub fn get_all(data: RequestData) -> RequestResult {
     const SHOW_ALL: i8 = 0;
     const SHOW_NEW: i8 = 1;
     const SHOW_MINE: i8 = 2;
-    const SHOW_CATEGORY: i8 = 3;
+    const SHOW_POLL: i8 = 3;
+    const SHOW_CATEGORY: i8 = 4;
 
     let filter = if let Some(i) = req.filter {
         i
@@ -347,6 +361,11 @@ pub fn get_all(data: RequestData) -> RequestResult {
             marks.on(marks::user_id
                 .eq(req_user_id)
                 .and(marks::mandela_id.eq(mandels::id))),
+        )
+        .left_join(
+            votes.on(votes::user_id
+                .eq(req_user_id)
+                .and(votes::mandela_id.eq(mandels::id))),
         )
         .left_join(categories.on(categories::mandela_id.eq(mandels::id)))
         .left_join(comments.on(comments::mandela_id.eq(mandels::id)))
@@ -369,11 +388,19 @@ pub fn get_all(data: RequestData) -> RequestResult {
         query = query.filter(marks::create_ts.is_null())
     } else if filter == SHOW_MINE {
         query = query.filter(mandels::user_id.eq(req_user_id))
+    } else if filter == SHOW_POLL {
+        query = query.filter(votes::create_ts.is_null())
     } else if filter == SHOW_CATEGORY {
         query = query.filter(categories::number.eq(req.category.unwrap()));
     }
 
-    query = query.group_by((mandels::id, users::name, users::id, marks::create_ts));
+    query = query.group_by((
+        mandels::id,
+        users::name,
+        users::id,
+        marks::create_ts,
+        votes::create_ts,
+    ));
 
     const SORT_MANDELA: i8 = 0;
     const SORT_COMMENT: i8 = 1;
@@ -400,6 +427,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let total_count: i64 = mandels.select(count_star()).first(&data.db.conn)?;
     let mut new_count = 0;
     let mut mine_count = 0;
+    let mut poll_count = 0;
     let mut category_count = 0;
 
     if let Some(i) = req.user_id {
@@ -408,12 +436,20 @@ pub fn get_all(data: RequestData) -> RequestResult {
             .filter(marks::user_id.eq(i))
             .first(&data.db.conn)?;
         new_count = total_count - mark_count;
-        if filter == SHOW_MINE {
-            mine_count = mandels
-                .select(count_star())
-                .filter(mandels::user_id.eq(i))
-                .first(&data.db.conn)?;
-        } else if filter == SHOW_CATEGORY {
+
+        let vote_count: i64 = votes
+            .select(count_star())
+            .filter(votes::user_id.eq(i))
+            .first(&data.db.conn)?;
+
+        poll_count = total_count - vote_count;
+
+        mine_count = mandels
+            .select(count_star())
+            .filter(mandels::user_id.eq(i))
+            .first(&data.db.conn)?;
+
+        if filter == SHOW_CATEGORY {
             category_count = mandels
                 .select(count_star())
                 .inner_join(categories)
@@ -427,6 +463,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         total_count: i64,
         new_count: i64,
         mine_count: i64,
+        poll_count: i64,
         category_count: i64,
         mandels: Vec<MandelaResp>,
     };
@@ -435,6 +472,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         total_count: total_count,
         new_count: new_count,
         mine_count: mine_count,
+        poll_count: poll_count,
         category_count: category_count,
         mandels: list,
     })?;

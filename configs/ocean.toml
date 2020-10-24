@@ -1,9 +1,12 @@
 [server]
 port = 21000
 
-    [server.ssl]
-    key = "/home/../ssl/ocean.key"
-    cert = "/home/../ssl/ocean.cert"
+[server.ssl]
+key = "/home/../ssl/ocean.key"
+cert = "/home/../ssl/ocean.cert"
+
+[frontend]
+domen = "http://ocean-mandela.info"
 
 [postgres]
 host = "localhost"
@@ -11,3 +14,10 @@ port = 5432
 username = "ocean"
 password = ""
 database = "ocean"
+
+[telegram_bot]
+token = ""
+url = "https://api.telegram.org"
+channel = ""
+admin_chat_id = ""
+enabled = true

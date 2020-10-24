@@ -1,11 +1,10 @@
 use crate::api::server;
 
-#[derive(Default)]
 pub struct App;
 
 impl App {
     pub fn new() -> Self {
-        App
+        Self
     }
 
     pub async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {

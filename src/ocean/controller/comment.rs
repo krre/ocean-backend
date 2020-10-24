@@ -1,5 +1,6 @@
 use super::*;
 use crate::model::comment;
+use crate::telegram_bot;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -11,10 +12,51 @@ pub fn create(data: RequestData) -> RequestResult {
     let new_comment = serde_json::from_value::<comment::NewComment>(data.params.unwrap())?;
 
     use crate::model::schema::comments::dsl::*;
+    use crate::model::schema::mandels;
+    use crate::model::schema::users;
 
     diesel::insert_into(comments)
         .values(&new_comment)
         .execute(&data.db.conn)?;
+
+    let mandela_title = mandels::table
+        .select((
+            mandels::id,
+            mandels::title_mode,
+            mandels::title,
+            mandels::what,
+            mandels::before,
+            mandels::after,
+        ))
+        .filter(mandels::id.eq(new_comment.mandela_id))
+        .first::<model::mandela::MandelaTitle>(&data.db.conn)?;
+
+    let user_name = users::table
+        .select(users::name.nullable())
+        .filter(users::id.eq(new_comment.user_id))
+        .first::<Option<String>>(&data.db.conn)?;
+
+    let final_user_name: String = if let Some(n) = user_name {
+        n
+    } else {
+        if new_comment.user_id == 2 {
+            "Лютый конспиролог".into()
+        } else {
+            "Конспиролог".into()
+        }
+    };
+
+    let comment_message = format!(
+        "{}
+{}
+
+{}",
+        format_mandela_title(mandela_title),
+        final_user_name,
+        new_comment.message
+    );
+
+    telegram_bot::send_admin_message(comment_message);
 
     Ok(None)
 }

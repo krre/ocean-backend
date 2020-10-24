@@ -28,6 +28,7 @@ impl ApiServer {
         let tls_cfg = {
             let certs = load_certs(config::CONFIG.server.ssl.cert.as_str())?;
             let key = load_private_key(config::CONFIG.server.ssl.key.as_str())?;
+
             // Do not use client certificate authentication.
             let mut cfg = rustls::ServerConfig::new(rustls::NoClientAuth::new());
             // Select a certificate to use.
@@ -96,6 +97,7 @@ fn load_private_key(filename: &str) -> io::Result<rustls::PrivateKey> {
     // Load and return a single private key.
     let keys = pemfile::rsa_private_keys(&mut reader)
         .map_err(|_| error("failed to load private key".into()))?;
+
     if keys.len() != 1 {
         return Err(error("expected a single private key".into()));
     }
