@@ -22,27 +22,21 @@ impl ApiServer {
 
     pub async fn listen(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let port = config::CONFIG.server.port;
-        // let addr = ([0, 0, 0, 0], port).into();
         let addr = format!("0.0.0.0:{}", port);
 
         let tls_cfg = {
             let certs = load_certs(config::CONFIG.server.ssl.cert.as_str())?;
             let key = load_private_key(config::CONFIG.server.ssl.key.as_str())?;
 
-            // Do not use client certificate authentication.
             let mut cfg = rustls::ServerConfig::new(rustls::NoClientAuth::new());
-            // Select a certificate to use.
             cfg.set_single_cert(certs, key)
                 .map_err(|e| error(format!("{}", e)))?;
-            // Configure ALPN to accept HTTP/2, HTTP/1.1 in that order.
             cfg.set_protocols(&[b"h2".to_vec(), b"http/1.1".to_vec()]);
             sync::Arc::new(cfg)
         };
 
-        // Create a TCP listener via tokio.
         let mut tcp = TcpListener::bind(&addr).await?;
         let tls_acceptor = TlsAcceptor::from(tls_cfg);
-        // Prepare a long-running future stream to accept and serve cients.
         let incoming_tls_stream = tcp
             .incoming()
             .map_err(|e| error(format!("Incoming failed: {:?}", e)))
@@ -59,7 +53,6 @@ impl ApiServer {
         let service =
             make_service_fn(|_| async { Ok::<_, hyper::Error>(service_fn(router::route)) });
 
-        // let server = hyper::Server::bind(&addr).serve(service);
         let server = Server::builder(HyperAcceptor {
             acceptor: incoming_tls_stream,
         })
@@ -76,25 +69,19 @@ fn error(err: String) -> io::Error {
     io::Error::new(io::ErrorKind::Other, err)
 }
 
-// Load public certificate from file.
 fn load_certs(filename: &str) -> io::Result<Vec<rustls::Certificate>> {
-    // Open certificate file.
     let certfile = fs::File::open(filename)
         .map_err(|e| error(format!("failed to open {}: {}", filename, e)))?;
     let mut reader = io::BufReader::new(certfile);
 
-    // Load and return certificate.
     pemfile::certs(&mut reader).map_err(|_| error("failed to load certificate".into()))
 }
 
-// Load private key from file.
 fn load_private_key(filename: &str) -> io::Result<rustls::PrivateKey> {
-    // Open keyfile.
     let keyfile = fs::File::open(filename)
         .map_err(|e| error(format!("failed to open {}: {}", filename, e)))?;
     let mut reader = io::BufReader::new(keyfile);
 
-    // Load and return a single private key.
     let keys = pemfile::rsa_private_keys(&mut reader)
         .map_err(|_| error("failed to load private key".into()))?;
 
