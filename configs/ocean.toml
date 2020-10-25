@@ -6,7 +6,7 @@ key = "/home/../ssl/ocean.key"
 cert = "/home/../ssl/ocean.cert"
 
 [frontend]
-domen = "http://ocean-mandela.info"
+domen = "https://ocean-mandela.info"
 
 [postgres]
 host = "localhost"
