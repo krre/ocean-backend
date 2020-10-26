@@ -97,7 +97,7 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     let bytes = whole_body.bytes();
     let raw_req = String::from_utf8(bytes.to_vec()).unwrap();
 
-    info!("Request: {}", raw_req);
+    info!("[REQUEST] {}", raw_req);
 
     let json_rpc_req = serde_json::from_slice::<json_rpc::Request>(bytes);
 
@@ -113,7 +113,7 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     };
 
     let raw_resp = serde_json::to_string(&json_rpc_resp).unwrap();
-    info!("Response: {}", raw_resp);
+    info!("[RESPONSE] {}", raw_resp);
 
     let mut response = Response::new(Body::from(raw_resp));
     response.headers_mut().insert(
