@@ -4,7 +4,7 @@ use core::task::{Context, Poll};
 use futures_util::{future::TryFutureExt, stream::Stream, StreamExt, TryStreamExt};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::Server;
-use log::{info, warn};
+use log::info;
 use rustls::internal::pemfile;
 use std::pin::Pin;
 use std::{fs, io, sync};
@@ -41,11 +41,9 @@ impl ApiServer {
             .incoming()
             .map_err(|e| error(format!("Incoming failed: {:?}", e)))
             .and_then(move |s| {
-                tls_acceptor.accept(s).map_err(|e| {
-                    warn!("TLS Error: {:?}", e);
-                    // Ok(None)
-                    error(format!("TLS Error: {:?}", e))
-                })
+                tls_acceptor
+                    .accept(s)
+                    .map_err(|e| error(format!("TLS Error: {:?}", e)))
             })
             .filter(|i| futures_util::future::ready(i.is_ok())) // Need to filter out errors as they will stop server to accept connections
             .boxed();
