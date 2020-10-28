@@ -8,6 +8,9 @@ use hyper::header;
 use hyper::{Body, Method, Request, Response, StatusCode};
 use log::{error, info};
 use std::collections::HashMap;
+use url;
+
+type ResponseResult = Result<Response<Body>, hyper::Error>;
 
 lazy_static! {
     static ref METHODS: HashMap<String, Rh> = {
@@ -80,18 +83,30 @@ lazy_static! {
 
 struct Rh(controller::RequestHandler);
 
-pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+pub async fn route(req: Request<Body>) -> ResponseResult {
     if req.method() != Method::POST || req.uri().path() != "/api" {
-        info!(
-            "Bad request: method: {}, URL: {}",
-            req.method().as_str(),
-            req.uri().path()
-        );
-        return Ok(Response::builder()
-            .status(StatusCode::BAD_REQUEST)
-            .body(Body::from("Bad request"))
-            .unwrap());
+        return bad_request(req);
     }
+
+    let query;
+    if let Some(q) = req.uri().query() {
+        query = q;
+    } else {
+        return bad_request(req);
+    };
+
+    let url_params = url::form_urlencoded::parse(query.as_bytes());
+    let hash_params: HashMap<_, _> = url_params.into_owned().collect();
+
+    let token;
+
+    if let Some(t) = hash_params.get("token") {
+        token = t;
+    } else {
+        return bad_request(req);
+    }
+
+    println!("token {}", token);
 
     let whole_body = body::aggregate(req).await?;
     let bytes = whole_body.bytes();
@@ -122,6 +137,19 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     );
 
     Ok(response)
+}
+
+fn bad_request(req: Request<Body>) -> ResponseResult {
+    info!(
+        "Bad request: method: {}, URL: {}",
+        req.method().as_str(),
+        req.uri().path()
+    );
+
+    Ok(Response::builder()
+        .status(StatusCode::BAD_REQUEST)
+        .body(Body::from("Bad request"))
+        .unwrap())
 }
 
 fn exec(req: json_rpc::Request) -> json_rpc::Response {
