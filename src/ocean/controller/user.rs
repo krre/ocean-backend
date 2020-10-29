@@ -2,6 +2,7 @@ use super::*;
 use crate::api;
 use crate::model::user;
 use crate::model::user_group;
+use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -52,7 +53,7 @@ pub fn auth(data: RequestData) -> RequestResult {
 
     #[derive(Deserialize)]
     struct Req {
-        id: i32,
+        id: Id,
         token: String,
     }
 
@@ -116,7 +117,7 @@ pub fn update(data: RequestData) -> RequestResult {
 
     #[derive(Deserialize)]
     struct Req {
-        id: i32,
+        id: Id,
         name: String,
         code: String,
     }
@@ -131,7 +132,7 @@ pub fn update(data: RequestData) -> RequestResult {
     #[table_name = "users"]
     pub struct UpdateUser {
         pub name: String,
-        pub group_id: i32,
+        pub group_id: Id,
         pub update_ts: NaiveDateTime,
     }
 
@@ -154,7 +155,7 @@ pub fn change_password(data: RequestData) -> RequestResult {
 
     #[derive(Deserialize)]
     struct Req {
-        id: i32,
+        id: Id,
         token: String,
     }
 

@@ -1,4 +1,5 @@
 use super::*;
+use crate::types::Id;
 use diesel::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
@@ -70,7 +71,7 @@ pub fn get_by_content(data: RequestData) -> RequestResult {
 
     #[derive(Queryable, Serialize)]
     struct Mandela {
-        id: i32,
+        id: Id,
         title_mode: i32,
         title: String,
         what: String,

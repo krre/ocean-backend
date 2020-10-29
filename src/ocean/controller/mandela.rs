@@ -1,6 +1,7 @@
 use super::*;
 use crate::model::mandela;
 use crate::telegram_bot;
+use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -20,14 +21,14 @@ struct Votes {
 
 fn update_categories(
     conn: &PgConnection,
-    mandela_id: i32,
+    mandela_id: Id,
     category_numbers: Vec<i16>,
 ) -> RequestResult {
     use crate::model::schema::categories;
 
     #[derive(Queryable, Serialize, Debug)]
     pub struct CategoryNumber {
-        id: i32,
+        id: Id,
         number: i16,
     }
 
@@ -54,7 +55,7 @@ fn update_categories(
     #[derive(Insertable, Deserialize)]
     #[table_name = "categories"]
     pub struct NewCategoryNumber {
-        mandela_id: i32,
+        mandela_id: Id,
         number: i16,
     }
 
@@ -86,7 +87,7 @@ pub fn create(data: RequestData) -> RequestResult {
         videos: serde_json::Value,
         links: serde_json::Value,
         categories: serde_json::Value,
-        user_id: i32,
+        user_id: Id,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -134,7 +135,7 @@ pub fn update(data: RequestData) -> RequestResult {
     use crate::model::schema::mandels::dsl::*;
     #[derive(Deserialize)]
     struct Req {
-        id: i32,
+        id: Id,
         title_mode: i32,
         title: String,
         what: String,
@@ -145,7 +146,7 @@ pub fn update(data: RequestData) -> RequestResult {
         videos: serde_json::Value,
         links: serde_json::Value,
         categories: serde_json::Value,
-        user_id: i32,
+        user_id: Id,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -174,7 +175,7 @@ pub fn update(data: RequestData) -> RequestResult {
     Ok(None)
 }
 
-fn get_poll(db: &db::Db, mandela_id: i32) -> Vec<Votes> {
+fn get_poll(db: &db::Db, mandela_id: Id) -> Vec<Votes> {
     use diesel::dsl::*;
     use diesel::sql_types::Int4;
 
@@ -200,8 +201,8 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
     #[derive(Deserialize)]
     struct Req {
-        id: i32,
-        user_id: Option<i32>,
+        id: Id,
+        user_id: Option<Id>,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -209,11 +210,11 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
     #[derive(Queryable, Serialize)]
     pub struct Mandela {
-        id: i32,
+        id: Id,
         title: String,
         title_mode: i32,
         description: String,
-        user_id: i32,
+        user_id: Id,
         user_name: Option<String>,
         images: serde_json::Value,
         videos: serde_json::Value,
@@ -329,7 +330,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     #[derive(Queryable, Serialize)]
     struct MandelaResp {
-        id: i32,
+        id: Id,
         title_mode: i32,
         title: String,
         what: String,
@@ -337,7 +338,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         after: String,
         create_ts: NaiveDateTime,
         user_name: Option<String>,
-        user_id: i32,
+        user_id: Id,
         comment_count: i32,
         mark_ts: Option<NaiveDateTime>,
     }
@@ -500,8 +501,8 @@ pub fn delete(data: RequestData) -> RequestResult {
 pub fn mark(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
-        id: i32,
-        user_id: i32,
+        id: Id,
+        user_id: Id,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -512,8 +513,8 @@ pub fn mark(data: RequestData) -> RequestResult {
     #[derive(Insertable)]
     #[table_name = "marks"]
     pub struct NewMark {
-        mandela_id: i32,
-        user_id: i32,
+        mandela_id: Id,
+        user_id: Id,
     };
 
     let new_mark = NewMark {
@@ -531,8 +532,8 @@ pub fn mark(data: RequestData) -> RequestResult {
 pub fn vote(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
-        id: i32,
-        user_id: i32,
+        id: Id,
+        user_id: Id,
         vote: i16,
     }
 
@@ -541,8 +542,8 @@ pub fn vote(data: RequestData) -> RequestResult {
     #[derive(Insertable, AsChangeset)]
     #[table_name = "votes"]
     pub struct NewVote {
-        mandela_id: i32,
-        user_id: i32,
+        mandela_id: Id,
+        user_id: Id,
         vote: i16,
     };
 

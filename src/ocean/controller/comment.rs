@@ -1,6 +1,7 @@
 use super::*;
 use crate::model::comment;
 use crate::telegram_bot;
+use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -70,7 +71,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     #[derive(Deserialize)]
     struct Req {
-        mandela_id: i32,
+        mandela_id: Id,
         offset: i64,
         limit: i64,
     }
@@ -120,7 +121,7 @@ pub fn update(data: RequestData) -> RequestResult {
 
     #[derive(Deserialize)]
     struct Req {
-        id: i32,
+        id: Id,
         message: String,
     }
 
