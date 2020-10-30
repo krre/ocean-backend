@@ -199,6 +199,8 @@ pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
 
+    println!("user_id {}", data.user.id);
+
     #[derive(Deserialize)]
     struct Req {
         id: Id,

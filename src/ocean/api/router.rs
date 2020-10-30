@@ -3,6 +3,7 @@ use crate::api::user_cache;
 use crate::controller;
 use crate::db;
 use crate::json_rpc;
+use crate::types;
 use hyper::body;
 use hyper::body::Buf;
 use hyper::header;
@@ -115,8 +116,6 @@ pub async fn route(req: Request<Body>) -> ResponseResult {
         return unauthorized(token);
     }
 
-    println!("user {}", user.id);
-
     let whole_body = body::aggregate(req).await?;
     let bytes = whole_body.bytes();
     let raw_req = String::from_utf8(bytes.to_vec()).unwrap();
@@ -126,7 +125,7 @@ pub async fn route(req: Request<Body>) -> ResponseResult {
     let json_rpc_req = serde_json::from_slice::<json_rpc::Request>(bytes);
 
     let json_rpc_resp = if let Ok(r) = json_rpc_req {
-        exec(r)
+        exec(user, r)
     } else {
         let mut resp = json_rpc::Response::default();
         resp.error = Some(json_rpc::Error::from_api_error(&api::Error::new(
@@ -170,7 +169,7 @@ fn unauthorized(token: &String) -> ResponseResult {
         .unwrap())
 }
 
-fn exec(req: json_rpc::Request) -> json_rpc::Response {
+fn exec(user: types::User, req: json_rpc::Request) -> json_rpc::Response {
     let mut resp = json_rpc::Response::default();
 
     if let Some(id) = req.id {
@@ -183,7 +182,7 @@ fn exec(req: json_rpc::Request) -> json_rpc::Response {
     match METHODS.get(&method) {
         Some(func) => {
             let db = db::Db::new();
-            let data = controller::RequestData::new(db, req.params);
+            let data = controller::RequestData::new(db, user, req.params);
             let result = func.0(data);
 
             match result {
