@@ -10,7 +10,18 @@ use serde::Serialize;
 
 // comment.create
 pub fn create(data: RequestData) -> RequestResult {
-    let new_comment = serde_json::from_value::<comment::NewComment>(data.params.unwrap())?;
+    #[derive(Deserialize)]
+    struct Req {
+        mandela_id: Id,
+        message: String,
+    }
+
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let new_comment = comment::NewComment {
+        mandela_id: req.mandela_id,
+        user_id: data.user.id,
+        message: req.message,
+    };
 
     use crate::model::schema::comments::dsl::*;
     use crate::model::schema::mandels;
@@ -34,17 +45,15 @@ pub fn create(data: RequestData) -> RequestResult {
 
     let user_name = users::table
         .select(users::name.nullable())
-        .filter(users::id.eq(new_comment.user_id))
+        .filter(users::id.eq(data.user.id))
         .first::<Option<String>>(&data.db.conn)?;
 
     let final_user_name: String = if let Some(n) = user_name {
         n
+    } else if data.user.code == types::UserCode::Fierce {
+        "Лютый конспиролог".into()
     } else {
-        if new_comment.user_id == 2 {
-            "Лютый конспиролог".into()
-        } else {
-            "Конспиролог".into()
-        }
+        "Конспиролог".into()
     };
 
     let comment_message = format!(
