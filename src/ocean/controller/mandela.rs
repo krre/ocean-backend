@@ -500,7 +500,6 @@ pub fn mark(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         id: Id,
-        user_id: Id,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -517,7 +516,7 @@ pub fn mark(data: RequestData) -> RequestResult {
 
     let new_mark = NewMark {
         mandela_id: req.id,
-        user_id: req.user_id,
+        user_id: data.user.id,
     };
 
     diesel::insert_into(marks)
