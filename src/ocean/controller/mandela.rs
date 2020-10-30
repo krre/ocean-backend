@@ -530,7 +530,6 @@ pub fn vote(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         id: Id,
-        user_id: Id,
         vote: i16,
     }
 
@@ -546,7 +545,7 @@ pub fn vote(data: RequestData) -> RequestResult {
 
     let new_vote = NewVote {
         mandela_id: req.id,
-        user_id: req.user_id,
+        user_id: data.user.id,
         vote: req.vote,
     };
 
@@ -555,8 +554,8 @@ pub fn vote(data: RequestData) -> RequestResult {
 
     let vote_id = votes
         .select(id)
-        .filter(mandela_id.eq(req.id).and(user_id.eq(req.user_id)))
-        .first::<i32>(&data.db.conn)
+        .filter(mandela_id.eq(req.id).and(user_id.eq(data.user.id)))
+        .first::<Id>(&data.db.conn)
         .optional()?;
 
     if let Some(i) = vote_id {
