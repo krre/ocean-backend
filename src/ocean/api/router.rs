@@ -1,4 +1,5 @@
 use crate::api;
+use crate::api::user_cache;
 use crate::controller;
 use crate::db;
 use crate::json_rpc;
@@ -106,7 +107,15 @@ pub async fn route(req: Request<Body>) -> ResponseResult {
         return bad_request(req);
     }
 
-    println!("token {}", token);
+    let user;
+
+    if let Some(u) = user_cache::get(token) {
+        user = u;
+    } else {
+        return unauthorized(token);
+    }
+
+    println!("user {}", user.id);
 
     let whole_body = body::aggregate(req).await?;
     let bytes = whole_body.bytes();
@@ -149,6 +158,15 @@ fn bad_request(req: Request<Body>) -> ResponseResult {
     Ok(Response::builder()
         .status(StatusCode::BAD_REQUEST)
         .body(Body::from("Bad request"))
+        .unwrap())
+}
+
+fn unauthorized(token: &String) -> ResponseResult {
+    info!("Unauthorized: token: {}", token);
+
+    Ok(Response::builder()
+        .status(StatusCode::UNAUTHORIZED)
+        .body(Body::from("Unauthorized"))
         .unwrap())
 }
 

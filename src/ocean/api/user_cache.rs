@@ -49,6 +49,10 @@ pub fn set(token: String, user: types::User) {
     USER_CACHE.lock().unwrap().insert(token, user);
 }
 
-pub fn get(token: String) -> types::User {
-    (*USER_CACHE.lock().unwrap().get(&token).unwrap()).clone()
+pub fn get(token: &String) -> Option<types::User> {
+    if let Some(u) = USER_CACHE.lock().unwrap().get(token) {
+        Some((*u).clone())
+    } else {
+        None
+    }
 }
