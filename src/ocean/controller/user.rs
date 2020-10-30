@@ -1,5 +1,6 @@
 use super::*;
 use crate::api;
+use crate::api::user_cache;
 use crate::model::user;
 use crate::model::user_group;
 use crate::types::Id;
@@ -162,8 +163,15 @@ pub fn change_password(data: RequestData) -> RequestResult {
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
     diesel::update(users.filter(id.eq(req.id)))
-        .set(token.eq(req.token))
+        .set(token.eq(&req.token))
         .execute(&data.db.conn)?;
+
+    let user = types::User {
+        id: data.user.id,
+        code: data.user.code,
+    };
+
+    user_cache::set(req.token, user);
 
     Ok(None)
 }
