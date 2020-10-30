@@ -197,16 +197,12 @@ pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
 
-    println!("user_id {}", data.user.id);
-
     #[derive(Deserialize)]
     struct Req {
         id: Id,
-        user_id: Option<Id>,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
-    let mark_user_id = if let Some(i) = req.user_id { i } else { 0 };
 
     #[derive(Queryable, Serialize)]
     pub struct Mandela {
@@ -231,7 +227,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         .inner_join(users)
         .left_join(
             marks.on(marks::user_id
-                .eq(mark_user_id)
+                .eq(data.user.id)
                 .and(marks::mandela_id.eq(mandels::id))),
         )
         .select((
@@ -260,10 +256,14 @@ pub fn get_one(data: RequestData) -> RequestResult {
     let mut mandela_vote: Option<i16> = None;
     let mut mandela_votes: Option<Vec<Votes>> = None;
 
-    if let Some(i) = req.user_id {
+    if data.user.code != types::UserCode::Fierce {
         mandela_vote = votes
             .select(votes::vote)
-            .filter(votes::mandela_id.eq(req.id).and(votes::user_id.eq(i)))
+            .filter(
+                votes::mandela_id
+                    .eq(req.id)
+                    .and(votes::user_id.eq(data.user.id)),
+            )
             .get_result::<i16>(&data.db.conn)
             .optional()?;
 
