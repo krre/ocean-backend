@@ -7,7 +7,7 @@ use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 // user.create
@@ -85,28 +85,24 @@ pub fn auth(data: RequestData) -> RequestResult {
 pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::user_groups;
     use crate::model::schema::user_groups::dsl::*;
+    use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
 
-    let params = data.params.unwrap();
-    let user_token = params["token"].as_str().unwrap();
+    #[derive(Queryable, Serialize)]
+    struct User {
+        id: types::Id,
+        name: Option<String>,
+        code: String,
+        create_ts: NaiveDateTime,
+    }
 
     let user = users
-        .filter(token.eq(user_token))
-        .limit(1)
-        .load::<user::User>(&data.db.conn)?;
+        .inner_join(user_groups)
+        .select((users::id, users::name, user_groups::code, users::create_ts))
+        .filter(users::id.eq(data.user.id))
+        .first::<User>(&data.db.conn)?;
 
-    let user_group = user_groups
-        .filter(user_groups::id.eq(user[0].group_id))
-        .limit(1)
-        .load::<user_group::UserGroup>(&data.db.conn)?;
-
-    let result = json!({
-        "id": user[0].id,
-        "name": user[0].name,
-        "code": user_group[0].code,
-        "create_ts": user[0].create_ts
-    });
-
+    let result = serde_json::to_value(&user)?;
     Ok(Some(result))
 }
 
