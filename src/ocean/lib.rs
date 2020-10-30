@@ -12,3 +12,21 @@ pub mod db;
 pub mod json_rpc;
 pub mod model;
 pub mod telegram_bot;
+
+pub mod types {
+    pub type Id = i32;
+
+    #[derive(Clone)]
+    pub enum UserCode {
+        Admin,
+        User,
+        Conspirator,
+        Fierce,
+    }
+
+    #[derive(Clone)]
+    pub struct User {
+        pub id: Id,
+        pub code: UserCode,
+    }
+}

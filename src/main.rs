@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate diesel_migrations;
 use log::info;
+use ocean::api::user_cache;
 use ocean::app;
 use ocean::db;
 
@@ -14,6 +15,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     let db = db::Db::new();
     embedded_migrations::run_with_output(&db.conn, &mut std::io::stdout()).unwrap();
+
+    user_cache::init(db);
 
     let app = app::App::new();
     app.start().await?;
