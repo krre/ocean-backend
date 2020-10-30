@@ -116,11 +116,13 @@ pub async fn route(req: Request<Body>) -> ResponseResult {
         return unauthorized(token);
     }
 
+    let user_id = user.id;
+
     let whole_body = body::aggregate(req).await?;
     let bytes = whole_body.bytes();
     let raw_req = String::from_utf8(bytes.to_vec()).unwrap();
 
-    info!("[REQUEST] {}", raw_req);
+    info!("[REQUEST] ({}) {}", user_id, raw_req);
 
     let json_rpc_req = serde_json::from_slice::<json_rpc::Request>(bytes);
 
@@ -136,7 +138,7 @@ pub async fn route(req: Request<Body>) -> ResponseResult {
     };
 
     let raw_resp = serde_json::to_string(&json_rpc_resp).unwrap();
-    info!("[RESPONSE] {}", raw_resp);
+    info!("[RESPONSE] ({}) {}", user_id, raw_resp);
 
     let mut response = Response::new(Body::from(raw_resp));
     response.headers_mut().insert(
