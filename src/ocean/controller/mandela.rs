@@ -322,7 +322,6 @@ pub fn get_all(data: RequestData) -> RequestResult {
     struct Req {
         offset: i64,
         limit: i64,
-        user_id: Option<i32>,
         filter: Option<i8>,
         category: Option<i16>,
         sort: i8,
@@ -345,7 +344,6 @@ pub fn get_all(data: RequestData) -> RequestResult {
         mark_ts: Option<NaiveDateTime>,
     }
 
-    let req_user_id = if let Some(i) = req.user_id { i } else { 0 };
     const SHOW_ALL: i8 = 0;
     const SHOW_NEW: i8 = 1;
     const SHOW_MINE: i8 = 2;
@@ -362,12 +360,12 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .inner_join(users)
         .left_join(
             marks.on(marks::user_id
-                .eq(req_user_id)
+                .eq(data.user.id)
                 .and(marks::mandela_id.eq(mandels::id))),
         )
         .left_join(
             votes.on(votes::user_id
-                .eq(req_user_id)
+                .eq(data.user.id)
                 .and(votes::mandela_id.eq(mandels::id))),
         )
         .left_join(categories.on(categories::mandela_id.eq(mandels::id)))
@@ -390,7 +388,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     if filter == SHOW_NEW {
         query = query.filter(marks::create_ts.is_null())
     } else if filter == SHOW_MINE {
-        query = query.filter(mandels::user_id.eq(req_user_id))
+        query = query.filter(mandels::user_id.eq(data.user.id))
     } else if filter == SHOW_POLL {
         query = query.filter(votes::create_ts.is_null())
     } else if filter == SHOW_CATEGORY {
@@ -433,23 +431,23 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let mut poll_count = 0;
     let mut category_count = 0;
 
-    if let Some(i) = req.user_id {
+    if data.user.code != types::UserCode::Fierce {
         let mark_count: i64 = marks
             .select(count_star())
-            .filter(marks::user_id.eq(i))
+            .filter(marks::user_id.eq(data.user.id))
             .first(&data.db.conn)?;
         new_count = total_count - mark_count;
 
         let vote_count: i64 = votes
             .select(count_star())
-            .filter(votes::user_id.eq(i))
+            .filter(votes::user_id.eq(data.user.id))
             .first(&data.db.conn)?;
 
         poll_count = total_count - vote_count;
 
         mine_count = mandels
             .select(count_star())
-            .filter(mandels::user_id.eq(i))
+            .filter(mandels::user_id.eq(data.user.id))
             .first(&data.db.conn)?;
 
         if filter == SHOW_CATEGORY {
