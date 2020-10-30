@@ -146,7 +146,6 @@ pub fn update(data: RequestData) -> RequestResult {
         videos: serde_json::Value,
         links: serde_json::Value,
         categories: serde_json::Value,
-        user_id: Id,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -161,7 +160,7 @@ pub fn update(data: RequestData) -> RequestResult {
         images: req.images,
         videos: req.videos,
         links: req.links,
-        user_id: req.user_id,
+        user_id: data.user.id,
         update_ts: Utc::now().naive_utc(),
     };
 
