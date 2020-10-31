@@ -1,3 +1,4 @@
+use crate::types::Id;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -10,7 +11,7 @@ pub struct Response {
 
 #[derive(Deserialize, Debug)]
 pub struct Update {
-    pub update_id: i32,
+    pub update_id: Id,
     pub message: Message,
 }
 
@@ -22,7 +23,7 @@ pub struct Message {
 
 #[derive(Deserialize, Debug)]
 pub struct Chat {
-    pub id: i32,
+    pub id: Id,
 }
 
 #[derive(Serialize, Debug)]

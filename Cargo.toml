@@ -15,11 +15,28 @@ serde_json = "1.0.56"
 serde_derive = "1.0.114"
 dirs = "3.0.1"
 hyper = "0.13.7"
+hyper-rustls = "0.21.0"
 tokio = { version = "0.2.22", features = ["full"] }
 lazy_static = "1.4.0"
 diesel = { version = "1.4.5", features = ["postgres", "chrono", "serde_json"] }
 diesel_migrations = "1.4.0"
 chrono = { version = "0.4.13", features = ["serde"] }
+sha1 = "0.6.0"
 log = "0.4.11"
+ct-logs = { version = "^0.7", optional = true }
 env_logger = "0.7.1"
+rustls = "0.18"
+tokio-rustls = "0.14.0"
+rustls-native-certs = { version = "0.4.0", optional = true }
+futures-util = "0.3.5"
 reqwest = { version = "0.10", features = ["json"] }
+url = "2.1.1"
+
+[dev-dependencies]
+tokio = { version = "0.2", features = ["io-std", "macros", "dns", "stream"] }
+
+[features]
+default = ["native-tokio"]
+webpki-tokio = ["tokio-runtime"]
+native-tokio = ["tokio-runtime", "rustls-native-certs"]
+tokio-runtime =  ["hyper/runtime", "ct-logs"]

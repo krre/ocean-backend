@@ -1,6 +1,7 @@
 use crate::config;
 use crate::db;
 use crate::model;
+use crate::types;
 
 pub mod comment;
 pub mod forum;
@@ -14,12 +15,13 @@ pub type RequestHandler = fn(RequestData) -> RequestResult;
 
 pub struct RequestData {
     db: db::Db,
+    user: types::User,
     params: Option<serde_json::Value>,
 }
 
 impl RequestData {
-    pub fn new(db: db::Db, params: Option<serde_json::Value>) -> Self {
-        Self { db, params }
+    pub fn new(db: db::Db, user: types::User, params: Option<serde_json::Value>) -> Self {
+        Self { db, user, params }
     }
 }
 

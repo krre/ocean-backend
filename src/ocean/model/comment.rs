@@ -1,12 +1,13 @@
 use crate::model::schema::comments;
+use crate::types::Id;
 use chrono::NaiveDateTime;
 use serde::Deserialize;
 use serde::Serialize;
 
 #[derive(Queryable, Serialize)]
 pub struct Comment {
-    pub id: i32,
-    pub user_id: i32,
+    pub id: Id,
+    pub user_id: Id,
     pub user_name: Option<String>,
     pub message: String,
     pub create_ts: NaiveDateTime,
@@ -16,7 +17,7 @@ pub struct Comment {
 #[derive(Insertable, Deserialize)]
 #[table_name = "comments"]
 pub struct NewComment {
-    pub mandela_id: i32,
-    pub user_id: i32,
+    pub mandela_id: Id,
+    pub user_id: Id,
     pub message: String,
 }

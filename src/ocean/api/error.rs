@@ -14,6 +14,7 @@ pub const INVALID_PARAMETER: ErrorCode = 6;
 
 // User (100..199)
 pub const WRONG_USER_PASSWORD: ErrorCode = 100;
+pub const NEXT_ID_EXPIRED: ErrorCode = 101;
 
 lazy_static! {
     static ref ERROR_MESSAGES: HashMap<ErrorCode, &'static str> = {
@@ -26,6 +27,7 @@ lazy_static! {
         m.insert(INVALID_PARAMETER, "Invalid parameter");
 
         m.insert(WRONG_USER_PASSWORD, "Wrong user password");
+        m.insert(NEXT_ID_EXPIRED, "Next id expired");
         m
     };
 }

@@ -1,13 +1,19 @@
 use crate::api;
+use crate::api::authorizer;
+use crate::api::user_cache;
 use crate::controller;
 use crate::db;
 use crate::json_rpc;
+use crate::types;
 use hyper::body;
 use hyper::body::Buf;
 use hyper::header;
 use hyper::{Body, Method, Request, Response, StatusCode};
 use log::{error, info};
 use std::collections::HashMap;
+use url;
+
+type ResponseResult = Result<Response<Body>, hyper::Error>;
 
 lazy_static! {
     static ref METHODS: HashMap<String, Rh> = {
@@ -34,13 +40,17 @@ lazy_static! {
         );
         m.insert("mandela.mark".to_string(), Rh(controller::mandela::mark));
         m.insert("mandela.vote".to_string(), Rh(controller::mandela::vote));
+        m.insert(
+            "user.getNextId".to_string(),
+            Rh(controller::user::get_next_id),
+        );
         m.insert("user.create".to_string(), Rh(controller::user::create));
         m.insert("user.auth".to_string(), Rh(controller::user::auth));
         m.insert("user.getOne".to_string(), Rh(controller::user::get_one));
         m.insert("user.update".to_string(), Rh(controller::user::update));
         m.insert(
-            "user.changePassword".to_string(),
-            Rh(controller::user::change_password),
+            "user.updateToken".to_string(),
+            Rh(controller::user::update_token),
         );
         m.insert(
             "comment.create".to_string(),
@@ -109,29 +119,53 @@ lazy_static! {
 
 struct Rh(controller::RequestHandler);
 
-pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
+pub async fn route(req: Request<Body>) -> ResponseResult {
     if req.method() != Method::POST || req.uri().path() != "/api" {
-        info!(
-            "Bad request: method: {}, URL: {}",
-            req.method().as_str(),
-            req.uri().path()
-        );
-        return Ok(Response::builder()
-            .status(StatusCode::BAD_REQUEST)
-            .body(Body::from("Bad request"))
-            .unwrap());
+        return bad_request(req);
     }
+
+    let query;
+    if let Some(q) = req.uri().query() {
+        query = q;
+    } else {
+        return bad_request(req);
+    };
+
+    let url_params = url::form_urlencoded::parse(query.as_bytes());
+    let hash_params: HashMap<_, _> = url_params.into_owned().collect();
+
+    let token;
+
+    if let Some(t) = hash_params.get("token") {
+        token = t;
+    } else {
+        return bad_request(req);
+    }
+
+    let user;
+
+    if let Some(u) = user_cache::get(token) {
+        user = u;
+    } else {
+        return unauthorized(token);
+    }
+
+    let user_id = user.id;
 
     let whole_body = body::aggregate(req).await?;
     let bytes = whole_body.bytes();
     let raw_req = String::from_utf8(bytes.to_vec()).unwrap();
 
-    info!("Request: {}", raw_req);
+    info!("[REQUEST] ({}) {}", user_id, raw_req);
 
     let json_rpc_req = serde_json::from_slice::<json_rpc::Request>(bytes);
 
     let json_rpc_resp = if let Ok(r) = json_rpc_req {
-        exec(r)
+        if !authorizer::authorize(&r.method, &user.code) {
+            return forbidden(&r.method, &user.code);
+        }
+
+        exec(user, r)
     } else {
         let mut resp = json_rpc::Response::default();
         resp.error = Some(json_rpc::Error::from_api_error(&api::Error::new(
@@ -142,7 +176,7 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     };
 
     let raw_resp = serde_json::to_string(&json_rpc_resp).unwrap();
-    info!("Response: {}", raw_resp);
+    info!("[RESPONSE] ({}) {}", user_id, raw_resp);
 
     let mut response = Response::new(Body::from(raw_resp));
     response.headers_mut().insert(
@@ -153,7 +187,38 @@ pub async fn route(req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     Ok(response)
 }
 
-fn exec(req: json_rpc::Request) -> json_rpc::Response {
+fn bad_request(req: Request<Body>) -> ResponseResult {
+    info!(
+        "Bad request: method: {}, URL: {}",
+        req.method().as_str(),
+        req.uri().path()
+    );
+
+    Ok(Response::builder()
+        .status(StatusCode::BAD_REQUEST)
+        .body(Body::from("Bad request"))
+        .unwrap())
+}
+
+fn unauthorized(token: &String) -> ResponseResult {
+    info!("Unauthorized: token: {}", token);
+
+    Ok(Response::builder()
+        .status(StatusCode::UNAUTHORIZED)
+        .body(Body::from("Unauthorized"))
+        .unwrap())
+}
+
+fn forbidden(method: &String, user_code: &types::UserCode) -> ResponseResult {
+    info!("Forbidden: method: {} user code: {:?}", method, user_code);
+
+    Ok(Response::builder()
+        .status(StatusCode::FORBIDDEN)
+        .body(Body::from("Forbidden"))
+        .unwrap())
+}
+
+fn exec(user: types::User, req: json_rpc::Request) -> json_rpc::Response {
     let mut resp = json_rpc::Response::default();
 
     if let Some(id) = req.id {
@@ -166,7 +231,7 @@ fn exec(req: json_rpc::Request) -> json_rpc::Response {
     match METHODS.get(&method) {
         Some(func) => {
             let db = db::Db::new();
-            let data = controller::RequestData::new(db, req.params);
+            let data = controller::RequestData::new(db, user, req.params);
             let result = func.0(data);
 
             match result {

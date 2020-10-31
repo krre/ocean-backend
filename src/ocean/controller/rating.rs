@@ -1,4 +1,5 @@
 use super::*;
+use crate::types::Id;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -22,7 +23,7 @@ pub fn get_mandels(data: RequestData) -> RequestResult {
     #[derive(QueryableByName, Serialize)]
     struct Mandela {
         #[sql_type = "Int4"]
-        id: i32,
+        id: Id,
         #[sql_type = "Int4"]
         title_mode: i32,
         #[sql_type = "Text"]

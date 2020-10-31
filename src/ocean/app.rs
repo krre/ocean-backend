@@ -7,8 +7,9 @@ impl App {
         Self
     }
 
-    pub async fn start(&self) {
-        let server = server::Server::new();
-        server.listen().await;
+    pub async fn start(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let server = server::ApiServer::new();
+        server.listen().await?;
+        Ok(())
     }
 }

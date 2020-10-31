@@ -1,6 +1,7 @@
 use super::*;
 use crate::model::mandela;
 use crate::telegram_bot;
+use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -20,14 +21,14 @@ struct Votes {
 
 fn update_categories(
     conn: &PgConnection,
-    mandela_id: i32,
+    mandela_id: Id,
     category_numbers: Vec<i16>,
 ) -> RequestResult {
     use crate::model::schema::categories;
 
     #[derive(Queryable, Serialize, Debug)]
     pub struct CategoryNumber {
-        id: i32,
+        id: Id,
         number: i16,
     }
 
@@ -54,7 +55,7 @@ fn update_categories(
     #[derive(Insertable, Deserialize)]
     #[table_name = "categories"]
     pub struct NewCategoryNumber {
-        mandela_id: i32,
+        mandela_id: Id,
         number: i16,
     }
 
@@ -86,7 +87,6 @@ pub fn create(data: RequestData) -> RequestResult {
         videos: serde_json::Value,
         links: serde_json::Value,
         categories: serde_json::Value,
-        user_id: i32,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -103,7 +103,7 @@ pub fn create(data: RequestData) -> RequestResult {
         images: req.images,
         videos: req.videos,
         links: req.links,
-        user_id: req.user_id,
+        user_id: data.user.id,
     };
     let mandela_id = diesel::insert_into(mandels)
         .values(&new_mandela)
@@ -134,7 +134,7 @@ pub fn update(data: RequestData) -> RequestResult {
     use crate::model::schema::mandels::dsl::*;
     #[derive(Deserialize)]
     struct Req {
-        id: i32,
+        id: Id,
         title_mode: i32,
         title: String,
         what: String,
@@ -145,7 +145,6 @@ pub fn update(data: RequestData) -> RequestResult {
         videos: serde_json::Value,
         links: serde_json::Value,
         categories: serde_json::Value,
-        user_id: i32,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -160,7 +159,7 @@ pub fn update(data: RequestData) -> RequestResult {
         images: req.images,
         videos: req.videos,
         links: req.links,
-        user_id: req.user_id,
+        user_id: data.user.id,
         update_ts: Utc::now().naive_utc(),
     };
 
@@ -174,7 +173,7 @@ pub fn update(data: RequestData) -> RequestResult {
     Ok(None)
 }
 
-fn get_poll(db: &db::Db, mandela_id: i32) -> Vec<Votes> {
+fn get_poll(db: &db::Db, mandela_id: Id) -> Vec<Votes> {
     use diesel::dsl::*;
     use diesel::sql_types::Int4;
 
@@ -200,20 +199,18 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
     #[derive(Deserialize)]
     struct Req {
-        id: i32,
-        user_id: Option<i32>,
+        id: Id,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
-    let mark_user_id = if let Some(i) = req.user_id { i } else { 0 };
 
     #[derive(Queryable, Serialize)]
     pub struct Mandela {
-        id: i32,
+        id: Id,
         title: String,
         title_mode: i32,
         description: String,
-        user_id: i32,
+        user_id: Id,
         user_name: Option<String>,
         images: serde_json::Value,
         videos: serde_json::Value,
@@ -230,7 +227,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         .inner_join(users)
         .left_join(
             marks.on(marks::user_id
-                .eq(mark_user_id)
+                .eq(data.user.id)
                 .and(marks::mandela_id.eq(mandels::id))),
         )
         .select((
@@ -259,10 +256,14 @@ pub fn get_one(data: RequestData) -> RequestResult {
     let mut mandela_vote: Option<i16> = None;
     let mut mandela_votes: Option<Vec<Votes>> = None;
 
-    if let Some(i) = req.user_id {
+    if data.user.code != types::UserCode::Fierce {
         mandela_vote = votes
             .select(votes::vote)
-            .filter(votes::mandela_id.eq(req.id).and(votes::user_id.eq(i)))
+            .filter(
+                votes::mandela_id
+                    .eq(req.id)
+                    .and(votes::user_id.eq(data.user.id)),
+            )
             .get_result::<i16>(&data.db.conn)
             .optional()?;
 
@@ -319,7 +320,6 @@ pub fn get_all(data: RequestData) -> RequestResult {
     struct Req {
         offset: i64,
         limit: i64,
-        user_id: Option<i32>,
         filter: Option<i8>,
         category: Option<i16>,
         sort: i8,
@@ -329,7 +329,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     #[derive(Queryable, Serialize)]
     struct MandelaResp {
-        id: i32,
+        id: Id,
         title_mode: i32,
         title: String,
         what: String,
@@ -337,12 +337,11 @@ pub fn get_all(data: RequestData) -> RequestResult {
         after: String,
         create_ts: NaiveDateTime,
         user_name: Option<String>,
-        user_id: i32,
+        user_id: Id,
         comment_count: i32,
         mark_ts: Option<NaiveDateTime>,
     }
 
-    let req_user_id = if let Some(i) = req.user_id { i } else { 0 };
     const SHOW_ALL: i8 = 0;
     const SHOW_NEW: i8 = 1;
     const SHOW_MINE: i8 = 2;
@@ -359,12 +358,12 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .inner_join(users)
         .left_join(
             marks.on(marks::user_id
-                .eq(req_user_id)
+                .eq(data.user.id)
                 .and(marks::mandela_id.eq(mandels::id))),
         )
         .left_join(
             votes.on(votes::user_id
-                .eq(req_user_id)
+                .eq(data.user.id)
                 .and(votes::mandela_id.eq(mandels::id))),
         )
         .left_join(categories.on(categories::mandela_id.eq(mandels::id)))
@@ -387,7 +386,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     if filter == SHOW_NEW {
         query = query.filter(marks::create_ts.is_null())
     } else if filter == SHOW_MINE {
-        query = query.filter(mandels::user_id.eq(req_user_id))
+        query = query.filter(mandels::user_id.eq(data.user.id))
     } else if filter == SHOW_POLL {
         query = query.filter(votes::create_ts.is_null())
     } else if filter == SHOW_CATEGORY {
@@ -430,23 +429,23 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let mut poll_count = 0;
     let mut category_count = 0;
 
-    if let Some(i) = req.user_id {
+    if data.user.code != types::UserCode::Fierce {
         let mark_count: i64 = marks
             .select(count_star())
-            .filter(marks::user_id.eq(i))
+            .filter(marks::user_id.eq(data.user.id))
             .first(&data.db.conn)?;
         new_count = total_count - mark_count;
 
         let vote_count: i64 = votes
             .select(count_star())
-            .filter(votes::user_id.eq(i))
+            .filter(votes::user_id.eq(data.user.id))
             .first(&data.db.conn)?;
 
         poll_count = total_count - vote_count;
 
         mine_count = mandels
             .select(count_star())
-            .filter(mandels::user_id.eq(i))
+            .filter(mandels::user_id.eq(data.user.id))
             .first(&data.db.conn)?;
 
         if filter == SHOW_CATEGORY {
@@ -500,8 +499,7 @@ pub fn delete(data: RequestData) -> RequestResult {
 pub fn mark(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
-        id: i32,
-        user_id: i32,
+        id: Id,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -512,13 +510,13 @@ pub fn mark(data: RequestData) -> RequestResult {
     #[derive(Insertable)]
     #[table_name = "marks"]
     pub struct NewMark {
-        mandela_id: i32,
-        user_id: i32,
+        mandela_id: Id,
+        user_id: Id,
     };
 
     let new_mark = NewMark {
         mandela_id: req.id,
-        user_id: req.user_id,
+        user_id: data.user.id,
     };
 
     diesel::insert_into(marks)
@@ -531,8 +529,7 @@ pub fn mark(data: RequestData) -> RequestResult {
 pub fn vote(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
-        id: i32,
-        user_id: i32,
+        id: Id,
         vote: i16,
     }
 
@@ -541,14 +538,14 @@ pub fn vote(data: RequestData) -> RequestResult {
     #[derive(Insertable, AsChangeset)]
     #[table_name = "votes"]
     pub struct NewVote {
-        mandela_id: i32,
-        user_id: i32,
+        mandela_id: Id,
+        user_id: Id,
         vote: i16,
     };
 
     let new_vote = NewVote {
         mandela_id: req.id,
-        user_id: req.user_id,
+        user_id: data.user.id,
         vote: req.vote,
     };
 
@@ -557,8 +554,8 @@ pub fn vote(data: RequestData) -> RequestResult {
 
     let vote_id = votes
         .select(id)
-        .filter(mandela_id.eq(req.id).and(user_id.eq(req.user_id)))
-        .first::<i32>(&data.db.conn)
+        .filter(mandela_id.eq(req.id).and(user_id.eq(data.user.id)))
+        .first::<Id>(&data.db.conn)
         .optional()?;
 
     if let Some(i) = vote_id {
