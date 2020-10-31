@@ -25,18 +25,17 @@ pub fn create(data: RequestData) -> RequestResult {
 
     let groups = user_groups
         .filter(code.eq(req.code))
-        .limit(1)
-        .load::<user_group::UserGroup>(&data.db.conn)?;
+        .first::<user_group::UserGroup>(&data.db.conn)?;
 
     let new_user = user::NewUser {
         name: req.name,
-        group_id: groups[0].id,
+        group_id: groups.id,
     };
 
     let user_id = diesel::insert_into(users)
         .values(&new_user)
         .returning(users::id)
-        .get_result::<i32>(&data.db.conn)?;
+        .get_result::<Id>(&data.db.conn)?;
 
     let result = json!({
         "id": user_id,
