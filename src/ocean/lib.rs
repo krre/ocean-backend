@@ -16,7 +16,7 @@ pub mod telegram_bot;
 pub mod types {
     pub type Id = i32;
 
-    #[derive(Clone, PartialEq)]
+    #[derive(Clone, Debug, PartialEq)]
     pub enum UserCode {
         Admin,
         User,

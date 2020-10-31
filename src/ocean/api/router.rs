@@ -1,4 +1,5 @@
 use crate::api;
+use crate::api::authorizer;
 use crate::api::user_cache;
 use crate::controller;
 use crate::db;
@@ -127,6 +128,10 @@ pub async fn route(req: Request<Body>) -> ResponseResult {
     let json_rpc_req = serde_json::from_slice::<json_rpc::Request>(bytes);
 
     let json_rpc_resp = if let Ok(r) = json_rpc_req {
+        if !authorizer::authorize(&r.method, &user.code) {
+            return forbidden(&r.method, &user.code);
+        }
+
         exec(user, r)
     } else {
         let mut resp = json_rpc::Response::default();
@@ -168,6 +173,15 @@ fn unauthorized(token: &String) -> ResponseResult {
     Ok(Response::builder()
         .status(StatusCode::UNAUTHORIZED)
         .body(Body::from("Unauthorized"))
+        .unwrap())
+}
+
+fn forbidden(method: &String, user_code: &types::UserCode) -> ResponseResult {
+    info!("Forbidden: method: {} user code: {:?}", method, user_code);
+
+    Ok(Response::builder()
+        .status(StatusCode::FORBIDDEN)
+        .body(Body::from("Forbidden"))
         .unwrap())
 }
 
