@@ -146,8 +146,8 @@ pub fn update(data: RequestData) -> RequestResult {
     Ok(None)
 }
 
-// user.changePassword
-pub fn change_password(data: RequestData) -> RequestResult {
+// user.updateToken
+pub fn update_token(data: RequestData) -> RequestResult {
     use crate::model::schema::users::dsl::*;
 
     #[derive(Deserialize)]

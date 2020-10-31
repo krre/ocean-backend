@@ -44,8 +44,8 @@ lazy_static! {
         m.insert("user.getOne".to_string(), Rh(controller::user::get_one));
         m.insert("user.update".to_string(), Rh(controller::user::update));
         m.insert(
-            "user.changePassword".to_string(),
-            Rh(controller::user::change_password),
+            "user.updateToken".to_string(),
+            Rh(controller::user::update_token),
         );
         m.insert(
             "comment.create".to_string(),
