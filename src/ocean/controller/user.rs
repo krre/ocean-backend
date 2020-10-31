@@ -86,31 +86,39 @@ pub fn auth(data: RequestData) -> RequestResult {
 
     #[derive(Deserialize)]
     struct Req {
-        id: Id,
         token: String,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let user_id;
 
-    let result = users
-        .filter(users::id.eq(req.id))
-        .first::<user::User>(&data.db.conn)
-        .optional()?;
-
-    if let Some(r) = result {
-        if r.token != req.token {
-            return Err(api::make_error(api::error::WRONG_USER_PASSWORD));
-        }
-
-        let user_group = user_groups
-            .filter(user_groups::id.eq(r.group_id))
-            .first::<user_group::UserGroup>(&data.db.conn)?;
-
-        Ok(Some(json!({ "code": user_group.code,
-             "name": r.name })))
+    if let Some(u) = user_cache::get(&req.token) {
+        user_id = u.id;
     } else {
-        Err(api::make_error(api::error::WRONG_USER_PASSWORD))
+        return Err(api::make_error(api::error::WRONG_USER_PASSWORD));
     }
+
+    let user = users
+        .filter(users::id.eq(user_id))
+        .first::<user::User>(&data.db.conn)?;
+
+    let user_group = user_groups
+        .filter(user_groups::id.eq(user.group_id))
+        .first::<user_group::UserGroup>(&data.db.conn)?;
+
+    #[derive(Serialize)]
+    struct Resp {
+        code: String,
+        name: Option<String>,
+    }
+
+    let resp = Resp {
+        code: user_group.code,
+        name: user.name,
+    };
+
+    let result = serde_json::to_value(&resp)?;
+    Ok(Some(result))
 }
 
 // user.getOne
