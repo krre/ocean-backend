@@ -163,7 +163,7 @@ pub fn change_password(data: RequestData) -> RequestResult {
         .execute(&data.db.conn)?;
 
     let user = types::User {
-        id: data.user.id,
+        id: req.id,
         code: data.user.code,
     };
 
