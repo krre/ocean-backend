@@ -28,25 +28,17 @@ pub fn init(db: db::Db) {
         .unwrap();
 
     for user_data in list {
-        let user_code: types::UserCode = match user_data.code.as_ref() {
-            "admin" => types::UserCode::Admin,
-            "user" => types::UserCode::User,
-            "conspirator" => types::UserCode::Conspirator,
-            "fierce" => types::UserCode::Fierce,
-            _ => panic!(format!("Unknown user code {}", user_data.code)),
-        };
-
         let user = types::User {
             id: user_data.id,
-            code: user_code,
+            code: user_code(&user_data.code),
         };
 
         USER_CACHE.lock().unwrap().insert(user_data.token, user);
     }
 }
 
-pub fn set(token: String, user: types::User) {
-    USER_CACHE.lock().unwrap().insert(token, user);
+pub fn set(token: &String, user: types::User) {
+    USER_CACHE.lock().unwrap().insert(token.to_string(), user);
 }
 
 pub fn get(token: &String) -> Option<types::User> {
@@ -54,5 +46,15 @@ pub fn get(token: &String) -> Option<types::User> {
         Some((*u).clone())
     } else {
         None
+    }
+}
+
+pub fn user_code(code: &String) -> types::UserCode {
+    match code.as_ref() {
+        "admin" => types::UserCode::Admin,
+        "user" => types::UserCode::User,
+        "conspirator" => types::UserCode::Conspirator,
+        "fierce" => types::UserCode::Fierce,
+        _ => panic!(format!("Unknown user code {}", code)),
     }
 }

@@ -18,4 +18,5 @@ pub struct User {
 pub struct NewUser {
     pub name: Option<String>,
     pub group_id: Id,
+    pub token: String,
 }

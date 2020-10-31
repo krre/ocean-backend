@@ -10,6 +10,28 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+// user.getNextId
+pub fn get_next_id(data: RequestData) -> RequestResult {
+    let id = next_id(&data.db)?;
+
+    let result = json!({
+        "id": id,
+    });
+
+    Ok(Some(result))
+}
+
+fn next_id(db: &db::Db) -> Result<Id, Box<dyn std::error::Error>> {
+    use crate::model::schema::users;
+    use crate::model::schema::users::dsl::*;
+    let user_id: Id = users
+        .select(users::id)
+        .order(users::id.desc())
+        .first(&db.conn)?;
+
+    Ok(user_id + 1)
+}
+
 // user.create
 pub fn create(data: RequestData) -> RequestResult {
     use crate::model::schema::user_groups::dsl::*;
@@ -17,31 +39,42 @@ pub fn create(data: RequestData) -> RequestResult {
     use crate::model::schema::users::dsl::*;
     #[derive(Deserialize)]
     struct Req {
+        id: Id,
         name: Option<String>,
         code: String,
+        token: String,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let next_id = next_id(&data.db)?;
+
+    if req.id != next_id {
+        return Err(api::make_error(api::error::NEXT_ID_EXPIRED));
+    }
 
     let groups = user_groups
-        .filter(code.eq(req.code))
+        .filter(code.eq(&req.code))
         .first::<user_group::UserGroup>(&data.db.conn)?;
 
     let new_user = user::NewUser {
         name: req.name,
         group_id: groups.id,
+        token: req.token,
     };
 
-    let user_id = diesel::insert_into(users)
+    diesel::insert_into(users)
         .values(&new_user)
         .returning(users::id)
         .get_result::<Id>(&data.db.conn)?;
 
-    let result = json!({
-        "id": user_id,
-    });
+    let user = types::User {
+        id: req.id,
+        code: user_cache::user_code(&req.code),
+    };
 
-    Ok(Some(result))
+    user_cache::set(&new_user.token, user);
+
+    Ok(None)
 }
 
 // user.auth
@@ -113,7 +146,6 @@ pub fn update(data: RequestData) -> RequestResult {
 
     #[derive(Deserialize)]
     struct Req {
-        id: Id,
         name: String,
         code: String,
     }
@@ -138,7 +170,7 @@ pub fn update(data: RequestData) -> RequestResult {
         update_ts: Utc::now().naive_utc(),
     };
 
-    diesel::update(users.filter(users::id.eq(req.id)))
+    diesel::update(users.filter(users::id.eq(data.user.id)))
         .set(&update_user)
         .execute(&data.db.conn)?;
 
@@ -151,22 +183,21 @@ pub fn update_token(data: RequestData) -> RequestResult {
 
     #[derive(Deserialize)]
     struct Req {
-        id: Id,
         token: String,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    diesel::update(users.filter(id.eq(req.id)))
+    diesel::update(users.filter(id.eq(data.user.id)))
         .set(token.eq(&req.token))
         .execute(&data.db.conn)?;
 
     let user = types::User {
-        id: req.id,
+        id: data.user.id,
         code: data.user.code,
     };
 
-    user_cache::set(req.token, user);
+    user_cache::set(&req.token, user);
 
     Ok(None)
 }

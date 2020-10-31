@@ -8,6 +8,7 @@ pub fn authorize(method: &String, user_code: &UserCode) -> bool {
         "mandela.vote" => UserCode::User,
         "user.getOne" => UserCode::User,
         "user.update" => UserCode::User,
+        "user.updateToken" => UserCode::User,
         "comment.update" => UserCode::User,
         "comment.delete" => UserCode::User,
         _ => UserCode::Fierce,
@@ -19,8 +20,8 @@ pub fn authorize(method: &String, user_code: &UserCode) -> bool {
 fn user_security_order(user_code: &UserCode) -> u8 {
     match user_code {
         UserCode::Admin => 4,
-        UserCode::User => 3,
-        UserCode::Conspirator => 2,
+        UserCode::Conspirator => 3,
+        UserCode::User => 2,
         UserCode::Fierce => 1,
     }
 }
