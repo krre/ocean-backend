@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS user_groups (
 
 INSERT INTO user_groups (name, code) VALUES ('Администраторы', 'admin');
 INSERT INTO user_groups (name, code) VALUES ('Пользователи', 'user');
-INSERT INTO user_groups (name, code) VALUES ('Конспирологи', 'conspirator');
-INSERT INTO user_groups (name, code) VALUES ('Лютые конспирологи', 'fierce');
+INSERT INTO user_groups (name, code) VALUES ('Анонимы', 'conspirator');
+INSERT INTO user_groups (name, code) VALUES ('Незарегистрированные', 'fierce');
 
 CREATE TABLE IF NOT EXISTS users (
     id serial NOT NULL PRIMARY KEY,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 INSERT INTO users (name, token, group_id) VALUES ('Администратор', '', 1);
-INSERT INTO users (name, token, group_id) VALUES ('Лютый конспиролог', '', 4);
+INSERT INTO users (name, token, group_id) VALUES ('Аноним', '', 4);
 
 CREATE TABLE IF NOT EXISTS mandels (
     id serial NOT NULL PRIMARY KEY,
