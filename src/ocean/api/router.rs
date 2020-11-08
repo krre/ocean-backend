@@ -98,6 +98,10 @@ lazy_static! {
             Rh(controller::forum::category::update),
         );
         m.insert(
+            "forumCategory.delete".to_string(),
+            Rh(controller::forum::category::delete),
+        );
+        m.insert(
             "forumSection.create".to_string(),
             Rh(controller::forum::section::create),
         );

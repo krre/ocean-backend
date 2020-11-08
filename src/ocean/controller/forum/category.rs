@@ -87,3 +87,12 @@ pub fn update(data: RequestData) -> RequestResult {
 
     Ok(None)
 }
+
+// forumCategory.delete
+pub fn delete(data: RequestData) -> RequestResult {
+    use crate::model::schema::forum_categories::dsl::*;
+    let forum_category_id = data.params.unwrap()["id"].as_i64().unwrap() as i32;
+
+    diesel::delete(forum_categories.filter(id.eq(forum_category_id))).execute(&data.db.conn)?;
+    Ok(None)
+}
