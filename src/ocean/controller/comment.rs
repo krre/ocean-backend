@@ -50,10 +50,8 @@ pub fn create(data: RequestData) -> RequestResult {
 
     let final_user_name: String = if let Some(n) = user_name {
         n
-    } else if data.user.code == types::UserCode::Fierce {
-        "Лютый конспиролог".into()
     } else {
-        "Конспиролог".into()
+        "Аноним".into()
     };
 
     let comment_message = format!(
