@@ -86,35 +86,35 @@ lazy_static! {
         );
         m.insert("forum.getAll".to_string(), Rh(controller::forum::get_all));
         m.insert(
-            "forumCategory.create".to_string(),
+            "forum.category.create".to_string(),
             Rh(controller::forum::category::create),
         );
         m.insert(
-            "forumCategory.getOne".to_string(),
+            "forum.category.getOne".to_string(),
             Rh(controller::forum::category::get_one),
         );
         m.insert(
-            "forumCategory.update".to_string(),
+            "forum.category.update".to_string(),
             Rh(controller::forum::category::update),
         );
         m.insert(
-            "forumCategory.delete".to_string(),
+            "forum.category.delete".to_string(),
             Rh(controller::forum::category::delete),
         );
         m.insert(
-            "forumSection.create".to_string(),
+            "forum.section.create".to_string(),
             Rh(controller::forum::section::create),
         );
         m.insert(
-            "forumSection.getOne".to_string(),
+            "forum.section.getOne".to_string(),
             Rh(controller::forum::section::get_one),
         );
         m.insert(
-            "forumSection.update".to_string(),
+            "forum.section.update".to_string(),
             Rh(controller::forum::section::update),
         );
         m.insert(
-            "forumSection.getAll".to_string(),
+            "forum.section.getAll".to_string(),
             Rh(controller::forum::section::get_all),
         );
         m
