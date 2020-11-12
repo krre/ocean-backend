@@ -114,8 +114,8 @@ lazy_static! {
             Rh(controller::forum::section::update),
         );
         m.insert(
-            "forum.section.getAll".to_string(),
-            Rh(controller::forum::section::get_all),
+            "forum.section.delete".to_string(),
+            Rh(controller::forum::section::delete),
         );
         m
     };
