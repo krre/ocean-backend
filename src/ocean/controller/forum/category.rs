@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
 
-// forumCategory.create
+// forum.category.create
 pub fn create(data: RequestData) -> RequestResult {
     use crate::model::schema::forum_categories;
     use crate::model::schema::forum_categories::dsl::*;
@@ -26,7 +26,7 @@ pub fn create(data: RequestData) -> RequestResult {
     Ok(None)
 }
 
-// forumCategory.getOne
+// forum.category.getOne
 pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::forum_categories::dsl::*;
 
@@ -53,7 +53,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     Ok(Some(result))
 }
 
-// forumCategory.update
+// forum.category.update
 pub fn update(data: RequestData) -> RequestResult {
     use crate::model::schema::forum_categories;
     use crate::model::schema::forum_categories::dsl::*;
@@ -88,7 +88,7 @@ pub fn update(data: RequestData) -> RequestResult {
     Ok(None)
 }
 
-// forumCategory.delete
+// forum.category.delete
 pub fn delete(data: RequestData) -> RequestResult {
     use crate::model::schema::forum_categories::dsl::*;
     let forum_category_id = data.params.unwrap()["id"].as_i64().unwrap() as i32;

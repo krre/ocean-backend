@@ -5,7 +5,7 @@ use diesel::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
 
-// forumCategory.create
+// forum.section.create
 pub fn create(data: RequestData) -> RequestResult {
     use crate::model::schema::forum_sections;
     use crate::model::schema::forum_sections::dsl::*;
@@ -27,7 +27,7 @@ pub fn create(data: RequestData) -> RequestResult {
     Ok(None)
 }
 
-// forumCategory.getOne
+// forum.section.getOne
 pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::forum_sections::dsl::*;
 
@@ -55,7 +55,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     Ok(Some(result))
 }
 
-// forumCategory.update
+// forum.section.update
 pub fn update(data: RequestData) -> RequestResult {
     use crate::model::schema::forum_sections;
     use crate::model::schema::forum_sections::dsl::*;
@@ -90,7 +90,7 @@ pub fn update(data: RequestData) -> RequestResult {
     Ok(None)
 }
 
-// forumSection.getAll
+// forum.section.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
     use crate::model::schema::forum_sections::dsl::*;
 
