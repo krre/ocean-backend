@@ -5,6 +5,7 @@ use serde::Serialize;
 
 pub mod category;
 pub mod section;
+pub mod topic;
 
 // forum.getAll
 pub fn get_all(data: RequestData) -> RequestResult {

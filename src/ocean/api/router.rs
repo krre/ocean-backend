@@ -117,6 +117,26 @@ lazy_static! {
             "forum.section.delete".to_string(),
             Rh(controller::forum::section::delete),
         );
+        m.insert(
+            "forum.topic.getAll".to_string(),
+            Rh(controller::forum::topic::get_all),
+        );
+        m.insert(
+            "forum.topic.getOne".to_string(),
+            Rh(controller::forum::topic::get_one),
+        );
+        m.insert(
+            "forum.topic.create".to_string(),
+            Rh(controller::forum::topic::create),
+        );
+        m.insert(
+            "forum.topic.update".to_string(),
+            Rh(controller::forum::topic::update),
+        );
+        m.insert(
+            "forum.topic.delete".to_string(),
+            Rh(controller::forum::topic::delete),
+        );
         m
     };
 }

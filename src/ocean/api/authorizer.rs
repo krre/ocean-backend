@@ -17,6 +17,9 @@ pub fn authorize(method: &String, user_code: &UserCode) -> bool {
         "forum.section.create" => UserCode::Admin,
         "forum.section.update" => UserCode::Admin,
         "forums.section.delete" => UserCode::Admin,
+        "forum.topic.create" => UserCode::Fierce,
+        "forum.topic.update" => UserCode::User,
+        "forums.topic.delete" => UserCode::User,
         _ => UserCode::Fierce,
     };
 
