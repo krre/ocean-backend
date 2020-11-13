@@ -39,6 +39,17 @@ table! {
 }
 
 table! {
+    forum_topics (id) {
+        id -> Int4,
+        section_id -> Int4,
+        user_id -> Int4,
+        name -> Text,
+        create_ts -> Timestamptz,
+        update_ts -> Timestamptz,
+    }
+}
+
+table! {
     mandels (id) {
         id -> Int4,
         title -> Text,
@@ -106,6 +117,8 @@ joinable!(categories -> mandels (mandela_id));
 joinable!(comments -> mandels (mandela_id));
 joinable!(comments -> users (user_id));
 joinable!(forum_sections -> forum_categories (category_id));
+joinable!(forum_topics -> forum_sections (section_id));
+joinable!(forum_topics -> users (user_id));
 joinable!(mandels -> users (user_id));
 joinable!(marks -> mandels (mandela_id));
 joinable!(marks -> users (user_id));
@@ -118,6 +131,7 @@ allow_tables_to_appear_in_same_query!(
     comments,
     forum_categories,
     forum_sections,
+    forum_topics,
     mandels,
     marks,
     user_groups,
