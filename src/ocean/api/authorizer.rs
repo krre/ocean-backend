@@ -11,12 +11,12 @@ pub fn authorize(method: &String, user_code: &UserCode) -> bool {
         "user.updateToken" => UserCode::User,
         "comment.update" => UserCode::User,
         "comment.delete" => UserCode::User,
-        "forumCategory.create" => UserCode::Admin,
-        "forumCategory.update" => UserCode::Admin,
-        "forumCategory.delete" => UserCode::Admin,
-        "forumSection.create" => UserCode::Admin,
-        "forumSection.update" => UserCode::Admin,
-        "forumSection.delete" => UserCode::Admin,
+        "forum.category.create" => UserCode::Admin,
+        "forum.category.update" => UserCode::Admin,
+        "forum.category.delete" => UserCode::Admin,
+        "forum.section.create" => UserCode::Admin,
+        "forum.section.update" => UserCode::Admin,
+        "forums.section.delete" => UserCode::Admin,
         _ => UserCode::Fierce,
     };
 
