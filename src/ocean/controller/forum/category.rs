@@ -1,4 +1,5 @@
 use crate::controller::*;
+use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -32,7 +33,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
     #[derive(Deserialize)]
     struct Req {
-        id: i32,
+        id: Id,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -60,7 +61,7 @@ pub fn update(data: RequestData) -> RequestResult {
 
     #[derive(Deserialize)]
     struct Req {
-        id: i32,
+        id: Id,
         name: String,
         order_index: i16,
     }

@@ -108,7 +108,7 @@ pub fn create(data: RequestData) -> RequestResult {
     let mandela_id = diesel::insert_into(mandels)
         .values(&new_mandela)
         .returning(id)
-        .get_result::<i32>(&data.db.conn)?;
+        .get_result::<Id>(&data.db.conn)?;
 
     let category_numbers: Vec<i16> = serde_json::from_value(req.categories).unwrap();
     update_categories(&data.db.conn, mandela_id, category_numbers)?;
