@@ -4,6 +4,7 @@ use diesel::prelude::*;
 use serde::Serialize;
 
 pub mod category;
+pub mod post;
 pub mod section;
 pub mod topic;
 
