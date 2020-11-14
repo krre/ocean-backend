@@ -28,6 +28,17 @@ table! {
 }
 
 table! {
+    forum_posts (id) {
+        id -> Int4,
+        topic_id -> Int4,
+        user_id -> Int4,
+        post -> Text,
+        create_ts -> Timestamptz,
+        update_ts -> Timestamptz,
+    }
+}
+
+table! {
     forum_sections (id) {
         id -> Int4,
         category_id -> Int4,
@@ -116,6 +127,8 @@ table! {
 joinable!(categories -> mandels (mandela_id));
 joinable!(comments -> mandels (mandela_id));
 joinable!(comments -> users (user_id));
+joinable!(forum_posts -> forum_topics (topic_id));
+joinable!(forum_posts -> users (user_id));
 joinable!(forum_sections -> forum_categories (category_id));
 joinable!(forum_topics -> forum_sections (section_id));
 joinable!(forum_topics -> users (user_id));
@@ -130,6 +143,7 @@ allow_tables_to_appear_in_same_query!(
     categories,
     comments,
     forum_categories,
+    forum_posts,
     forum_sections,
     forum_topics,
     mandels,
