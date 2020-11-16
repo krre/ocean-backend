@@ -48,19 +48,13 @@ pub fn create(data: RequestData) -> RequestResult {
         .filter(users::id.eq(data.user.id))
         .first::<Option<String>>(&data.db.conn)?;
 
-    let final_user_name: String = if let Some(n) = user_name {
-        n
-    } else {
-        "Аноним".into()
-    };
-
     let comment_message = format!(
         "{}
 {}
 
 {}",
         format_mandela_title(mandela_title),
-        final_user_name,
+        user_name.unwrap(),
         new_comment.message
     );
 
