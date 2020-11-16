@@ -88,12 +88,13 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
     #[derive(Queryable, Serialize)]
     pub struct ForumTopic {
+        user_id: Id,
         section_id: Id,
         name: String,
     }
 
     let forum_topic = forum_topics
-        .select((section_id, name))
+        .select((user_id, section_id, name))
         .filter(id.eq(req.id))
         .first::<ForumTopic>(&data.db.conn)
         .optional()?;
