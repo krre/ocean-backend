@@ -57,6 +57,8 @@ table! {
         name -> Text,
         create_ts -> Timestamptz,
         update_ts -> Timestamptz,
+        last_post_id -> Nullable<Int4>,
+        last_post_create_ts -> Nullable<Timestamptz>,
     }
 }
 
@@ -127,7 +129,6 @@ table! {
 joinable!(categories -> mandels (mandela_id));
 joinable!(comments -> mandels (mandela_id));
 joinable!(comments -> users (user_id));
-joinable!(forum_posts -> forum_topics (topic_id));
 joinable!(forum_posts -> users (user_id));
 joinable!(forum_sections -> forum_categories (category_id));
 joinable!(forum_topics -> forum_sections (section_id));
