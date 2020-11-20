@@ -129,10 +129,29 @@ pub fn create(data: RequestData) -> RequestResult {
         post: req.post,
     };
 
-    let post_id = diesel::insert_into(forum_posts)
+    let (post_id, post_create_ts) = diesel::insert_into(forum_posts)
         .values(&new_forum_post)
-        .returning(id)
-        .get_result::<Id>(&data.db.conn)?;
+        .returning((forum_posts::id, forum_posts::create_ts))
+        .get_result::<(Id, NaiveDateTime)>(&data.db.conn)?;
+
+    use crate::model::schema::forum_topics;
+    use crate::model::schema::forum_topics::dsl::*;
+
+    #[derive(AsChangeset)]
+    #[table_name = "forum_topics"]
+    pub struct UpdateForumTopic {
+        last_post_id: Option<Id>,
+        last_post_create_ts: Option<NaiveDateTime>,
+    }
+
+    let update_forum_topic = UpdateForumTopic {
+        last_post_id: Some(post_id),
+        last_post_create_ts: Some(post_create_ts),
+    };
+
+    diesel::update(forum_topics.filter(forum_topics::id.eq(req.topic_id)))
+        .set(&update_forum_topic)
+        .execute(&data.db.conn)?;
 
     let result = json!({ "id": post_id });
     Ok(Some(result))
