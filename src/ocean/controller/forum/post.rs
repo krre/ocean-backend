@@ -77,7 +77,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     Ok(Some(result))
 }
 
-// forum.topic.getOne
+// forum.post.getOne
 pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::forum_posts::dsl::*;
 
