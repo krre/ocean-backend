@@ -1,3 +1,4 @@
+use crate::controller::forum::topic;
 use crate::controller::*;
 use crate::types::Id;
 use chrono::prelude::*;
@@ -134,24 +135,7 @@ pub fn create(data: RequestData) -> RequestResult {
         .returning((forum_posts::id, forum_posts::create_ts))
         .get_result::<(Id, NaiveDateTime)>(&data.db.conn)?;
 
-    use crate::model::schema::forum_topics;
-    use crate::model::schema::forum_topics::dsl::*;
-
-    #[derive(AsChangeset)]
-    #[table_name = "forum_topics"]
-    pub struct UpdateForumTopic {
-        last_post_id: Option<Id>,
-        last_post_create_ts: Option<NaiveDateTime>,
-    }
-
-    let update_forum_topic = UpdateForumTopic {
-        last_post_id: Some(post_id),
-        last_post_create_ts: Some(post_create_ts),
-    };
-
-    diesel::update(forum_topics.filter(forum_topics::id.eq(req.topic_id)))
-        .set(&update_forum_topic)
-        .execute(&data.db.conn)?;
+    topic::update_last_post(&data.db, req.topic_id, Some(post_id), Some(post_create_ts))?;
 
     let result = json!({ "id": post_id });
     Ok(Some(result))
@@ -191,9 +175,39 @@ pub fn update(data: RequestData) -> RequestResult {
 
 // forum.post.delete
 pub fn delete(data: RequestData) -> RequestResult {
-    use crate::model::schema::forum_posts::dsl::*;
-    let forum_post_id = data.params.unwrap()["id"].as_i64().unwrap() as Id;
+    use crate::model::schema::forum_posts;
 
-    diesel::delete(forum_posts.filter(id.eq(forum_post_id))).execute(&data.db.conn)?;
+    let post_id = data.params.unwrap()["id"].as_i64().unwrap() as Id;
+
+    let topic_id = forum_posts::table
+        .select(forum_posts::topic_id)
+        .filter(forum_posts::id.eq(post_id))
+        .first::<Id>(&data.db.conn)?;
+
+    #[derive(Queryable, Serialize)]
+    pub struct ForumPost {
+        id: Id,
+        create_ts: NaiveDateTime,
+    }
+
+    let forum_post = forum_posts::table
+        .select((forum_posts::id, forum_posts::create_ts))
+        .filter(forum_posts::topic_id.eq(topic_id))
+        .order(forum_posts::id.desc())
+        .offset(1)
+        .first::<ForumPost>(&data.db.conn)
+        .optional()?;
+
+    let mut prev_post_id: Option<Id> = None;
+    let mut prev_post_create_ts: Option<NaiveDateTime> = None;
+
+    if let Some(fp) = forum_post {
+        prev_post_id = Some(fp.id);
+        prev_post_create_ts = Some(fp.create_ts);
+    }
+
+    topic::update_last_post(&data.db, topic_id, prev_post_id, prev_post_create_ts)?;
+    diesel::delete(forum_posts::table.filter(forum_posts::id.eq(post_id)))
+        .execute(&data.db.conn)?;
     Ok(None)
 }

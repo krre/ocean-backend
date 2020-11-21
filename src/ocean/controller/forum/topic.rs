@@ -179,3 +179,31 @@ pub fn delete(data: RequestData) -> RequestResult {
     diesel::delete(forum_topics.filter(id.eq(forum_topic_id))).execute(&data.db.conn)?;
     Ok(None)
 }
+
+pub fn update_last_post(
+    db: &db::Db,
+    id: Id,
+    post_id: Option<Id>,
+    post_create_ts: Option<NaiveDateTime>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    use crate::model::schema::forum_topics;
+
+    #[derive(AsChangeset)]
+    #[table_name = "forum_topics"]
+    #[changeset_options(treat_none_as_null = "true")]
+    pub struct UpdateForumTopic {
+        last_post_id: Option<Id>,
+        last_post_create_ts: Option<NaiveDateTime>,
+    }
+
+    let update_forum_topic = UpdateForumTopic {
+        last_post_id: post_id,
+        last_post_create_ts: post_create_ts,
+    };
+
+    diesel::update(forum_topics::table.filter(forum_topics::id.eq(id)))
+        .set(&update_forum_topic)
+        .execute(&db.conn)?;
+
+    Ok(())
+}
