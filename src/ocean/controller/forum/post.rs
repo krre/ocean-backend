@@ -36,14 +36,15 @@ pub fn get_all(data: RequestData) -> RequestResult {
     #[derive(Serialize)]
     struct Resp {
         topic_name: String,
+        topic_user_id: Id,
         post_count: i64,
         posts: Vec<Post>,
     }
 
-    let topic_name = forum_topics::table
-        .select(forum_topics::name)
+    let (topic_name, topic_user_id) = forum_topics::table
+        .select((forum_topics::name, forum_topics::user_id))
         .filter(forum_topics::id.eq(req.topic_id))
-        .first::<String>(&data.db.conn)?;
+        .first::<(String, Id)>(&data.db.conn)?;
     use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
 
@@ -69,6 +70,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     let resp = Resp {
         topic_name: topic_name,
+        topic_user_id: topic_user_id,
         post_count: post_count,
         posts: list,
     };
