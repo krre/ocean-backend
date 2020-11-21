@@ -1,5 +1,6 @@
 use crate::controller::forum::topic;
 use crate::controller::*;
+use crate::telegram_bot;
 use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
@@ -118,16 +119,16 @@ pub fn create(data: RequestData) -> RequestResult {
 
     #[derive(Insertable)]
     #[table_name = "forum_posts"]
-    struct NewForumPost {
+    struct NewForumPost<'a> {
         topic_id: Id,
         user_id: Id,
-        post: String,
+        post: &'a str,
     }
 
     let new_forum_post = NewForumPost {
         topic_id: req.topic_id,
         user_id: data.user.id,
-        post: req.post,
+        post: &req.post,
     };
 
     let (post_id, post_create_ts) = diesel::insert_into(forum_posts)
@@ -136,6 +137,39 @@ pub fn create(data: RequestData) -> RequestResult {
         .get_result::<(Id, NaiveDateTime)>(&data.db.conn)?;
 
     topic::update_last_post(&data.db, req.topic_id, Some(post_id), Some(post_create_ts))?;
+
+    use crate::model::schema::forum_topics;
+    use crate::model::schema::users;
+
+    let topic_name = forum_topics::table
+        .select(forum_topics::name)
+        .filter(forum_topics::id.eq(req.topic_id))
+        .first::<String>(&data.db.conn)?;
+
+    let topic_user_name = users::table
+        .select(users::name)
+        .filter(users::id.eq(data.user.id))
+        .first::<Option<String>>(&data.db.conn)?;
+
+    let topic_title = format!(
+        "<a href='{}/forum/topic/{}'>{}</a>",
+        config::CONFIG.frontend.domen,
+        req.topic_id,
+        topic_name
+    );
+
+    let post_message = format!(
+        "Форум
+{}
+{}
+
+{}",
+        topic_title,
+        topic_user_name.unwrap(),
+        req.post
+    );
+
+    telegram_bot::send_admin_message(post_message);
 
     let result = json!({ "id": post_id });
     Ok(Some(result))

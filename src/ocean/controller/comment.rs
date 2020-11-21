@@ -49,7 +49,8 @@ pub fn create(data: RequestData) -> RequestResult {
         .first::<Option<String>>(&data.db.conn)?;
 
     let comment_message = format!(
-        "{}
+        "Каталог
+{}
 {}
 
 {}",
