@@ -9,10 +9,6 @@ use serde_json::json;
 
 // forum.topic.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
-    use crate::model::schema::forum_sections;
-    use crate::model::schema::forum_topics;
-    use crate::model::schema::forum_topics::dsl::*;
-
     #[derive(Deserialize)]
     struct Req {
         section_id: Id,
@@ -22,6 +18,33 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
+    #[derive(Queryable)]
+    struct SectionMeta {
+        category_id: Id,
+        category_name: String,
+        section_name: String,
+    };
+
+    use crate::model::schema::forum_categories;
+    use crate::model::schema::forum_sections;
+    use crate::model::schema::forum_topics;
+    use crate::model::schema::forum_topics::dsl::*;
+
+    let section_meta = forum_sections::table
+        .inner_join(
+            forum_categories::table.on(forum_categories::id.eq(forum_sections::category_id)),
+        )
+        .select((
+            forum_categories::id,
+            forum_categories::name,
+            forum_sections::name,
+        ))
+        .filter(forum_sections::id.eq(req.section_id))
+        .first::<SectionMeta>(&data.db.conn)?;
+
+    use crate::model::schema::users;
+    use crate::model::schema::users::dsl::*;
+
     #[derive(Queryable, Serialize)]
     struct Topic {
         id: Id,
@@ -30,20 +53,6 @@ pub fn get_all(data: RequestData) -> RequestResult {
         name: String,
         create_ts: NaiveDateTime,
     }
-
-    #[derive(Serialize)]
-    struct Resp {
-        section_name: String,
-        topic_count: i64,
-        topics: Vec<Topic>,
-    }
-
-    let section_name = forum_sections::table
-        .select(forum_sections::name)
-        .filter(forum_sections::id.eq(req.section_id))
-        .first::<String>(&data.db.conn)?;
-    use crate::model::schema::users;
-    use crate::model::schema::users::dsl::*;
 
     let list = forum_topics
         .inner_join(users)
@@ -65,8 +74,19 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .select(diesel::dsl::count_star())
         .first(&data.db.conn)?;
 
+    #[derive(Serialize)]
+    struct Resp {
+        category_id: Id,
+        category_name: String,
+        section_name: String,
+        topic_count: i64,
+        topics: Vec<Topic>,
+    }
+
     let resp = Resp {
-        section_name: section_name,
+        category_id: section_meta.category_id,
+        category_name: section_meta.category_name,
+        section_name: section_meta.section_name,
         topic_count: topic_count,
         topics: list,
     };
