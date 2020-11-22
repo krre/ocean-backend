@@ -100,7 +100,7 @@ table! {
 table! {
     users (id) {
         id -> Int4,
-        name -> Nullable<Text>,
+        name -> Text,
         token -> Text,
         group_id -> Int4,
         create_ts -> Timestamptz,
