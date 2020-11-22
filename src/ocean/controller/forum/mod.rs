@@ -60,45 +60,52 @@ pub fn get_all(data: RequestData) -> RequestResult {
 pub fn get_new(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
-        offset: i64,
-        limit: i64,
+        offset: i32,
+        limit: i32,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    #[derive(Queryable, Serialize)]
+    use diesel::prelude::*;
+    use diesel::sql_types::Int4;
+    use diesel::sql_types::Int8;
+    use diesel::sql_types::Text;
+    use diesel::sql_types::Timestamptz;
+
+    #[derive(QueryableByName, Serialize)]
     struct Topic {
+        #[sql_type = "Int4"]
         id: Id,
+        #[sql_type = "Text"]
         name: String,
+        #[sql_type = "Text"]
         post: String,
+        #[sql_type = "Timestamptz"]
         post_create_ts: NaiveDateTime,
+        #[sql_type = "Int4"]
         user_id: Id,
-        user_name: Option<String>,
+        #[sql_type = "Text"]
+        user_name: String,
+        #[sql_type = "Int8"]
+        post_count: i64,
     }
 
-    use crate::model::schema::forum_posts;
-    use crate::model::schema::forum_posts::dsl::*;
-    use crate::model::schema::forum_topics;
-    use crate::model::schema::forum_topics::dsl::*;
-    use crate::model::schema::users;
-    use crate::model::schema::users::dsl::*;
+    let list = diesel::dsl::sql_query("
+        SELECT ft.id, ft.name, fp.post, fp.create_ts AS post_create_ts, u.id AS user_id, u.name AS user_name,
+            (SELECT count(*) FROM forum_posts WHERE topic_id = ft.id) AS post_count
+        FROM forum_topics AS ft
+            INNER JOIN forum_posts AS fp ON fp.id = ft.last_post_id
+            INNER JOIN users AS u ON u.id = fp.user_id
+        WHERE last_post_create_ts IS NOT NULL
+        ORDER BY last_post_create_ts DESC
+        LIMIT $1
+        OFFSET $2"
+    )
+    .bind::<Int4, _>(req.limit)
+    .bind::<Int4, _>(req.offset)
+    .load::<Topic>(&data.db.conn)?;
 
-    let list = forum_topics
-        .inner_join(forum_posts.on(forum_posts::id.nullable().eq(forum_topics::last_post_id)))
-        .inner_join(users.on(users::id.eq(forum_posts::user_id)))
-        .select((
-            forum_topics::id,
-            forum_topics::name,
-            forum_posts::post,
-            forum_posts::create_ts,
-            users::id,
-            users::name.nullable(),
-        ))
-        .filter(last_post_create_ts.is_not_null())
-        .order(last_post_create_ts.desc())
-        .offset(req.offset)
-        .limit(req.limit)
-        .load::<Topic>(&data.db.conn)?;
+    use crate::model::schema::forum_topics::dsl::*;
 
     let topic_count: i64 = forum_topics
         .filter(last_post_create_ts.is_not_null())
