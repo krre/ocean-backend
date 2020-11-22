@@ -60,7 +60,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     struct Post {
         id: Id,
         user_id: Id,
-        user_name: Option<String>,
+        user_name: String,
         post: String,
         create_ts: NaiveDateTime,
     }
@@ -184,7 +184,7 @@ pub fn create(data: RequestData) -> RequestResult {
     let topic_user_name = users::table
         .select(users::name)
         .filter(users::id.eq(data.user.id))
-        .first::<Option<String>>(&data.db.conn)?;
+        .first::<String>(&data.db.conn)?;
 
     let topic_title = format!(
         "<a href='{}/forum/topic/{}'>{}</a>",
@@ -199,9 +199,7 @@ pub fn create(data: RequestData) -> RequestResult {
 {}
 
 {}",
-        topic_title,
-        topic_user_name.unwrap(),
-        req.post
+        topic_title, topic_user_name, req.post
     );
 
     telegram_bot::send_admin_message(post_message);

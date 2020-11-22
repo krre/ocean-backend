@@ -49,7 +49,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     struct Topic {
         id: Id,
         user_id: Id,
-        user_name: Option<String>,
+        user_name: String,
         name: String,
         create_ts: NaiveDateTime,
     }

@@ -6,7 +6,7 @@ use serde::Serialize;
 #[derive(Queryable, Serialize)]
 pub struct User {
     pub id: Id,
-    pub name: Option<String>,
+    pub name: String,
     pub token: String,
     pub group_id: Id,
     pub create_ts: NaiveDateTime,
@@ -16,7 +16,7 @@ pub struct User {
 #[derive(Insertable)]
 #[table_name = "users"]
 pub struct NewUser {
-    pub name: Option<String>,
+    pub name: String,
     pub group_id: Id,
     pub token: String,
 }

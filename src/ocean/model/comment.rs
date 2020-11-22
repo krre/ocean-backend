@@ -8,7 +8,7 @@ use serde::Serialize;
 pub struct Comment {
     pub id: Id,
     pub user_id: Id,
-    pub user_name: Option<String>,
+    pub user_name: String,
     pub message: String,
     pub create_ts: NaiveDateTime,
     pub update_ts: NaiveDateTime,

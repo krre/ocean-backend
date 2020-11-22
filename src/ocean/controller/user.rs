@@ -40,7 +40,7 @@ pub fn create(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         id: Id,
-        name: Option<String>,
+        name: String,
         code: String,
         token: String,
     }
@@ -109,7 +109,7 @@ pub fn auth(data: RequestData) -> RequestResult {
     #[derive(Serialize)]
     struct Resp {
         code: String,
-        name: Option<String>,
+        name: String,
     }
 
     let resp = Resp {
@@ -131,7 +131,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     #[derive(Queryable, Serialize)]
     struct User {
         id: types::Id,
-        name: Option<String>,
+        name: String,
         code: String,
         create_ts: NaiveDateTime,
     }

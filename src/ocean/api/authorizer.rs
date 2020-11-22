@@ -17,13 +17,13 @@ pub fn authorize(method: &String, user_code: &UserCode) -> bool {
         "forum.section.create" => UserCode::Admin,
         "forum.section.update" => UserCode::Admin,
         "forums.section.delete" => UserCode::Admin,
-        "forum.topic.create" => UserCode::Fierce,
+        "forum.topic.create" => UserCode::Anonym,
         "forum.topic.update" => UserCode::User,
         "forums.topic.delete" => UserCode::User,
-        "forum.post.create" => UserCode::Fierce,
+        "forum.post.create" => UserCode::Anonym,
         "forum.post.update" => UserCode::User,
         "forums.post.delete" => UserCode::User,
-        _ => UserCode::Fierce,
+        _ => UserCode::Anonym,
     };
 
     user_security_order(user_code) >= user_security_order(&allowed_code)
@@ -31,9 +31,8 @@ pub fn authorize(method: &String, user_code: &UserCode) -> bool {
 
 fn user_security_order(user_code: &UserCode) -> u8 {
     match user_code {
-        UserCode::Admin => 4,
-        UserCode::Conspirator => 3,
+        UserCode::Admin => 3,
         UserCode::User => 2,
-        UserCode::Fierce => 1,
+        UserCode::Anonym => 1,
     }
 }

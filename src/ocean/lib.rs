@@ -20,8 +20,7 @@ pub mod types {
     pub enum UserCode {
         Admin,
         User,
-        Conspirator,
-        Fierce,
+        Anonym,
     }
 
     #[derive(Clone)]

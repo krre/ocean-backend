@@ -211,7 +211,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         title_mode: i32,
         description: String,
         user_id: Id,
-        user_name: Option<String>,
+        user_name: String,
         images: serde_json::Value,
         videos: serde_json::Value,
         links: serde_json::Value,
@@ -256,7 +256,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     let mut mandela_vote: Option<i16> = None;
     let mut mandela_votes: Option<Vec<Votes>> = None;
 
-    if data.user.code != types::UserCode::Fierce {
+    if data.user.code != types::UserCode::Anonym {
         mandela_vote = votes
             .select(votes::vote)
             .filter(
@@ -429,7 +429,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let mut poll_count = 0;
     let mut category_count = 0;
 
-    if data.user.code != types::UserCode::Fierce {
+    if data.user.code != types::UserCode::Anonym {
         let mark_count: i64 = marks
             .select(count_star())
             .filter(marks::user_id.eq(data.user.id))

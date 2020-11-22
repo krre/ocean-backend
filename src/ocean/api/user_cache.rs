@@ -53,8 +53,7 @@ pub fn user_code(code: &String) -> types::UserCode {
     match code.as_ref() {
         "admin" => types::UserCode::Admin,
         "user" => types::UserCode::User,
-        "conspirator" => types::UserCode::Conspirator,
-        "fierce" => types::UserCode::Fierce,
+        "anonym" => types::UserCode::Anonym,
         _ => panic!(format!("Unknown user code {}", code)),
     }
 }
