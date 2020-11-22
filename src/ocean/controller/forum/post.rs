@@ -11,10 +11,6 @@ use serde_json::json;
 
 // forum.post.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
-    use crate::model::schema::forum_posts;
-    use crate::model::schema::forum_posts::dsl::*;
-    use crate::model::schema::forum_topics;
-
     #[derive(Deserialize)]
     struct Req {
         topic_id: Id,
@@ -24,6 +20,42 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
+    #[derive(Queryable)]
+    struct TopicMeta {
+        category_id: Id,
+        category_name: String,
+        section_id: Id,
+        section_name: String,
+        topic_name: String,
+        topic_user_id: Id,
+    };
+
+    use crate::model::schema::forum_categories;
+    use crate::model::schema::forum_posts;
+    use crate::model::schema::forum_posts::dsl::*;
+    use crate::model::schema::forum_sections;
+    use crate::model::schema::forum_topics;
+    use crate::model::schema::forum_topics::dsl::*;
+
+    let topic_meta = forum_topics
+        .inner_join(forum_sections::table.on(forum_sections::id.eq(forum_topics::section_id)))
+        .inner_join(
+            forum_categories::table.on(forum_categories::id.eq(forum_sections::category_id)),
+        )
+        .select((
+            forum_categories::id,
+            forum_categories::name,
+            forum_sections::id,
+            forum_sections::name,
+            forum_topics::name,
+            forum_topics::user_id,
+        ))
+        .filter(forum_topics::id.eq(req.topic_id))
+        .first::<TopicMeta>(&data.db.conn)?;
+
+    use crate::model::schema::users;
+    use crate::model::schema::users::dsl::*;
+
     #[derive(Queryable, Serialize)]
     struct Post {
         id: Id,
@@ -32,21 +64,6 @@ pub fn get_all(data: RequestData) -> RequestResult {
         post: String,
         create_ts: NaiveDateTime,
     }
-
-    #[derive(Serialize)]
-    struct Resp {
-        topic_name: String,
-        topic_user_id: Id,
-        post_count: i64,
-        posts: Vec<Post>,
-    }
-
-    let (topic_name, topic_user_id) = forum_topics::table
-        .select((forum_topics::name, forum_topics::user_id))
-        .filter(forum_topics::id.eq(req.topic_id))
-        .first::<(String, Id)>(&data.db.conn)?;
-    use crate::model::schema::users;
-    use crate::model::schema::users::dsl::*;
 
     let list = forum_posts
         .inner_join(users)
@@ -68,9 +85,25 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .select(diesel::dsl::count_star())
         .first(&data.db.conn)?;
 
+    #[derive(Serialize)]
+    struct Resp {
+        category_id: Id,
+        category_name: String,
+        section_id: Id,
+        section_name: String,
+        topic_name: String,
+        topic_user_id: Id,
+        post_count: i64,
+        posts: Vec<Post>,
+    }
+
     let resp = Resp {
-        topic_name: topic_name,
-        topic_user_id: topic_user_id,
+        category_id: topic_meta.category_id,
+        category_name: topic_meta.category_name,
+        section_id: topic_meta.section_id,
+        section_name: topic_meta.section_name,
+        topic_name: topic_meta.topic_name,
+        topic_user_id: topic_meta.topic_user_id,
         post_count: post_count,
         posts: list,
     };
