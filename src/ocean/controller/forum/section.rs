@@ -6,26 +6,49 @@ use diesel::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
 
-// forum.section.create
-pub fn create(data: RequestData) -> RequestResult {
+// forum.section.getAll
+pub fn get_all(data: RequestData) -> RequestResult {
+    #[derive(Deserialize)]
+    struct Req {
+        category_id: Id,
+    }
+
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+
+    use crate::model::schema::forum_categories;
     use crate::model::schema::forum_sections;
     use crate::model::schema::forum_sections::dsl::*;
 
-    #[derive(Insertable, Deserialize)]
-    #[table_name = "forum_sections"]
-    struct NewForumSection {
-        category_id: Id,
+    let category_name = forum_categories::table
+        .select(forum_categories::name)
+        .filter(forum_categories::id.eq(req.category_id))
+        .first::<String>(&data.db.conn)?;
+
+    #[derive(Queryable, Serialize)]
+    struct Section {
+        id: Id,
         name: String,
-        order_index: i16,
     }
 
-    let new_forum_section = serde_json::from_value::<NewForumSection>(data.params.unwrap())?;
+    let list = forum_sections
+        .select((forum_sections::id, forum_sections::name))
+        .filter(category_id.eq(req.category_id))
+        .order(forum_sections::order_index.asc())
+        .load::<Section>(&data.db.conn)?;
 
-    diesel::insert_into(forum_sections)
-        .values(&new_forum_section)
-        .execute(&data.db.conn)?;
+    #[derive(Serialize)]
+    struct Resp {
+        category_name: String,
+        sections: Vec<Section>,
+    }
 
-    Ok(None)
+    let resp = Resp {
+        category_name: category_name,
+        sections: list,
+    };
+
+    let result = serde_json::to_value(&resp)?;
+    Ok(Some(result))
 }
 
 // forum.section.getOne
@@ -54,6 +77,28 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
     let result = serde_json::to_value(&forum_section)?;
     Ok(Some(result))
+}
+
+// forum.section.create
+pub fn create(data: RequestData) -> RequestResult {
+    use crate::model::schema::forum_sections;
+    use crate::model::schema::forum_sections::dsl::*;
+
+    #[derive(Insertable, Deserialize)]
+    #[table_name = "forum_sections"]
+    struct NewForumSection {
+        category_id: Id,
+        name: String,
+        order_index: i16,
+    }
+
+    let new_forum_section = serde_json::from_value::<NewForumSection>(data.params.unwrap())?;
+
+    diesel::insert_into(forum_sections)
+        .values(&new_forum_section)
+        .execute(&data.db.conn)?;
+
+    Ok(None)
 }
 
 // forum.section.update

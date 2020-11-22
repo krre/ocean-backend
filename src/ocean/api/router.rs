@@ -107,6 +107,10 @@ lazy_static! {
             Rh(controller::forum::section::create),
         );
         m.insert(
+            "forum.section.getAll".to_string(),
+            Rh(controller::forum::section::get_all),
+        );
+        m.insert(
             "forum.section.getOne".to_string(),
             Rh(controller::forum::section::get_one),
         );
