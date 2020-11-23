@@ -1,7 +1,6 @@
 use super::*;
 use crate::api;
 use crate::api::user_cache;
-use crate::model::user;
 use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
@@ -62,7 +61,15 @@ pub fn create(data: RequestData) -> RequestResult {
         .filter(code.eq(&req.code))
         .first::<UserGroup>(&data.db.conn)?;
 
-    let new_user = user::NewUser {
+    #[derive(Insertable)]
+    #[table_name = "users"]
+    pub struct NewUser {
+        name: String,
+        group_id: Id,
+        token: String,
+    }
+
+    let new_user = NewUser {
         name: req.name,
         group_id: groups.id,
         token: req.token,
@@ -104,9 +111,19 @@ pub fn auth(data: RequestData) -> RequestResult {
         return Err(api::make_error(api::error::WRONG_USER_PASSWORD));
     }
 
+    #[derive(Queryable, Serialize)]
+    pub struct User {
+        id: Id,
+        name: String,
+        token: String,
+        group_id: Id,
+        create_ts: NaiveDateTime,
+        update_ts: NaiveDateTime,
+    }
+
     let user = users
         .filter(users::id.eq(user_id))
-        .first::<user::User>(&data.db.conn)?;
+        .first::<User>(&data.db.conn)?;
 
     let user_group = user_groups
         .filter(user_groups::id.eq(user.group_id))
