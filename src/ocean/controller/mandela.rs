@@ -1,5 +1,4 @@
 use super::*;
-use crate::model::mandela;
 use crate::telegram_bot;
 use crate::types::Id;
 use chrono::prelude::*;
@@ -10,6 +9,16 @@ use diesel::sql_types::Int8;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;
+
+#[derive(Queryable)]
+pub struct MandelaTitle {
+    pub id: Id,
+    pub title_mode: i32,
+    pub title: String,
+    pub what: String,
+    pub before: String,
+    pub after: String,
+}
 
 #[derive(QueryableByName, Serialize)]
 struct Votes {
@@ -91,9 +100,25 @@ pub fn create(data: RequestData) -> RequestResult {
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
+    use crate::model::schema::mandels;
     use crate::model::schema::mandels::dsl::*;
 
-    let new_mandela = mandela::NewMandela {
+    #[derive(Insertable)]
+    #[table_name = "mandels"]
+    struct NewMandela {
+        title_mode: i32,
+        title: String,
+        what: String,
+        before: String,
+        after: String,
+        description: String,
+        user_id: Id,
+        images: serde_json::Value,
+        videos: serde_json::Value,
+        links: serde_json::Value,
+    }
+
+    let new_mandela = NewMandela {
         title_mode: req.title_mode,
         title: req.title,
         what: req.what,
@@ -105,6 +130,7 @@ pub fn create(data: RequestData) -> RequestResult {
         links: req.links,
         user_id: data.user.id,
     };
+
     let mandela_id = diesel::insert_into(mandels)
         .values(&new_mandela)
         .returning(id)
@@ -149,7 +175,23 @@ pub fn update(data: RequestData) -> RequestResult {
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    let update_mandela = mandela::UpdateMandela {
+    #[derive(AsChangeset)]
+    #[table_name = "mandels"]
+    struct UpdateMandela {
+        title_mode: i32,
+        title: String,
+        what: String,
+        before: String,
+        after: String,
+        description: String,
+        images: serde_json::Value,
+        videos: serde_json::Value,
+        links: serde_json::Value,
+        user_id: Id,
+        update_ts: NaiveDateTime,
+    }
+
+    let update_mandela = UpdateMandela {
         title_mode: req.title_mode,
         title: req.title,
         what: req.what,

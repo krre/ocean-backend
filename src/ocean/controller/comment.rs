@@ -1,3 +1,4 @@
+use self::mandela;
 use super::*;
 use crate::telegram_bot;
 use crate::types::Id;
@@ -51,7 +52,7 @@ pub fn create(data: RequestData) -> RequestResult {
             mandels::after,
         ))
         .filter(mandels::id.eq(new_comment.mandela_id))
-        .first::<model::mandela::MandelaTitle>(&data.db.conn)?;
+        .first::<mandela::MandelaTitle>(&data.db.conn)?;
 
     let user_name = users::table
         .select(users::name.nullable())

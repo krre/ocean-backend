@@ -1,6 +1,5 @@
 use crate::config;
 use crate::db;
-use crate::model;
 use crate::types;
 
 pub mod comment;
@@ -25,7 +24,7 @@ impl RequestData {
     }
 }
 
-pub fn format_mandela_title(mandela_title: model::mandela::MandelaTitle) -> String {
+pub fn format_mandela_title(mandela_title: mandela::MandelaTitle) -> String {
     const TITLE_MODE_SIMPLE: i32 = 0;
     const TITLE_MODE_COMPLEX: i32 = 1;
 
