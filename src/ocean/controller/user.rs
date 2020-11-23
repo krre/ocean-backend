@@ -2,13 +2,19 @@ use super::*;
 use crate::api;
 use crate::api::user_cache;
 use crate::model::user;
-use crate::model::user_group;
 use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+
+#[derive(Queryable, Serialize)]
+struct UserGroup {
+    id: Id,
+    name: Option<String>,
+    code: String,
+}
 
 // user.getNextId
 pub fn get_next_id(data: RequestData) -> RequestResult {
@@ -54,7 +60,7 @@ pub fn create(data: RequestData) -> RequestResult {
 
     let groups = user_groups
         .filter(code.eq(&req.code))
-        .first::<user_group::UserGroup>(&data.db.conn)?;
+        .first::<UserGroup>(&data.db.conn)?;
 
     let new_user = user::NewUser {
         name: req.name,
@@ -104,7 +110,7 @@ pub fn auth(data: RequestData) -> RequestResult {
 
     let user_group = user_groups
         .filter(user_groups::id.eq(user.group_id))
-        .first::<user_group::UserGroup>(&data.db.conn)?;
+        .first::<UserGroup>(&data.db.conn)?;
 
     #[derive(Serialize)]
     struct Resp {
@@ -162,7 +168,7 @@ pub fn update(data: RequestData) -> RequestResult {
 
     let groups = user_groups
         .filter(code.eq(req.code))
-        .first::<user_group::UserGroup>(&data.db.conn)?;
+        .first::<UserGroup>(&data.db.conn)?;
 
     #[derive(AsChangeset)]
     #[table_name = "users"]
