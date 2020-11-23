@@ -1,5 +1,4 @@
 use super::*;
-use crate::model::comment;
 use crate::telegram_bot;
 use crate::types::Id;
 use chrono::prelude::*;
@@ -17,7 +16,18 @@ pub fn create(data: RequestData) -> RequestResult {
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
-    let new_comment = comment::NewComment {
+
+    use crate::model::schema::comments;
+
+    #[derive(Insertable)]
+    #[table_name = "comments"]
+    pub struct NewComment {
+        mandela_id: Id,
+        user_id: Id,
+        message: String,
+    }
+
+    let new_comment = NewComment {
         mandela_id: req.mandela_id,
         user_id: data.user.id,
         message: req.message,
@@ -80,6 +90,16 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
+    #[derive(Queryable, Serialize)]
+    pub struct Comment {
+        pub id: Id,
+        pub user_id: Id,
+        pub user_name: String,
+        pub message: String,
+        pub create_ts: NaiveDateTime,
+        pub update_ts: NaiveDateTime,
+    }
+
     let list = comments
         .inner_join(users)
         .select((
@@ -94,7 +114,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .order(comments::id.asc())
         .offset(req.offset)
         .limit(req.limit)
-        .load::<comment::Comment>(&data.db.conn)?;
+        .load::<Comment>(&data.db.conn)?;
 
     let total_count: i64 = comments
         .filter(mandela_id.eq(req.mandela_id))
@@ -104,7 +124,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     #[derive(Serialize)]
     struct Resp {
         total_count: i64,
-        comments: Vec<comment::Comment>,
+        comments: Vec<Comment>,
     };
 
     let resp = serde_json::to_value(&Resp {
