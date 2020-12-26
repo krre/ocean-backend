@@ -92,9 +92,6 @@ pub fn create(data: RequestData) -> RequestResult {
         before: String,
         after: String,
         description: String,
-        images: serde_json::Value,
-        videos: serde_json::Value,
-        links: serde_json::Value,
         categories: serde_json::Value,
     }
 
@@ -113,9 +110,6 @@ pub fn create(data: RequestData) -> RequestResult {
         after: String,
         description: String,
         user_id: Id,
-        images: serde_json::Value,
-        videos: serde_json::Value,
-        links: serde_json::Value,
     }
 
     let new_mandela = NewMandela {
@@ -125,9 +119,6 @@ pub fn create(data: RequestData) -> RequestResult {
         before: req.before,
         after: req.after,
         description: req.description,
-        images: req.images,
-        videos: req.videos,
-        links: req.links,
         user_id: data.user.id,
     };
 
@@ -167,9 +158,6 @@ pub fn update(data: RequestData) -> RequestResult {
         before: String,
         after: String,
         description: String,
-        images: serde_json::Value,
-        videos: serde_json::Value,
-        links: serde_json::Value,
         categories: serde_json::Value,
     }
 
@@ -184,9 +172,6 @@ pub fn update(data: RequestData) -> RequestResult {
         before: String,
         after: String,
         description: String,
-        images: serde_json::Value,
-        videos: serde_json::Value,
-        links: serde_json::Value,
         user_id: Id,
         update_ts: NaiveDateTime,
     }
@@ -198,9 +183,6 @@ pub fn update(data: RequestData) -> RequestResult {
         before: req.before,
         after: req.after,
         description: req.description,
-        images: req.images,
-        videos: req.videos,
-        links: req.links,
         user_id: data.user.id,
         update_ts: Utc::now().naive_utc(),
     };
@@ -254,9 +236,6 @@ pub fn get_one(data: RequestData) -> RequestResult {
         description: String,
         user_id: Id,
         user_name: String,
-        images: serde_json::Value,
-        videos: serde_json::Value,
-        links: serde_json::Value,
         create_ts: NaiveDateTime,
         update_ts: NaiveDateTime,
         what: String,
@@ -279,9 +258,6 @@ pub fn get_one(data: RequestData) -> RequestResult {
             description,
             mandels::user_id,
             users::name,
-            images,
-            videos,
-            links,
             mandels::create_ts,
             mandels::update_ts,
             what,
