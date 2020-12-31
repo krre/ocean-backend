@@ -201,9 +201,9 @@ pub async fn route(req: Request<Body>) -> ResponseResult {
 
     let user_id = user.id;
 
-    let whole_body = body::aggregate(req).await?;
+    let whole_body = body::to_bytes(req).await?;
     let bytes = whole_body.bytes();
-    let raw_req = String::from_utf8(bytes.to_vec()).unwrap();
+    let raw_req = String::from_utf8_lossy(bytes);
 
     info!("[REQUEST] ({}) {}", user_id, raw_req);
 
