@@ -2,6 +2,7 @@ use crate::config;
 use crate::db;
 use crate::types;
 
+pub mod activity;
 pub mod comment;
 pub mod forum;
 pub mod mandela;

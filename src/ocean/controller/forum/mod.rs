@@ -2,12 +2,34 @@ use crate::controller::*;
 use crate::types::Id;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel::sql_types::Int4;
+use diesel::sql_types::Int8;
+use diesel::sql_types::Text;
+use diesel::sql_types::Timestamptz;
 use serde::{Deserialize, Serialize};
 
 pub mod category;
 pub mod post;
 pub mod section;
 pub mod topic;
+
+#[derive(QueryableByName, Serialize)]
+pub struct Topic {
+    #[sql_type = "Int4"]
+    id: Id,
+    #[sql_type = "Text"]
+    name: String,
+    #[sql_type = "Text"]
+    post: String,
+    #[sql_type = "Timestamptz"]
+    post_create_ts: NaiveDateTime,
+    #[sql_type = "Int4"]
+    user_id: Id,
+    #[sql_type = "Text"]
+    user_name: String,
+    #[sql_type = "Int8"]
+    post_count: i64,
+}
 
 // forum.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
@@ -67,45 +89,10 @@ pub fn get_new(data: RequestData) -> RequestResult {
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
     use diesel::prelude::*;
-    use diesel::sql_types::Int4;
-    use diesel::sql_types::Int8;
-    use diesel::sql_types::Text;
-    use diesel::sql_types::Timestamptz;
-
-    #[derive(QueryableByName, Serialize)]
-    struct Topic {
-        #[sql_type = "Int4"]
-        id: Id,
-        #[sql_type = "Text"]
-        name: String,
-        #[sql_type = "Text"]
-        post: String,
-        #[sql_type = "Timestamptz"]
-        post_create_ts: NaiveDateTime,
-        #[sql_type = "Int4"]
-        user_id: Id,
-        #[sql_type = "Text"]
-        user_name: String,
-        #[sql_type = "Int8"]
-        post_count: i64,
-    }
-
-    let list = diesel::dsl::sql_query("
-        SELECT ft.id, ft.name, fp.post, fp.create_ts AS post_create_ts, u.id AS user_id, u.name AS user_name,
-            (SELECT count(*) FROM forum_posts WHERE topic_id = ft.id) AS post_count
-        FROM forum_topics AS ft
-            INNER JOIN forum_posts AS fp ON fp.id = ft.last_post_id
-            INNER JOIN users AS u ON u.id = fp.user_id
-        WHERE last_post_create_ts IS NOT NULL
-        ORDER BY last_post_create_ts DESC
-        LIMIT $1
-        OFFSET $2"
-    )
-    .bind::<Int4, _>(req.limit)
-    .bind::<Int4, _>(req.offset)
-    .load::<Topic>(&data.db.conn)?;
 
     use crate::model::schema::forum_topics::dsl::*;
+
+    let list = new_topics(&data.db, req.limit, req.offset)?;
 
     let topic_count: i64 = forum_topics
         .filter(last_post_create_ts.is_not_null())
@@ -125,4 +112,26 @@ pub fn get_new(data: RequestData) -> RequestResult {
 
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
+}
+
+pub fn new_topics(
+    db: &db::Db,
+    limit: i32,
+    offset: i32,
+) -> Result<Vec<Topic>, Box<dyn std::error::Error>> {
+    let result = diesel::dsl::sql_query("
+    SELECT ft.id, ft.name, fp.post, fp.create_ts AS post_create_ts, u.id AS user_id, u.name AS user_name,
+        (SELECT count(*) FROM forum_posts WHERE topic_id = ft.id) AS post_count
+    FROM forum_topics AS ft
+        INNER JOIN forum_posts AS fp ON fp.id = ft.last_post_id
+        INNER JOIN users AS u ON u.id = fp.user_id
+    WHERE last_post_create_ts IS NOT NULL
+    ORDER BY last_post_create_ts DESC
+    LIMIT $1
+    OFFSET $2")
+    .bind::<Int4, _>(limit)
+    .bind::<Int4, _>(offset)
+    .load::<Topic>(&db.conn)?;
+
+    Ok(result)
 }

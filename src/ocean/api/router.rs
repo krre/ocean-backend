@@ -162,6 +162,10 @@ lazy_static! {
             "forum.post.delete".to_string(),
             Rh(controller::forum::post::delete),
         );
+        m.insert(
+            "activity.getAll".to_string(),
+            Rh(controller::activity::get_all),
+        );
         m
     };
 }
