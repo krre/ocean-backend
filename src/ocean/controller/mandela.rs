@@ -5,7 +5,10 @@ use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel::sql_types::Int2;
+use diesel::sql_types::Int4;
 use diesel::sql_types::Int8;
+use diesel::sql_types::Text;
+use diesel::sql_types::Timestamptz;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;
@@ -26,6 +29,30 @@ struct Votes {
     vote: i16,
     #[sql_type = "Int8"]
     count: i64,
+}
+
+#[derive(QueryableByName, Serialize)]
+pub struct Comment {
+    #[sql_type = "Int4"]
+    mandela_id: Id,
+    #[sql_type = "Int4"]
+    title_mode: i32,
+    #[sql_type = "Text"]
+    title: String,
+    #[sql_type = "Text"]
+    what: String,
+    #[sql_type = "Text"]
+    before: String,
+    #[sql_type = "Text"]
+    after: String,
+    #[sql_type = "Text"]
+    message: String,
+    #[sql_type = "Int4"]
+    user_id: i32,
+    #[sql_type = "Text"]
+    user_name: String,
+    #[sql_type = "Timestamptz"]
+    create_ts: NaiveDateTime,
 }
 
 fn update_categories(
@@ -199,7 +226,6 @@ pub fn update(data: RequestData) -> RequestResult {
 
 fn get_poll(db: &db::Db, mandela_id: Id) -> Vec<Votes> {
     use diesel::dsl::*;
-    use diesel::sql_types::Int4;
 
     sql_query(
         "SELECT vote, COUNT (*) as count FROM votes AS v
@@ -589,4 +615,28 @@ pub fn vote(data: RequestData) -> RequestResult {
     let votes_count = get_poll(&data.db, req.id);
     let result = serde_json::to_value(&votes_count)?;
     Ok(Some(result))
+}
+
+pub fn new_comments(
+    db: &db::Db,
+    limit: i32,
+    offset: i32,
+) -> Result<Vec<Comment>, Box<dyn std::error::Error>> {
+    let result = diesel::dsl::sql_query(
+        "SELECT mandela_id, title_mode, title, what, before, after, message, user_id, user_name, create_ts
+        FROM (select m.id AS mandela_id, m.title_mode, m.title, m.what, m.before, m.after, c.message, c.user_id, u.name AS user_name, c.create_ts,
+            rank() over (PARTITION BY c.mandela_id ORDER BY c.create_ts DESC)
+        FROM mandels AS m
+            LEFT JOIN comments AS c ON c.mandela_id = m.id
+            INNER JOIN users AS u ON c.user_id = u.id) AS x
+        WHERE x.rank = 1
+        ORDER BY x.create_ts DESC
+        LIMIT $1
+        OFFSET $2",
+    )
+    .bind::<Int4, _>(limit)
+    .bind::<Int4, _>(offset)
+    .load::<Comment>(&db.conn)?;
+
+    Ok(result)
 }
