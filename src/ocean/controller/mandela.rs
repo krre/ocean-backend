@@ -294,11 +294,12 @@ pub fn get_one(data: RequestData) -> RequestResult {
         .filter(mandels::id.eq(req.id))
         .first::<Mandela>(&data.db.conn)?;
 
+    let mandela_votes = get_poll(&data.db, req.id);
+
     use crate::model::schema::votes;
     use crate::model::schema::votes::dsl::*;
 
     let mut mandela_vote: Option<i16> = None;
-    let mut mandela_votes: Option<Vec<Votes>> = None;
 
     if data.user.code != types::UserCode::Anonym {
         mandela_vote = votes
@@ -310,11 +311,6 @@ pub fn get_one(data: RequestData) -> RequestResult {
             )
             .get_result::<i16>(&data.db.conn)
             .optional()?;
-
-        if let Some(_) = mandela_vote {
-            let votes_count = get_poll(&data.db, req.id);
-            mandela_votes = Some(votes_count);
-        }
     };
 
     use crate::model::schema::categories;
@@ -328,7 +324,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     #[derive(Serialize)]
     struct MandelaResp {
         mandela: Mandela,
-        votes: Option<Vec<Votes>>,
+        votes: Vec<Votes>,
         vote: Option<i16>,
         categories: Vec<i16>,
     }
