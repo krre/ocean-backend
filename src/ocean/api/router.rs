@@ -6,7 +6,6 @@ use crate::db;
 use crate::json_rpc;
 use crate::types;
 use hyper::body;
-use hyper::body::Buf;
 use hyper::header;
 use hyper::{Body, Method, Request, Response, StatusCode};
 use log::{error, info};
@@ -206,7 +205,7 @@ pub async fn route(req: Request<Body>) -> ResponseResult {
     let user_id = user.id;
 
     let whole_body = body::to_bytes(req).await?;
-    let bytes = whole_body.bytes();
+    let bytes = whole_body.as_ref();
     let raw_req = String::from_utf8_lossy(bytes);
 
     info!("[REQUEST] ({}) {}", user_id, raw_req);
