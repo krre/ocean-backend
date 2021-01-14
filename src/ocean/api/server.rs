@@ -11,6 +11,7 @@ use std::{fs, io, sync};
 use tokio::net::{TcpListener, TcpStream};
 use tokio_rustls::server::TlsStream;
 use tokio_rustls::TlsAcceptor;
+use tokio_stream::wrappers::TcpListenerStream;
 
 #[derive(Default)]
 pub struct ApiServer;
@@ -35,10 +36,10 @@ impl ApiServer {
             sync::Arc::new(cfg)
         };
 
-        let mut tcp = TcpListener::bind(&addr).await?;
+        let tcp = TcpListener::bind(&addr).await?;
+        let stream = TcpListenerStream::new(tcp);
         let tls_acceptor = TlsAcceptor::from(tls_cfg);
-        let incoming_tls_stream = tcp
-            .incoming()
+        let incoming_tls_stream = stream
             .map_err(|e| error(format!("Incoming failed: {:?}", e)))
             .and_then(move |s| {
                 tls_acceptor
