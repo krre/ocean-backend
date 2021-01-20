@@ -157,7 +157,7 @@ pub fn create(data: RequestData) -> RequestResult {
     let category_numbers: Vec<i16> = serde_json::from_value(req.categories).unwrap();
     update_categories(&data.db.conn, mandela_id, category_numbers)?;
 
-    let message = format_mandela_title(mandela::MandelaTitle {
+    let mut message = format_mandela_title(mandela::MandelaTitle {
         id: mandela_id,
         title: new_mandela.title,
         title_mode: new_mandela.title_mode,
@@ -165,6 +165,14 @@ pub fn create(data: RequestData) -> RequestResult {
         before: new_mandela.before,
         after: new_mandela.after,
     });
+
+    use crate::model::schema::users;
+    let user_name: String = users::table
+        .select(users::name)
+        .filter(users::id.eq(data.user.id))
+        .first(&data.db.conn)?;
+
+    message = message + "\n" + &user_name;
 
     telegram_bot::send_message(message);
 
