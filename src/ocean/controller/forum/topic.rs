@@ -161,10 +161,41 @@ pub fn create(data: RequestData) -> RequestResult {
         poll_selection_type: req.poll_answer_selection,
     };
 
-    let topic_id = diesel::insert_into(forum_topics)
-        .values(&new_forum_topic)
-        .returning(id)
-        .get_result::<Id>(&data.db.conn)?;
+    let mut topic_id: Id = 0;
+    let conn = data.db.conn;
+
+    const _COMMON_TOPIC_TYPE: i16 = 0;
+    const POLL_TOPIC_TYPE: i16 = 1;
+
+    let topic_type = req.topic_type;
+    // Temporary array to shut up borrow checker while passing to transaction closure
+    let mut answers: Vec<String> = Vec::new();
+
+    if topic_type == POLL_TOPIC_TYPE {
+        answers = req.poll_answers.unwrap().clone();
+    }
+
+    conn.transaction::<_, diesel::result::Error, _>(|| {
+        topic_id = diesel::insert_into(forum_topics)
+            .values(&new_forum_topic)
+            .returning(id)
+            .get_result::<Id>(&conn)?;
+
+        if topic_type == POLL_TOPIC_TYPE {
+            use crate::model::schema::forum_poll_answers;
+
+            for answer in answers {
+                diesel::insert_into(forum_poll_answers::table)
+                    .values((
+                        forum_poll_answers::topic_id.eq(topic_id),
+                        forum_poll_answers::answer.eq(answer),
+                    ))
+                    .execute(&conn)?;
+            }
+        }
+
+        Ok(())
+    })?;
 
     let result = json!({ "id": topic_id });
     Ok(Some(result))
