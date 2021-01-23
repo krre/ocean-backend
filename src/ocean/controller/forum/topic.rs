@@ -51,6 +51,8 @@ pub fn get_all(data: RequestData) -> RequestResult {
         user_id: Id,
         user_name: String,
         name: String,
+        #[serde(rename(serialize = "type"))]
+        type_: i16,
         create_ts: NaiveDateTime,
     }
 
@@ -61,6 +63,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
             users::id,
             users::name,
             forum_topics::name,
+            type_,
             forum_topics::create_ts,
         ))
         .filter(section_id.eq(req.section_id))
