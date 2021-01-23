@@ -132,6 +132,10 @@ pub fn create(data: RequestData) -> RequestResult {
     struct Req {
         section_id: Id,
         name: String,
+        #[serde(rename(deserialize = "type"))]
+        topic_type: i16,
+        poll_answers: Option<Vec<String>>,
+        poll_answer_selection: Option<i16>,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
@@ -142,12 +146,16 @@ pub fn create(data: RequestData) -> RequestResult {
         section_id: Id,
         user_id: Id,
         name: String,
+        type_: i16,
+        poll_selection_type: Option<i16>,
     }
 
     let new_forum_topic = NewForumTopic {
         section_id: req.section_id,
         user_id: data.user.id,
         name: req.name,
+        type_: req.topic_type,
+        poll_selection_type: req.poll_answer_selection,
     };
 
     let topic_id = diesel::insert_into(forum_topics)
