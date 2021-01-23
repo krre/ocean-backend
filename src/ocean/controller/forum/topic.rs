@@ -7,6 +7,9 @@ use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;
 
+pub const COMMON_TOPIC_TYPE: i16 = 0;
+pub const POLL_TOPIC_TYPE: i16 = 1;
+
 // forum.topic.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
@@ -163,9 +166,6 @@ pub fn create(data: RequestData) -> RequestResult {
 
     let mut topic_id: Id = 0;
     let conn = data.db.conn;
-
-    const _COMMON_TOPIC_TYPE: i16 = 0;
-    const POLL_TOPIC_TYPE: i16 = 1;
 
     let topic_type = req.topic_type;
     // Temporary array to shut up borrow checker while passing to transaction closure

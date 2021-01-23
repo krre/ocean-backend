@@ -5,6 +5,10 @@ use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel::sql_types::Bool;
+use diesel::sql_types::Int4;
+use diesel::sql_types::Int8;
+use diesel::sql_types::Text;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;
@@ -27,7 +31,9 @@ pub fn get_all(data: RequestData) -> RequestResult {
         section_id: Id,
         section_name: String,
         topic_name: String,
+        topic_type: i16,
         topic_user_id: Id,
+        poll_selection_type: Option<i16>,
     };
 
     use crate::model::schema::forum_categories;
@@ -48,7 +54,9 @@ pub fn get_all(data: RequestData) -> RequestResult {
             forum_sections::id,
             forum_sections::name,
             forum_topics::name,
+            forum_topics::type_,
             forum_topics::user_id,
+            forum_topics::poll_selection_type,
         ))
         .filter(forum_topics::id.eq(req.topic_id))
         .first::<TopicMeta>(&data.db.conn)?;
@@ -85,6 +93,35 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .select(diesel::dsl::count_star())
         .first(&data.db.conn)?;
 
+    #[derive(Serialize, QueryableByName)]
+    struct Poll {
+        #[sql_type = "Int4"]
+        id: Id,
+        #[sql_type = "Text"]
+        answer: String,
+        #[sql_type = "Int8"]
+        count: i64,
+        #[sql_type = "Bool"]
+        voted: bool,
+    };
+
+    let mut poll: Option<Vec<Poll>> = None;
+
+    if topic_meta.topic_type == topic::POLL_TOPIC_TYPE {
+        let answers = diesel::dsl::sql_query(
+            "SELECT fpa.id, answer, COUNT(fpv.*), false AS voted
+            FROM forum_poll_answers AS fpa
+                LEFT JOIN forum_poll_votes AS fpv ON fpv.answer_id = fpa.id
+            WHERE topic_id = $1
+            GROUP BY fpa.id
+            ORDER BY id ASC",
+        )
+        .bind::<Int4, _>(req.topic_id)
+        .load::<Poll>(&data.db.conn)?;
+
+        poll = Some(answers);
+    }
+
     #[derive(Serialize)]
     struct Resp {
         category_id: Id,
@@ -92,7 +129,10 @@ pub fn get_all(data: RequestData) -> RequestResult {
         section_id: Id,
         section_name: String,
         topic_name: String,
+        topic_type: i16,
         topic_user_id: Id,
+        poll_selection_type: Option<i16>,
+        poll: Option<Vec<Poll>>,
         post_count: i64,
         posts: Vec<Post>,
     }
@@ -103,7 +143,10 @@ pub fn get_all(data: RequestData) -> RequestResult {
         section_id: topic_meta.section_id,
         section_name: topic_meta.section_name,
         topic_name: topic_meta.topic_name,
+        topic_type: topic_meta.topic_type,
         topic_user_id: topic_meta.topic_user_id,
+        poll_selection_type: topic_meta.poll_selection_type,
+        poll: poll,
         post_count: post_count,
         posts: list,
     };
