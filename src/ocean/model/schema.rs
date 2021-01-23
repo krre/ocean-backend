@@ -28,6 +28,23 @@ table! {
 }
 
 table! {
+    forum_poll_answers (id) {
+        id -> Int4,
+        topic_id -> Int4,
+        answer -> Text,
+    }
+}
+
+table! {
+    forum_poll_votes (id) {
+        id -> Int4,
+        answer_id -> Int4,
+        user_id -> Int4,
+        create_ts -> Timestamptz,
+    }
+}
+
+table! {
     forum_posts (id) {
         id -> Int4,
         topic_id -> Int4,
@@ -59,6 +76,9 @@ table! {
         update_ts -> Timestamptz,
         last_post_id -> Nullable<Int4>,
         last_post_create_ts -> Nullable<Timestamptz>,
+        #[sql_name = "type"]
+        type_ -> Int2,
+        poll_selection_type -> Nullable<Int2>,
     }
 }
 
@@ -126,6 +146,9 @@ table! {
 joinable!(categories -> mandels (mandela_id));
 joinable!(comments -> mandels (mandela_id));
 joinable!(comments -> users (user_id));
+joinable!(forum_poll_answers -> forum_topics (topic_id));
+joinable!(forum_poll_votes -> forum_poll_answers (answer_id));
+joinable!(forum_poll_votes -> users (user_id));
 joinable!(forum_posts -> users (user_id));
 joinable!(forum_sections -> forum_categories (category_id));
 joinable!(forum_topics -> forum_sections (section_id));
@@ -141,6 +164,8 @@ allow_tables_to_appear_in_same_query!(
     categories,
     comments,
     forum_categories,
+    forum_poll_answers,
+    forum_poll_votes,
     forum_posts,
     forum_sections,
     forum_topics,
