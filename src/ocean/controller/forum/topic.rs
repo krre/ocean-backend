@@ -327,7 +327,7 @@ pub fn vote(data: RequestData) -> RequestResult {
         Ok(())
     })?;
 
-    let poll = get_poll(&data.db, poll_topic_id);
+    let poll = get_poll(&data.db, poll_topic_id, poll_user_id);
 
     #[derive(Serialize)]
     struct Resp {
@@ -340,16 +340,18 @@ pub fn vote(data: RequestData) -> RequestResult {
     Ok(Some(result))
 }
 
-pub fn get_poll(db: &db::Db, topic_id: Id) -> Vec<Poll> {
+pub fn get_poll(db: &db::Db, topic_id: Id, user_id: Id) -> Vec<Poll> {
     diesel::dsl::sql_query(
-        "SELECT fpa.id, answer, COUNT(fpv.*), false AS voted
+        "SELECT fpa.id, answer, COUNT(fpv.*),
+            (SELECT true AS voted FROM forum_poll_votes WHERE answer_id = fpa.id AND user_id = $2) AS voted
         FROM forum_poll_answers AS fpa
             LEFT JOIN forum_poll_votes AS fpv ON fpv.answer_id = fpa.id
         WHERE fpa.topic_id = $1
         GROUP BY fpa.id
-        ORDER BY id ASC",
+        ORDER BY fpa.id ASC",
     )
     .bind::<Int4, _>(topic_id)
+    .bind::<Int4, _>(user_id)
     .load::<Poll>(&db.conn)
     .unwrap()
 }

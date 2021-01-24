@@ -92,7 +92,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let mut poll: Option<Vec<topic::Poll>> = None;
 
     if topic_meta.topic_type == topic::POLL_TOPIC_TYPE {
-        let answers = topic::get_poll(&data.db, req.topic_id);
+        let answers = topic::get_poll(&data.db, req.topic_id, data.user.id);
         poll = Some(answers);
     }
 
