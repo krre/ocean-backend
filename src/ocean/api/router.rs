@@ -142,6 +142,10 @@ lazy_static! {
             Rh(controller::forum::topic::delete),
         );
         m.insert(
+            "forum.topic.vote".to_string(),
+            Rh(controller::forum::topic::vote),
+        );
+        m.insert(
             "forum.post.getAll".to_string(),
             Rh(controller::forum::post::get_all),
         );

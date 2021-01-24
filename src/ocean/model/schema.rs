@@ -38,6 +38,7 @@ table! {
 table! {
     forum_poll_votes (id) {
         id -> Int4,
+        topic_id -> Int4,
         answer_id -> Int4,
         user_id -> Int4,
         create_ts -> Timestamptz,
@@ -148,6 +149,7 @@ joinable!(comments -> mandels (mandela_id));
 joinable!(comments -> users (user_id));
 joinable!(forum_poll_answers -> forum_topics (topic_id));
 joinable!(forum_poll_votes -> forum_poll_answers (answer_id));
+joinable!(forum_poll_votes -> forum_topics (topic_id));
 joinable!(forum_poll_votes -> users (user_id));
 joinable!(forum_posts -> users (user_id));
 joinable!(forum_sections -> forum_categories (category_id));

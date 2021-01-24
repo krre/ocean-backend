@@ -5,10 +5,6 @@ use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use diesel::sql_types::Bool;
-use diesel::sql_types::Int4;
-use diesel::sql_types::Int8;
-use diesel::sql_types::Text;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;
@@ -93,32 +89,10 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .select(diesel::dsl::count_star())
         .first(&data.db.conn)?;
 
-    #[derive(Serialize, QueryableByName)]
-    struct Poll {
-        #[sql_type = "Int4"]
-        id: Id,
-        #[sql_type = "Text"]
-        answer: String,
-        #[sql_type = "Int8"]
-        count: i64,
-        #[sql_type = "Bool"]
-        voted: bool,
-    };
-
-    let mut poll: Option<Vec<Poll>> = None;
+    let mut poll: Option<Vec<topic::Poll>> = None;
 
     if topic_meta.topic_type == topic::POLL_TOPIC_TYPE {
-        let answers = diesel::dsl::sql_query(
-            "SELECT fpa.id, answer, COUNT(fpv.*), false AS voted
-            FROM forum_poll_answers AS fpa
-                LEFT JOIN forum_poll_votes AS fpv ON fpv.answer_id = fpa.id
-            WHERE topic_id = $1
-            GROUP BY fpa.id
-            ORDER BY id ASC",
-        )
-        .bind::<Int4, _>(req.topic_id)
-        .load::<Poll>(&data.db.conn)?;
-
+        let answers = topic::get_poll(&data.db, req.topic_id);
         poll = Some(answers);
     }
 
@@ -132,7 +106,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         topic_type: i16,
         topic_user_id: Id,
         poll_selection_type: Option<i16>,
-        poll: Option<Vec<Poll>>,
+        poll: Option<Vec<topic::Poll>>,
         post_count: i64,
         posts: Vec<Post>,
     }

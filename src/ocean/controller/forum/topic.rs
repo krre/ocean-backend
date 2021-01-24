@@ -3,12 +3,28 @@ use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel::sql_types::Bool;
+use diesel::sql_types::Int4;
+use diesel::sql_types::Int8;
+use diesel::sql_types::Text;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;
 
 pub const COMMON_TOPIC_TYPE: i16 = 0;
 pub const POLL_TOPIC_TYPE: i16 = 1;
+
+#[derive(Serialize, QueryableByName)]
+pub struct Poll {
+    #[sql_type = "Int4"]
+    id: Id,
+    #[sql_type = "Text"]
+    answer: String,
+    #[sql_type = "Int8"]
+    count: i64,
+    #[sql_type = "Bool"]
+    voted: bool,
+}
 
 // forum.topic.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
@@ -268,4 +284,72 @@ pub fn update_last_post(
         .execute(&db.conn)?;
 
     Ok(())
+}
+
+// forum.topic.vote
+pub fn vote(data: RequestData) -> RequestResult {
+    #[derive(Deserialize)]
+    struct Req {
+        id: Id,
+        votes: Vec<Id>,
+    }
+
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let conn = &data.db.conn;
+    let poll_user_id = data.user.id;
+    let poll_topic_id = req.id;
+
+    conn.transaction::<_, diesel::result::Error, _>(|| {
+        use crate::model::schema::forum_poll_votes;
+        use crate::model::schema::forum_poll_votes::dsl::*;
+        diesel::delete(
+            forum_poll_votes.filter(topic_id.eq(poll_topic_id).and(user_id.eq(poll_user_id))),
+        )
+        .execute(conn)?;
+        #[derive(Insertable)]
+        #[table_name = "forum_poll_votes"]
+        struct NewVote {
+            topic_id: Id,
+            answer_id: Id,
+            user_id: Id,
+        };
+        for vote in req.votes {
+            let new_vote = NewVote {
+                topic_id: poll_topic_id,
+                user_id: poll_user_id,
+                answer_id: vote,
+            };
+            diesel::insert_into(forum_poll_votes)
+                .values(&new_vote)
+                .execute(conn)?;
+        }
+
+        Ok(())
+    })?;
+
+    let poll = get_poll(&data.db, poll_topic_id);
+
+    #[derive(Serialize)]
+    struct Resp {
+        poll: Vec<Poll>,
+    }
+
+    let resp = Resp { poll: poll };
+
+    let result = serde_json::to_value(&resp)?;
+    Ok(Some(result))
+}
+
+pub fn get_poll(db: &db::Db, topic_id: Id) -> Vec<Poll> {
+    diesel::dsl::sql_query(
+        "SELECT fpa.id, answer, COUNT(fpv.*), false AS voted
+        FROM forum_poll_answers AS fpa
+            LEFT JOIN forum_poll_votes AS fpv ON fpv.answer_id = fpa.id
+        WHERE fpa.topic_id = $1
+        GROUP BY fpa.id
+        ORDER BY id ASC",
+    )
+    .bind::<Int4, _>(topic_id)
+    .load::<Poll>(&db.conn)
+    .unwrap()
 }

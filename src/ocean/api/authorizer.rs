@@ -20,6 +20,7 @@ pub fn authorize(method: &String, user_code: &UserCode) -> bool {
         "forum.topic.create" => UserCode::Anonym,
         "forum.topic.update" => UserCode::User,
         "forums.topic.delete" => UserCode::User,
+        "forums.topic.vote" => UserCode::User,
         "forum.post.create" => UserCode::Anonym,
         "forum.post.update" => UserCode::User,
         "forums.post.delete" => UserCode::User,
