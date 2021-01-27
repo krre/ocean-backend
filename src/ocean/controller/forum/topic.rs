@@ -150,7 +150,7 @@ pub fn create(data: RequestData) -> RequestResult {
     use crate::model::schema::forum_topics;
     use crate::model::schema::forum_topics::dsl::*;
 
-    #[derive(Deserialize)]
+    #[derive(Deserialize, Clone)]
     struct Req {
         section_id: Id,
         name: String,
@@ -172,6 +172,8 @@ pub fn create(data: RequestData) -> RequestResult {
         poll_selection_type: Option<i16>,
     }
 
+    let r = req.clone();
+
     let new_forum_topic = NewForumTopic {
         section_id: req.section_id,
         user_id: data.user.id,
@@ -183,24 +185,16 @@ pub fn create(data: RequestData) -> RequestResult {
     let mut topic_id: Id = 0;
     let conn = data.db.conn;
 
-    let topic_type = req.topic_type;
-    // Temporary array to shut up borrow checker while passing to transaction closure
-    let mut answers: Vec<String> = Vec::new();
-
-    if topic_type == POLL_TOPIC_TYPE {
-        answers = req.poll_answers.unwrap().clone();
-    }
-
     conn.transaction::<_, diesel::result::Error, _>(|| {
         topic_id = diesel::insert_into(forum_topics)
             .values(&new_forum_topic)
             .returning(id)
             .get_result::<Id>(&conn)?;
 
-        if topic_type == POLL_TOPIC_TYPE {
+        if r.topic_type == POLL_TOPIC_TYPE {
             use crate::model::schema::forum_poll_answers;
 
-            for answer in answers {
+            for answer in r.poll_answers.unwrap() {
                 diesel::insert_into(forum_poll_answers::table)
                     .values((
                         forum_poll_answers::topic_id.eq(topic_id),
