@@ -52,7 +52,7 @@ pub fn get_mandels(data: RequestData) -> RequestResult {
         LEFT JOIN votes AS v on v.mandela_id = m.id
         WHERE vote = $1
         GROUP BY m.id
-        ORDER BY count DESC
+        ORDER BY count DESC, m.id ASC
         LIMIT $2
         OFFSET $3",
     )
@@ -110,8 +110,8 @@ pub fn get_users(data: RequestData) -> RequestResult {
         "SELECT u.name, count(m.*)
         FROM users AS u
         INNER JOIN mandels as m on m.user_id = u.id
-        GROUP BY u.name
-        ORDER BY count DESC
+        GROUP BY u.id
+        ORDER BY count DESC, u.id ASC
         LIMIT $1
         OFFSET $2",
     )
