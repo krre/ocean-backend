@@ -477,6 +477,14 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let mut poll_count = 0;
     let mut category_count = 0;
 
+    if filter == SHOW_CATEGORY {
+        category_count = mandels
+            .select(count_star())
+            .inner_join(categories)
+            .filter(number.eq(req.category.unwrap()))
+            .first(&data.db.conn)?;
+    }
+
     if data.user.code != types::UserCode::Anonym {
         let mark_count: i64 = marks
             .select(count_star())
@@ -495,14 +503,6 @@ pub fn get_all(data: RequestData) -> RequestResult {
             .select(count_star())
             .filter(mandels::user_id.eq(data.user.id))
             .first(&data.db.conn)?;
-
-        if filter == SHOW_CATEGORY {
-            category_count = mandels
-                .select(count_star())
-                .inner_join(categories)
-                .filter(number.eq(req.category.unwrap()))
-                .first(&data.db.conn)?;
-        }
     }
 
     #[derive(Serialize)]
