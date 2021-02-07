@@ -34,7 +34,6 @@ pub struct Topic {
 // forum.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
     use crate::model::schema::forum_categories;
-    use crate::model::schema::forum_sections;
 
     #[derive(Queryable, Serialize)]
     pub struct Category {
@@ -47,26 +46,12 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .order(forum_categories::order_index.asc())
         .load::<Category>(&data.db.conn)?;
 
-    #[derive(Queryable, Serialize)]
-    pub struct Section {
-        id: Id,
-        name: String,
-        category_id: Id,
-    }
-
-    let sections = forum_sections::table
-        .select((
-            forum_sections::id,
-            forum_sections::name,
-            forum_sections::category_id,
-        ))
-        .order(forum_sections::order_index.asc())
-        .load::<Section>(&data.db.conn)?;
+    let sections = section::get_sections(&data.db, None)?;
 
     #[derive(Serialize)]
     struct Resp {
         categories: Vec<Category>,
-        sections: Vec<Section>,
+        sections: Vec<section::Section>,
     };
 
     let resp = serde_json::to_value(&Resp {

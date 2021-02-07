@@ -3,8 +3,51 @@ use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel::sql_types::Int4;
+use diesel::sql_types::Int8;
+use diesel::sql_types::Text;
 use serde::Deserialize;
 use serde::Serialize;
+
+#[derive(QueryableByName, Serialize)]
+pub struct Section {
+    #[sql_type = "Int4"]
+    id: Id,
+    #[sql_type = "Text"]
+    name: String,
+    #[sql_type = "Int4"]
+    category_id: Id,
+    #[sql_type = "Int8"]
+    topic_count: i64,
+    #[sql_type = "Int8"]
+    post_count: i64,
+}
+
+pub fn get_sections(
+    db: &db::Db,
+    category_id: Option<Id>,
+) -> Result<Vec<Section>, Box<dyn std::error::Error>> {
+    let mut result = diesel::dsl::sql_query(
+        "SELECT fs.id, fs.name, fs.category_id,
+	        (SELECT COUNT(*) FROM forum_topics WHERE section_id = fs.id) AS topic_count,
+	        (SELECT COUNT(*) FROM forum_posts AS fp
+		        JOIN forum_topics AS ft ON ft.id = fp.topic_id
+		WHERE ft.section_id = fs.id) AS post_count
+        FROM forum_sections AS fs
+        ORDER BY fs.order_index ASC",
+    )
+    .load::<Section>(&db.conn)?;
+
+    if let Some(id) = category_id {
+        // Expensive but simple
+        result = result
+            .into_iter()
+            .filter(|section| section.category_id == id)
+            .collect();
+    }
+
+    Ok(result)
+}
 
 // forum.section.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
@@ -16,25 +59,13 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
     use crate::model::schema::forum_categories;
-    use crate::model::schema::forum_sections;
-    use crate::model::schema::forum_sections::dsl::*;
 
     let category_name = forum_categories::table
         .select(forum_categories::name)
         .filter(forum_categories::id.eq(req.category_id))
         .first::<String>(&data.db.conn)?;
 
-    #[derive(Queryable, Serialize)]
-    struct Section {
-        id: Id,
-        name: String,
-    }
-
-    let list = forum_sections
-        .select((forum_sections::id, forum_sections::name))
-        .filter(category_id.eq(req.category_id))
-        .order(forum_sections::order_index.asc())
-        .load::<Section>(&data.db.conn)?;
+    let sections = get_sections(&data.db, Some(req.category_id))?;
 
     #[derive(Serialize)]
     struct Resp {
@@ -44,7 +75,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     let resp = Resp {
         category_name: category_name,
-        sections: list,
+        sections: sections,
     };
 
     let result = serde_json::to_value(&resp)?;
