@@ -4,9 +4,11 @@ use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel::sql_types::Bool;
+use diesel::sql_types::Int2;
 use diesel::sql_types::Int4;
 use diesel::sql_types::Int8;
 use diesel::sql_types::Text;
+use diesel::sql_types::Timestamptz;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::json;
@@ -46,7 +48,6 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     use crate::model::schema::forum_categories;
     use crate::model::schema::forum_sections;
-    use crate::model::schema::forum_topics;
     use crate::model::schema::forum_topics::dsl::*;
 
     let section_meta = forum_sections::table
@@ -61,35 +62,40 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .filter(forum_sections::id.eq(req.section_id))
         .first::<SectionMeta>(&data.db.conn)?;
 
-    use crate::model::schema::users;
-    use crate::model::schema::users::dsl::*;
-
-    #[derive(Queryable, Serialize)]
+    #[derive(QueryableByName, Serialize)]
     struct Topic {
+        #[sql_type = "Int4"]
         id: Id,
+        #[sql_type = "Int4"]
         user_id: Id,
+        #[sql_type = "Text"]
         user_name: String,
+        #[sql_type = "Text"]
         name: String,
         #[serde(rename(serialize = "type"))]
+        #[sql_type = "Int2"]
         type_: i16,
+        #[sql_type = "Timestamptz"]
         create_ts: NaiveDateTime,
+        #[sql_type = "Int8"]
+        post_count: i64,
     }
 
-    let list = forum_topics
-        .inner_join(users)
-        .select((
-            forum_topics::id,
-            users::id,
-            users::name,
-            forum_topics::name,
-            type_,
-            forum_topics::create_ts,
-        ))
-        .filter(section_id.eq(req.section_id))
-        .order(forum_topics::create_ts.desc())
-        .offset(req.offset)
-        .limit(req.limit)
-        .load::<Topic>(&data.db.conn)?;
+    let topics = diesel::dsl::sql_query(
+        "
+    SELECT ft.id, ft.user_id, u.name AS user_name, ft.name, ft.type AS type_, ft.create_ts,
+	    (SELECT COUNT(*) FROM forum_posts WHERE topic_id = ft.id) AS post_count
+    FROM forum_topics AS ft
+        JOIN users AS u ON u.id = ft.user_id
+    WHERE section_id = $1
+    ORDER BY ft.create_ts DESC
+    OFFSET $2
+    LIMIT $3",
+    )
+    .bind::<Int4, _>(req.section_id)
+    .bind::<Int8, _>(req.offset)
+    .bind::<Int8, _>(req.limit)
+    .load::<Topic>(&data.db.conn)?;
 
     let topic_count: i64 = forum_topics
         .filter(section_id.eq(req.section_id))
@@ -110,7 +116,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         category_name: section_meta.category_name,
         section_name: section_meta.section_name,
         topic_count: topic_count,
-        topics: list,
+        topics: topics,
     };
 
     let result = serde_json::to_value(&resp)?;
