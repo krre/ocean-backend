@@ -6,6 +6,7 @@ pub fn authorize(method: &String, user_code: &UserCode) -> bool {
         "mandela.delete" => UserCode::Admin,
         "mandela.mark" => UserCode::User,
         "mandela.vote" => UserCode::User,
+        "user.logout" => UserCode::User,
         "user.getOne" => UserCode::User,
         "user.update" => UserCode::User,
         "user.updateToken" => UserCode::User,

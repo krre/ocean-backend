@@ -144,6 +144,11 @@ pub fn auth(data: RequestData) -> RequestResult {
     Ok(Some(result))
 }
 
+// user.logout
+pub fn logout(_data: RequestData) -> RequestResult {
+    Ok(None)
+}
+
 // user.getOne
 pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::user_groups;
