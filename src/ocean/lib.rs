@@ -27,5 +27,6 @@ pub mod types {
     pub struct User {
         pub id: Id,
         pub code: UserCode,
+        pub name: String,
     }
 }

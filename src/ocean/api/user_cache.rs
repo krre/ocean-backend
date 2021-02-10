@@ -17,13 +17,14 @@ pub fn init(db: db::Db) {
     #[derive(Queryable)]
     struct UserData {
         id: types::Id,
+        name: String,
         token: String,
         code: String,
     }
 
     let list = users
         .inner_join(user_groups)
-        .select((users::id, users::token, user_groups::code))
+        .select((users::id, users::name, users::token, user_groups::code))
         .load::<UserData>(&db.conn)
         .unwrap();
 
@@ -31,6 +32,7 @@ pub fn init(db: db::Db) {
         let user = types::User {
             id: user_data.id,
             code: user_code(&user_data.code),
+            name: user_data.name,
         };
 
         USER_CACHE.lock().unwrap().insert(user_data.token, user);

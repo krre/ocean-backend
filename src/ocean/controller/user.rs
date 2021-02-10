@@ -69,6 +69,8 @@ pub fn create(data: RequestData) -> RequestResult {
         token: String,
     }
 
+    let user_name = req.name.clone();
+
     let new_user = NewUser {
         name: req.name,
         group_id: groups.id,
@@ -83,6 +85,7 @@ pub fn create(data: RequestData) -> RequestResult {
     let user = types::User {
         id: req.id,
         code: user_cache::user_code(&req.code),
+        name: user_name,
     };
 
     user_cache::set(&new_user.token, user);
@@ -231,6 +234,7 @@ pub fn update_token(data: RequestData) -> RequestResult {
     let user = types::User {
         id: data.user.id,
         code: data.user.code,
+        name: data.user.name,
     };
 
     user_cache::set(&req.token, user);
