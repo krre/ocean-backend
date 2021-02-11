@@ -49,8 +49,16 @@ impl ApiServer {
             .filter(|i| futures_util::future::ready(i.is_ok())) // Need to filter out errors as they will stop server to accept connections
             .boxed();
 
-        let service =
-            make_service_fn(|_| async { Ok::<_, hyper::Error>(service_fn(router::route)) });
+        let service = make_service_fn(
+            move |conn: &tokio_rustls::server::TlsStream<tokio::net::TcpStream>| {
+                let (stream, _) = conn.get_ref();
+                let addr = stream.peer_addr().unwrap();
+                async move {
+                    let addr = addr.clone();
+                    Ok::<_, hyper::Error>(service_fn(move |req| router::route(req, addr)))
+                }
+            },
+        );
 
         let server = Server::builder(HyperAcceptor {
             acceptor: incoming_tls_stream,

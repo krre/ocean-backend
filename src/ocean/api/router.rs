@@ -10,6 +10,7 @@ use hyper::header;
 use hyper::{Body, Method, Request, Response, StatusCode};
 use log::{error, info};
 use std::collections::HashMap;
+use std::net::SocketAddr;
 use url;
 
 type ResponseResult = Result<Response<Body>, hyper::Error>;
@@ -176,7 +177,7 @@ lazy_static! {
 
 struct Rh(controller::RequestHandler);
 
-pub async fn route(req: Request<Body>) -> ResponseResult {
+pub async fn route(req: Request<Body>, addr: SocketAddr) -> ResponseResult {
     if req.method() != Method::POST || req.uri().path() != "/api" {
         return bad_request(req);
     }
@@ -209,12 +210,19 @@ pub async fn route(req: Request<Body>) -> ResponseResult {
 
     let user_id = user.id;
     let user_name = user.name.clone();
+    // let address = req.remote
 
     let whole_body = body::to_bytes(req).await?;
     let bytes = whole_body.as_ref();
     let raw_req = String::from_utf8_lossy(bytes);
 
-    info!("[REQUEST] ({}: {}) {}", user_id, user.name, raw_req);
+    info!(
+        "[REQUEST] {} ({}: {}) {}",
+        addr.ip(),
+        user_id,
+        user.name,
+        raw_req
+    );
 
     let json_rpc_req = serde_json::from_slice::<json_rpc::Request>(bytes);
 
@@ -234,7 +242,13 @@ pub async fn route(req: Request<Body>) -> ResponseResult {
     };
 
     let raw_resp = serde_json::to_string(&json_rpc_resp).unwrap();
-    info!("[RESPONSE] ({}: {}) {}", user_id, user_name, raw_resp);
+    info!(
+        "[RESPONSE] {} ({}: {}) {}",
+        addr.ip(),
+        user_id,
+        user_name,
+        raw_resp
+    );
 
     let mut response = Response::new(Body::from(raw_resp));
     response.headers_mut().insert(
