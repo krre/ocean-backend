@@ -154,10 +154,12 @@ pub fn logout(_data: RequestData) -> RequestResult {
 
 // user.getOne
 pub fn get_one(data: RequestData) -> RequestResult {
-    use crate::model::schema::user_groups;
-    use crate::model::schema::user_groups::dsl::*;
-    use crate::model::schema::users;
-    use crate::model::schema::users::dsl::*;
+    #[derive(Deserialize)]
+    struct Req {
+        id: Id,
+    }
+
+    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
     #[derive(Queryable, Serialize)]
     struct User {
@@ -167,10 +169,15 @@ pub fn get_one(data: RequestData) -> RequestResult {
         create_ts: NaiveDateTime,
     }
 
+    use crate::model::schema::user_groups;
+    use crate::model::schema::user_groups::dsl::*;
+    use crate::model::schema::users;
+    use crate::model::schema::users::dsl::*;
+
     let user = users
         .inner_join(user_groups)
         .select((users::id, users::name, user_groups::code, users::create_ts))
-        .filter(users::id.eq(data.user.id))
+        .filter(users::id.eq(req.id))
         .first::<User>(&data.db.conn)?;
 
     let result = serde_json::to_value(&user)?;
