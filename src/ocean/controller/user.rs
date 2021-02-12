@@ -5,6 +5,10 @@ use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel::sql_types::Int4;
+use diesel::sql_types::Int8;
+use diesel::sql_types::Text;
+use diesel::sql_types::Timestamptz;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -161,27 +165,47 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    #[derive(Queryable, Serialize)]
+    #[derive(QueryableByName, Serialize)]
     struct User {
-        id: types::Id,
+        #[sql_type = "Int4"]
+        id: Id,
+        #[sql_type = "Text"]
         name: String,
+        #[sql_type = "Text"]
         code: String,
+        #[sql_type = "Timestamptz"]
         create_ts: NaiveDateTime,
+        #[sql_type = "Int8"]
+        mandela_count: i64,
+        #[sql_type = "Int8"]
+        comment_count: i64,
+        #[sql_type = "Int8"]
+        forum_topic_count: i64,
+        #[sql_type = "Int8"]
+        forum_post_count: i64,
     }
 
-    use crate::model::schema::user_groups;
-    use crate::model::schema::user_groups::dsl::*;
-    use crate::model::schema::users;
-    use crate::model::schema::users::dsl::*;
+    use diesel::dsl::*;
 
-    let user = users
-        .inner_join(user_groups)
-        .select((users::id, users::name, user_groups::code, users::create_ts))
-        .filter(users::id.eq(req.id))
-        .first::<User>(&data.db.conn)?;
+    let user = sql_query(
+        "SELECT u.id, u.name, ug.code, u.create_ts,
+            (SELECT COUNT(*) FROM mandels WHERE user_id = u.id) AS mandela_count,
+            (SELECT COUNT(*) FROM comments WHERE user_id = u.id) AS comment_count,
+            (SELECT COUNT(*) FROM forum_topics WHERE user_id = u.id) AS forum_topic_count,
+            (SELECT COUNT(*) FROM forum_posts WHERE user_id = u.id) AS forum_post_count
+        FROM users AS u
+            JOIN user_groups AS ug ON ug.id = u.group_id
+        WHERE u.id = $1",
+    )
+    .bind::<Int4, _>(req.id)
+    .load::<User>(&data.db.conn)?;
 
-    let result = serde_json::to_value(&user)?;
-    Ok(Some(result))
+    if user.len() > 0 {
+        let result = serde_json::to_value(&user[0])?;
+        Ok(Some(result))
+    } else {
+        Err(api::make_error(api::error::NOT_FOUND))
+    }
 }
 
 // user.update
