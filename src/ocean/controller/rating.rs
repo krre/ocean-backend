@@ -102,12 +102,14 @@ pub fn get_users(data: RequestData) -> RequestResult {
     struct User {
         #[sql_type = "Text"]
         name: String,
+        #[sql_type = "Int4"]
+        id: Id,
         #[sql_type = "Int8"]
         count: i64,
     }
 
     let list = diesel::dsl::sql_query(
-        "SELECT u.name, count(m.*)
+        "SELECT u.name, u.id, count(m.*)
         FROM users AS u
         INNER JOIN mandels as m on m.user_id = u.id
         GROUP BY u.id
