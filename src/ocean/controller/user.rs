@@ -204,7 +204,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         let result = serde_json::to_value(&user[0])?;
         Ok(Some(result))
     } else {
-        Err(api::make_error(api::error::NOT_FOUND))
+        Err(api::make_error(api::error::RECORD_NOT_FOUND))
     }
 }
 

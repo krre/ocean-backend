@@ -11,11 +11,11 @@ pub const METHOD_NOT_FOUND: ErrorCode = 3;
 pub const PARAMETER_NOT_FOUND: ErrorCode = 4;
 pub const INTERNAL_SERVER_ERROR: ErrorCode = 5;
 pub const INVALID_PARAMETER: ErrorCode = 6;
+pub const RECORD_NOT_FOUND: ErrorCode = 7;
 
 // User (100..199)
 pub const WRONG_USER_PASSWORD: ErrorCode = 100;
 pub const NEXT_ID_EXPIRED: ErrorCode = 101;
-pub const NOT_FOUND: ErrorCode = 102;
 
 lazy_static! {
     static ref ERROR_MESSAGES: HashMap<ErrorCode, &'static str> = {
@@ -26,10 +26,10 @@ lazy_static! {
         m.insert(PARAMETER_NOT_FOUND, "Parameter not found");
         m.insert(INTERNAL_SERVER_ERROR, "Internal server error");
         m.insert(INVALID_PARAMETER, "Invalid parameter");
+        m.insert(RECORD_NOT_FOUND, "Record not found");
 
         m.insert(WRONG_USER_PASSWORD, "Wrong user password");
         m.insert(NEXT_ID_EXPIRED, "Next id expired");
-        m.insert(NOT_FOUND, "User not found");
         m
     };
 }

@@ -1,4 +1,5 @@
 use super::*;
+use crate::api;
 use crate::telegram_bot;
 use crate::types::Id;
 use chrono::prelude::*;
@@ -300,7 +301,15 @@ pub fn get_one(data: RequestData) -> RequestResult {
             marks::create_ts.nullable(),
         ))
         .filter(mandels::id.eq(req.id))
-        .first::<Mandela>(&data.db.conn)?;
+        .first::<Mandela>(&data.db.conn);
+
+    let mandela: Mandela;
+
+    if let Ok(m) = mandela_record {
+        mandela = m;
+    } else {
+        return Err(api::make_error(api::error::RECORD_NOT_FOUND));
+    }
 
     let mandela_votes = get_poll(&data.db, req.id);
 
@@ -338,7 +347,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     }
 
     let resp = MandelaResp {
-        mandela: mandela_record,
+        mandela: mandela,
         votes: mandela_votes,
         vote: mandela_vote,
         categories: category_numbers,
