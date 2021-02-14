@@ -384,8 +384,8 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    #[derive(Queryable, Serialize)]
-    struct MandelaResp {
+    #[derive(Queryable)]
+    struct Mandela {
         id: Id,
         title_mode: i32,
         title: String,
@@ -395,7 +395,6 @@ pub fn get_all(data: RequestData) -> RequestResult {
         create_ts: NaiveDateTime,
         user_name: Option<String>,
         user_id: Id,
-        comment_count: i32,
         mark_ts: Option<NaiveDateTime>,
     }
 
@@ -435,7 +434,6 @@ pub fn get_all(data: RequestData) -> RequestResult {
             mandels::create_ts,
             users::name.nullable(),
             users::id,
-            mandels::id, // Hack to fill by anything the last value
             marks::create_ts.nullable(),
         ))
         .into_boxed();
@@ -467,17 +465,53 @@ pub fn get_all(data: RequestData) -> RequestResult {
         query = query.order(max(comments::create_ts).desc().nulls_last());
     }
 
-    let mut list = query
+    let list = query
         .offset(req.offset)
         .limit(req.limit)
-        .load::<MandelaResp>(&data.db.conn)?;
+        .load::<Mandela>(&data.db.conn)?;
 
-    for elem in &mut list {
+    #[derive(Serialize)]
+    struct MandelaResp {
+        id: Id,
+        title_mode: i32,
+        title: String,
+        what: String,
+        before: String,
+        after: String,
+        create_ts: NaiveDateTime,
+        user_name: Option<String>,
+        user_id: Id,
+        comment_count: i64,
+        mark_ts: Option<NaiveDateTime>,
+        votes: Vec<Votes>,
+    }
+
+    let mut mandels_resp: Vec<MandelaResp> = Vec::new();
+
+    for elem in list {
         let comment_count: i64 = comments
             .filter(comments::mandela_id.eq(elem.id))
             .select(count_star())
             .first(&data.db.conn)?;
-        elem.comment_count = comment_count as i32;
+
+        let mandela_votes = get_poll(&data.db, elem.id);
+
+        let mandela_resp = MandelaResp {
+            id: elem.id,
+            title_mode: elem.title_mode,
+            title: elem.title,
+            what: elem.what,
+            before: elem.before,
+            after: elem.after,
+            create_ts: elem.create_ts,
+            user_name: elem.user_name,
+            user_id: elem.user_id,
+            comment_count: comment_count,
+            mark_ts: elem.mark_ts,
+            votes: mandela_votes,
+        };
+
+        mandels_resp.push(mandela_resp);
     }
 
     let total_count: i64 = mandels.select(count_star()).first(&data.db.conn)?;
@@ -530,7 +564,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         mine_count: mine_count,
         poll_count: poll_count,
         category_count: category_count,
-        mandels: list,
+        mandels: mandels_resp,
     })?;
 
     let result = serde_json::to_value(&resp)?;
