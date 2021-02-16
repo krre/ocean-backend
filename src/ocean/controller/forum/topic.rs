@@ -88,7 +88,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     FROM forum_topics AS ft
         JOIN users AS u ON u.id = ft.user_id
     WHERE section_id = $1
-    ORDER BY ft.create_ts DESC
+    ORDER BY ft.last_post_create_ts DESC
     OFFSET $2
     LIMIT $3",
     )
