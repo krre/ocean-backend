@@ -21,6 +21,8 @@ pub struct Topic {
     name: String,
     #[sql_type = "Text"]
     post: String,
+    #[sql_type = "Int4"]
+    post_id: Id,
     #[sql_type = "Timestamptz"]
     post_create_ts: NaiveDateTime,
     #[sql_type = "Int4"]
@@ -105,7 +107,7 @@ pub fn new_topics(
     offset: i32,
 ) -> Result<Vec<Topic>, Box<dyn std::error::Error>> {
     let result = diesel::dsl::sql_query("
-    SELECT ft.id, ft.name, fp.post, fp.create_ts AS post_create_ts, u.id AS user_id, u.name AS user_name,
+    SELECT ft.id, ft.name, fp.post, fp.id AS post_id, fp.create_ts AS post_create_ts, u.id AS user_id, u.name AS user_name,
         (SELECT count(*) FROM forum_posts WHERE topic_id = ft.id) AS post_count
     FROM forum_topics AS ft
         INNER JOIN forum_posts AS fp ON fp.id = ft.last_post_id
