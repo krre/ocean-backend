@@ -77,6 +77,8 @@ pub fn get_all(data: RequestData) -> RequestResult {
         type_: i16,
         #[sql_type = "Timestamptz"]
         create_ts: NaiveDateTime,
+        #[sql_type = "Int4"]
+        last_post_id: Id,
         #[sql_type = "Timestamptz"]
         last_post_create_ts: NaiveDateTime,
         #[sql_type = "Int8"]
@@ -85,7 +87,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     let topics = diesel::dsl::sql_query(
         "
-    SELECT ft.id, ft.user_id, ft.last_post_create_ts, ft.name, ft.type AS type_, ft.create_ts, u.name AS user_name,
+    SELECT ft.id, ft.user_id, ft.last_post_id, ft.last_post_create_ts, ft.name, ft.type AS type_, ft.create_ts, u.name AS user_name,
 	    (SELECT COUNT(*) FROM forum_posts WHERE topic_id = ft.id) AS post_count
     FROM forum_topics AS ft
         JOIN users AS u ON u.id = ft.user_id
