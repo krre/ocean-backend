@@ -35,6 +35,8 @@ struct Votes {
 #[derive(QueryableByName, Serialize)]
 pub struct Comment {
     #[sql_type = "Int4"]
+    id: Id,
+    #[sql_type = "Int4"]
     mandela_id: Id,
     #[sql_type = "Int4"]
     title_mode: i32,
@@ -54,6 +56,8 @@ pub struct Comment {
     user_name: String,
     #[sql_type = "Timestamptz"]
     create_ts: NaiveDateTime,
+    #[sql_type = "Int8"]
+    comment_count: i64,
 }
 
 fn update_categories(
@@ -670,9 +674,10 @@ pub fn new_comments(
     offset: i32,
 ) -> Result<Vec<Comment>, Box<dyn std::error::Error>> {
     let result = diesel::dsl::sql_query(
-        "SELECT mandela_id, title_mode, title, what, before, after, message, user_id, user_name, create_ts
-        FROM (select m.id AS mandela_id, m.title_mode, m.title, m.what, m.before, m.after, c.message, c.user_id, u.name AS user_name, c.create_ts,
-            rank() over (PARTITION BY c.mandela_id ORDER BY c.create_ts DESC)
+        "SELECT id, mandela_id, title_mode, title, what, before, after, message, user_id, user_name, create_ts, comment_count
+        FROM (SELECT m.id AS mandela_id, m.title_mode, m.title, m.what, m.before, m.after, c.id, c.message, c.user_id, u.name AS user_name, c.create_ts,
+            rank() over (PARTITION BY c.mandela_id ORDER BY c.create_ts DESC),
+            (SELECT count (*) FROM comments WHERE mandela_id = m.id) as comment_count
         FROM mandels AS m
             LEFT JOIN comments AS c ON c.mandela_id = m.id
             INNER JOIN users AS u ON c.user_id = u.id) AS x
