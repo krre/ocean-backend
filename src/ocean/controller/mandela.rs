@@ -212,7 +212,6 @@ pub fn update(data: RequestData) -> RequestResult {
         before: String,
         after: String,
         description: String,
-        user_id: Id,
         update_ts: NaiveDateTime,
     }
 
@@ -223,7 +222,6 @@ pub fn update(data: RequestData) -> RequestResult {
         before: req.before,
         after: req.after,
         description: req.description,
-        user_id: data.user.id,
         update_ts: Utc::now().naive_utc(),
     };
 
