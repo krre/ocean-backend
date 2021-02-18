@@ -7,6 +7,7 @@ use diesel::sql_types::Bool;
 use diesel::sql_types::Int2;
 use diesel::sql_types::Int4;
 use diesel::sql_types::Int8;
+use diesel::sql_types::Nullable;
 use diesel::sql_types::Text;
 use diesel::sql_types::Timestamptz;
 use serde::Deserialize;
@@ -77,10 +78,10 @@ pub fn get_all(data: RequestData) -> RequestResult {
         type_: i16,
         #[sql_type = "Timestamptz"]
         create_ts: NaiveDateTime,
-        #[sql_type = "Int4"]
-        last_post_id: Id,
-        #[sql_type = "Timestamptz"]
-        last_post_create_ts: NaiveDateTime,
+        #[sql_type = "Nullable<Int4>"]
+        last_post_id: Option<Id>,
+        #[sql_type = "Nullable<Timestamptz>"]
+        last_post_create_ts: Option<NaiveDateTime>,
         #[sql_type = "Int8"]
         post_count: i64,
     }
