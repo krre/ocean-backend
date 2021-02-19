@@ -4,6 +4,7 @@ use crate::types;
 
 pub mod activity;
 pub mod comment;
+pub mod feed;
 pub mod forum;
 pub mod mandela;
 pub mod rating;

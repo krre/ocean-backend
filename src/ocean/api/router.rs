@@ -171,6 +171,7 @@ lazy_static! {
             "activity.getAll".to_string(),
             Rh(controller::activity::get_all),
         );
+        m.insert("feed.getAll".to_string(), Rh(controller::feed::get_all));
         m
     };
 }
