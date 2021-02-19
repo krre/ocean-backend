@@ -13,9 +13,20 @@ pub fn send_admin_message(text: String) {
 }
 
 fn send_message_to(chat_id: String, text: String) {
+    let mut adaptive_text = text;
+
+    const TEXT_LIMIT: usize = 4096; // Telegram Bot limit
+
+    if adaptive_text.len() > TEXT_LIMIT {
+        const CUT_SIGN: &str = "[...]";
+        const SAFE_CUT_LENGHT: usize = 16; // Safe cutting numbers of symbols to fit to UTF char boundary
+        adaptive_text.truncate(TEXT_LIMIT - SAFE_CUT_LENGHT);
+        adaptive_text.push_str(CUT_SIGN);
+    }
+
     let params = api::SendMessageParams {
         chat_id: chat_id,
-        text,
+        text: adaptive_text,
         parse_mode: Some("HTML".into()),
     };
 
