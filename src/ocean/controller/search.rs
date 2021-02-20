@@ -8,18 +8,22 @@ use serde::Serialize;
 pub fn get_all(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
-        content: String,
+        text: String,
+        #[serde(rename(deserialize = "type"))]
+        type_: i8,
+        offset: i64,
+        limit: i64,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    if req.content.is_empty() {
+    if req.text.is_empty() {
         let data = r#"[]"#;
         let result = serde_json::from_str(data)?;
         return Ok(Some(result));
     }
 
-    let content = format!("%{}%", req.content).to_string();
+    let text = format!("%{}%", req.text).to_string();
 
     #[derive(Queryable, Serialize)]
     struct Mandela {
@@ -37,13 +41,14 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .select((id, title_mode, title, what, before, after))
         .filter(
             title
-                .ilike(&content)
-                .or(what.ilike(&content))
-                .or(before.ilike(&content))
-                .or(after.ilike(&content))
-                .or(description.ilike(&content)),
+                .ilike(&text)
+                .or(what.ilike(&text))
+                .or(before.ilike(&text))
+                .or(after.ilike(&text))
+                .or(description.ilike(&text)),
         )
-        .limit(50)
+        .limit(req.limit)
+        .offset(req.offset)
         .load::<Mandela>(&data.db.conn)?;
 
     let result = serde_json::to_value(&list)?;
