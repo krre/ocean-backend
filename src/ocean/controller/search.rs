@@ -4,8 +4,8 @@ use diesel::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
 
-// search.getByContent
-pub fn get_by_content(data: RequestData) -> RequestResult {
+// search.getAll
+pub fn get_all(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         content: String,

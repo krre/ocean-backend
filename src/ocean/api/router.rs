@@ -69,10 +69,7 @@ lazy_static! {
             "comment.delete".to_string(),
             Rh(controller::comment::delete),
         );
-        m.insert(
-            "search.getByContent".to_string(),
-            Rh(controller::search::get_by_content),
-        );
+        m.insert("search.getAll".to_string(), Rh(controller::search::get_all));
         m.insert(
             "rating.getMandels".to_string(),
             Rh(controller::rating::get_mandels),
