@@ -55,13 +55,11 @@ pub fn get_by_content(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         content: String,
-        search_title: bool,
-        search_description: bool,
     }
 
     let req = serde_json::from_value::<Req>(data.params.unwrap())?;
 
-    if req.content.is_empty() || !(req.search_title || req.search_description) {
+    if req.content.is_empty() {
         let data = r#"[]"#;
         let result = serde_json::from_str(data)?;
         return Ok(Some(result));
@@ -81,26 +79,20 @@ pub fn get_by_content(data: RequestData) -> RequestResult {
 
     use crate::model::schema::mandels::dsl::*;
 
-    let mut query = mandels
+    let list = mandels
         .select((id, title_mode, title, what, before, after))
-        .into_boxed();
-
-    if req.search_title {
-        query = query.filter(
+        .filter(
             title
                 .ilike(&content)
                 .or(what.ilike(&content))
                 .or(before.ilike(&content))
-                .or(after.ilike(&content)),
-        );
-    }
+                .or(after.ilike(&content))
+                .or(description.ilike(&content)),
+        )
+        .limit(50)
+        .load::<Mandela>(&data.db.conn)?;
 
-    if req.search_description {
-        query = query.or_filter(description.ilike(&content));
-    }
-
-    let search_mandels = query.limit(50).load::<Mandela>(&data.db.conn)?;
-    let result = serde_json::to_value(&search_mandels)?;
+    let result = serde_json::to_value(&list)?;
 
     Ok(Some(result))
 }
