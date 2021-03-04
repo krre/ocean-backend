@@ -12,6 +12,7 @@ pub mod db;
 pub mod json_rpc;
 pub mod model;
 pub mod telegram_bot;
+pub mod watchdog;
 
 pub mod types {
     pub type Id = i32;
