@@ -19,9 +19,3 @@ impl Db {
         Db { conn }
     }
 }
-
-impl Default for Db {
-    fn default() -> Self {
-        Self::new()
-    }
-}
