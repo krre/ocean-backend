@@ -61,9 +61,3 @@ impl Config {
         toml::from_str(&config_text).unwrap()
     }
 }
-
-impl Default for Config {
-    fn default() -> Self {
-        Self::new()
-    }
-}
