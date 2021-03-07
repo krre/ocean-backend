@@ -12,7 +12,6 @@ use diesel::sql_types::Text;
 use diesel::sql_types::Timestamptz;
 use serde::Deserialize;
 use serde::Serialize;
-use serde_json::json;
 
 #[derive(Queryable)]
 pub struct MandelaTitle {
@@ -181,7 +180,8 @@ pub fn create(data: RequestData) -> RequestResult {
 
     telegram_bot::send_message(message);
 
-    let result = json!({ "id": mandela_id });
+    let resp = ResponseId { id: mandela_id };
+    let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
 }
 

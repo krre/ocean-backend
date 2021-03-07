@@ -7,7 +7,6 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
-use serde_json::json;
 
 // forum.post.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
@@ -216,7 +215,8 @@ pub fn create(data: RequestData) -> RequestResult {
 
     telegram_bot::send_admin_message(post_message);
 
-    let result = json!({ "id": post_id });
+    let resp = ResponseId { id: post_id };
+    let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
 }
 

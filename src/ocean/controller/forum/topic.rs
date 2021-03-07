@@ -12,7 +12,6 @@ use diesel::sql_types::Text;
 use diesel::sql_types::Timestamptz;
 use serde::Deserialize;
 use serde::Serialize;
-use serde_json::json;
 
 pub const COMMON_TOPIC_TYPE: i16 = 0;
 pub const POLL_TOPIC_TYPE: i16 = 1;
@@ -213,7 +212,8 @@ pub fn create(data: RequestData) -> RequestResult {
         Ok(())
     })?;
 
-    let result = json!({ "id": topic_id });
+    let resp = ResponseId { id: topic_id };
+    let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
 }
 

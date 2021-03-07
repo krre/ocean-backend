@@ -10,7 +10,6 @@ use diesel::sql_types::Int8;
 use diesel::sql_types::Text;
 use diesel::sql_types::Timestamptz;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 #[derive(Queryable, Serialize)]
 struct UserGroup {
@@ -21,12 +20,10 @@ struct UserGroup {
 
 // user.getNextId
 pub fn get_next_id(data: RequestData) -> RequestResult {
-    let id = next_id(&data.db)?;
-
-    let result = json!({
-        "id": id,
-    });
-
+    let resp = ResponseId {
+        id: next_id(&data.db)?,
+    };
+    let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
 }
 

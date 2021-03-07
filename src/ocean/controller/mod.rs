@@ -2,7 +2,7 @@ use crate::config;
 use crate::db;
 use crate::types;
 use serde::de::DeserializeOwned;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub mod activity;
 pub mod comment;
@@ -18,6 +18,11 @@ pub type RequestHandler = fn(RequestData) -> RequestResult;
 
 #[derive(Deserialize)]
 pub struct RequestId {
+    id: types::Id,
+}
+
+#[derive(Serialize)]
+pub struct ResponseId {
     id: types::Id,
 }
 
