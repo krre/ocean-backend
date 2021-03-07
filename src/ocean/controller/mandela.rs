@@ -560,14 +560,14 @@ pub fn get_all(data: RequestData) -> RequestResult {
         mandels: Vec<MandelaResp>,
     };
 
-    let resp = serde_json::to_value(&Resp {
+    let resp = Resp {
         total_count: total_count,
         new_count: new_count,
         mine_count: mine_count,
         poll_count: poll_count,
         category_count: category_count,
         mandels: mandels_resp,
-    })?;
+    };
 
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))

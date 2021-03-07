@@ -345,7 +345,6 @@ pub fn vote(data: RequestData) -> RequestResult {
     }
 
     let resp = Resp { poll: poll };
-
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
 }

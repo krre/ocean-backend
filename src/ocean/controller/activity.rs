@@ -22,8 +22,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let topics = forum::new_topics(&data.db, req.limit, 0)?;
     let comments = mandela::new_comments(&data.db, req.limit, 0)?;
 
-    let resp = serde_json::to_value(&Resp { comments, topics })?;
-
+    let resp = Resp { comments, topics };
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
 }

@@ -56,10 +56,10 @@ pub fn get_all(data: RequestData) -> RequestResult {
         sections: Vec<section::Section>,
     };
 
-    let resp = serde_json::to_value(&Resp {
+    let resp = Resp {
         categories: categories,
         sections: sections,
-    })?;
+    };
 
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))

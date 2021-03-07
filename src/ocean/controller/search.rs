@@ -97,8 +97,6 @@ pub fn get_all(data: RequestData) -> RequestResult {
     };
 
     let resp = Resp { records: records };
-
     let result = serde_json::to_value(&resp)?;
-
     Ok(Some(result))
 }

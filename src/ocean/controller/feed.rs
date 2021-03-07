@@ -109,10 +109,10 @@ pub fn get_all(data: RequestData) -> RequestResult {
         0
     };
 
-    let resp = serde_json::to_value(&Resp {
+    let resp = Resp {
         total_count: total_count,
         feeds: feeds,
-    })?;
+    };
 
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))

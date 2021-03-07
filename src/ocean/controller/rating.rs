@@ -74,10 +74,10 @@ pub fn get_mandels(data: RequestData) -> RequestResult {
         mandels: Vec<Mandela>,
     };
 
-    let resp = serde_json::to_value(&Resp {
+    let resp = Resp {
         total_count: total_count[0].count,
         mandels: list,
-    })?;
+    };
 
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
@@ -141,10 +141,10 @@ pub fn get_users(data: RequestData) -> RequestResult {
         users: Vec<User>,
     };
 
-    let resp = serde_json::to_value(&Resp {
+    let resp = Resp {
         user_count: user_count[0].count,
         users: list,
-    })?;
+    };
 
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))

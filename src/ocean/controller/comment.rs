@@ -128,10 +128,10 @@ pub fn get_all(data: RequestData) -> RequestResult {
         comments: Vec<Comment>,
     };
 
-    let resp = serde_json::to_value(&Resp {
+    let resp = Resp {
         total_count: total_count,
         comments: list,
-    })?;
+    };
 
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
