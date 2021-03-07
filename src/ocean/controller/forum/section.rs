@@ -86,12 +86,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::forum_sections::dsl::*;
 
-    #[derive(Deserialize)]
-    struct Req {
-        id: Id,
-    }
-
-    let req: Req = data.params()?;
+    let req: RequestId = data.params()?;
 
     #[derive(Queryable, Serialize)]
     pub struct ForumSection {
@@ -169,12 +164,7 @@ pub fn update(data: RequestData) -> RequestResult {
 
 // forum.section.delete
 pub fn delete(data: RequestData) -> RequestResult {
-    #[derive(Deserialize)]
-    struct Req {
-        id: Id,
-    }
-
-    let req: Req = data.params()?;
+    let req: RequestId = data.params()?;
 
     use crate::model::schema::forum_sections::dsl::*;
 

@@ -158,12 +158,7 @@ pub fn logout(_data: RequestData) -> RequestResult {
 
 // user.getOne
 pub fn get_one(data: RequestData) -> RequestResult {
-    #[derive(Deserialize)]
-    struct Req {
-        id: Id,
-    }
-
-    let req: Req = data.params()?;
+    let req: RequestId = data.params()?;
 
     #[derive(QueryableByName, Serialize)]
     struct User {

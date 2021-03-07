@@ -172,12 +172,7 @@ pub fn update(data: RequestData) -> RequestResult {
 // comment.delete
 pub fn delete(data: RequestData) -> RequestResult {
     use crate::model::schema::comments::dsl::*;
-    #[derive(Deserialize)]
-    struct Req {
-        id: Id,
-    }
-
-    let req: Req = data.params()?;
+    let req: RequestId = data.params()?;
 
     diesel::delete(comments.filter(id.eq(req.id))).execute(&data.db.conn)?;
     Ok(None)

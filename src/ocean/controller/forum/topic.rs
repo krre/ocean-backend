@@ -132,12 +132,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::forum_topics::dsl::*;
 
-    #[derive(Deserialize)]
-    struct Req {
-        id: Id,
-    }
-
-    let req: Req = data.params()?;
+    let req: RequestId = data.params()?;
 
     #[derive(Queryable, Serialize)]
     pub struct ForumTopic {
@@ -256,12 +251,7 @@ pub fn update(data: RequestData) -> RequestResult {
 
 // forum.topic.delete
 pub fn delete(data: RequestData) -> RequestResult {
-    #[derive(Deserialize)]
-    struct Req {
-        id: Id,
-    }
-
-    let req: Req = data.params()?;
+    let req: RequestId = data.params()?;
 
     use crate::model::schema::forum_topics::dsl::*;
     diesel::delete(forum_topics.filter(id.eq(req.id))).execute(&data.db.conn)?;

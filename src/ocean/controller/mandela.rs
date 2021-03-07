@@ -258,12 +258,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
 
-    #[derive(Deserialize)]
-    struct Req {
-        id: Id,
-    }
-
-    let req: Req = data.params()?;
+    let req: RequestId = data.params()?;
 
     #[derive(Queryable, Serialize)]
     pub struct Mandela {
@@ -590,12 +585,7 @@ pub fn delete(data: RequestData) -> RequestResult {
 
 // mandela.mark
 pub fn mark(data: RequestData) -> RequestResult {
-    #[derive(Deserialize)]
-    struct Req {
-        id: Id,
-    }
-
-    let req: Req = data.params()?;
+    let req: RequestId = data.params()?;
 
     use crate::model::schema::marks;
     use crate::model::schema::marks::dsl::*;

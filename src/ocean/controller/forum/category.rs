@@ -31,12 +31,7 @@ pub fn create(data: RequestData) -> RequestResult {
 pub fn get_one(data: RequestData) -> RequestResult {
     use crate::model::schema::forum_categories::dsl::*;
 
-    #[derive(Deserialize)]
-    struct Req {
-        id: Id,
-    }
-
-    let req: Req = data.params()?;
+    let req: RequestId = data.params()?;
 
     #[derive(Queryable, Serialize)]
     pub struct ForumCategory {
@@ -91,12 +86,7 @@ pub fn update(data: RequestData) -> RequestResult {
 
 // forum.category.delete
 pub fn delete(data: RequestData) -> RequestResult {
-    #[derive(Deserialize)]
-    struct Req {
-        id: Id,
-    }
-
-    let req: Req = data.params()?;
+    let req: RequestId = data.params()?;
 
     use crate::model::schema::forum_categories::dsl::*;
     diesel::delete(forum_categories.filter(id.eq(req.id))).execute(&data.db.conn)?;

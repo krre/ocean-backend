@@ -2,6 +2,7 @@ use crate::config;
 use crate::db;
 use crate::types;
 use serde::de::DeserializeOwned;
+use serde::Deserialize;
 
 pub mod activity;
 pub mod comment;
@@ -14,6 +15,11 @@ pub mod user;
 
 pub type RequestResult = Result<Option<serde_json::Value>, Box<dyn std::error::Error>>;
 pub type RequestHandler = fn(RequestData) -> RequestResult;
+
+#[derive(Deserialize)]
+pub struct RequestId {
+    id: types::Id,
+}
 
 #[derive(Debug)]
 pub struct Error {
