@@ -16,7 +16,7 @@ pub fn create(data: RequestData) -> RequestResult {
         message: String,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     use crate::model::schema::comments;
 
@@ -89,7 +89,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         limit: i64,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(Queryable, Serialize)]
     pub struct Comment {
@@ -148,7 +148,7 @@ pub fn update(data: RequestData) -> RequestResult {
         message: String,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(AsChangeset)]
     #[table_name = "comments"]
@@ -172,8 +172,13 @@ pub fn update(data: RequestData) -> RequestResult {
 // comment.delete
 pub fn delete(data: RequestData) -> RequestResult {
     use crate::model::schema::comments::dsl::*;
-    let comment_id = data.params.unwrap()["id"].as_i64().unwrap() as i32;
+    #[derive(Deserialize)]
+    struct Req {
+        id: Id,
+    }
 
-    diesel::delete(comments.filter(id.eq(comment_id))).execute(&data.db.conn)?;
+    let req: Req = data.params()?;
+
+    diesel::delete(comments.filter(id.eq(req.id))).execute(&data.db.conn)?;
     Ok(None)
 }

@@ -38,7 +38,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         limit: i64,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(Queryable)]
     struct SectionMeta {
@@ -137,7 +137,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         id: Id,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(Queryable, Serialize)]
     pub struct ForumTopic {
@@ -171,7 +171,7 @@ pub fn create(data: RequestData) -> RequestResult {
         poll_answer_selection: Option<i16>,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(Insertable)]
     #[table_name = "forum_topics"]
@@ -233,7 +233,7 @@ pub fn update(data: RequestData) -> RequestResult {
         name: String,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(AsChangeset)]
     #[table_name = "forum_topics"]
@@ -256,10 +256,15 @@ pub fn update(data: RequestData) -> RequestResult {
 
 // forum.topic.delete
 pub fn delete(data: RequestData) -> RequestResult {
-    use crate::model::schema::forum_topics::dsl::*;
-    let forum_topic_id = data.params.unwrap()["id"].as_i64().unwrap() as Id;
+    #[derive(Deserialize)]
+    struct Req {
+        id: Id,
+    }
 
-    diesel::delete(forum_topics.filter(id.eq(forum_topic_id))).execute(&data.db.conn)?;
+    let req: Req = data.params()?;
+
+    use crate::model::schema::forum_topics::dsl::*;
+    diesel::delete(forum_topics.filter(id.eq(req.id))).execute(&data.db.conn)?;
     Ok(None)
 }
 
@@ -299,7 +304,7 @@ pub fn vote(data: RequestData) -> RequestResult {
         votes: Vec<Id>,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
     let conn = &data.db.conn;
     let poll_user_id = data.user.id;
     let poll_topic_id = req.id;

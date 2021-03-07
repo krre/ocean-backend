@@ -18,7 +18,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         limit: i64,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(Queryable)]
     struct TopicMeta {
@@ -138,7 +138,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         id: Id,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(Queryable, Serialize)]
     pub struct ForumPost {
@@ -167,7 +167,7 @@ pub fn create(data: RequestData) -> RequestResult {
         post: String,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(Insertable)]
     #[table_name = "forum_posts"]
@@ -236,7 +236,7 @@ pub fn update(data: RequestData) -> RequestResult {
         post: String,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(AsChangeset)]
     #[table_name = "forum_posts"]
@@ -259,13 +259,18 @@ pub fn update(data: RequestData) -> RequestResult {
 
 // forum.post.delete
 pub fn delete(data: RequestData) -> RequestResult {
-    use crate::model::schema::forum_posts;
+    #[derive(Deserialize)]
+    struct Req {
+        id: Id,
+    }
 
-    let post_id = data.params.unwrap()["id"].as_i64().unwrap() as Id;
+    let req: Req = data.params()?;
+
+    use crate::model::schema::forum_posts;
 
     let topic_id = forum_posts::table
         .select(forum_posts::topic_id)
-        .filter(forum_posts::id.eq(post_id))
+        .filter(forum_posts::id.eq(req.id))
         .first::<Id>(&data.db.conn)?;
 
     #[derive(Queryable, Serialize)]
@@ -291,7 +296,6 @@ pub fn delete(data: RequestData) -> RequestResult {
     }
 
     topic::update_last_post(&data.db, topic_id, prev_post_id, prev_post_create_ts)?;
-    diesel::delete(forum_posts::table.filter(forum_posts::id.eq(post_id)))
-        .execute(&data.db.conn)?;
+    diesel::delete(forum_posts::table.filter(forum_posts::id.eq(req.id))).execute(&data.db.conn)?;
     Ok(None)
 }

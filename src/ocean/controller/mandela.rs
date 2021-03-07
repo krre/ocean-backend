@@ -127,7 +127,7 @@ pub fn create(data: RequestData) -> RequestResult {
         categories: serde_json::Value,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     use crate::model::schema::mandels;
     use crate::model::schema::mandels::dsl::*;
@@ -201,7 +201,7 @@ pub fn update(data: RequestData) -> RequestResult {
         categories: serde_json::Value,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(AsChangeset)]
     #[table_name = "mandels"]
@@ -263,7 +263,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         id: Id,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(Queryable, Serialize)]
     pub struct Mandela {
@@ -384,7 +384,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         sort: i8,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(Queryable)]
     struct Mandela {
@@ -580,7 +580,7 @@ pub fn delete(data: RequestData) -> RequestResult {
         id: Vec<i32>,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     use crate::model::schema::mandels::dsl::*;
 
@@ -595,7 +595,7 @@ pub fn mark(data: RequestData) -> RequestResult {
         id: Id,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     use crate::model::schema::marks;
     use crate::model::schema::marks::dsl::*;
@@ -626,7 +626,7 @@ pub fn vote(data: RequestData) -> RequestResult {
         vote: i16,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(Insertable, AsChangeset)]
     #[table_name = "votes"]

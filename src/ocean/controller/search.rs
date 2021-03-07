@@ -19,7 +19,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         limit: i64,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     if req.text.is_empty() {
         let data = r#"[]"#;

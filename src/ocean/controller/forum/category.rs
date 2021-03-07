@@ -13,15 +13,15 @@ pub fn create(data: RequestData) -> RequestResult {
 
     #[derive(Insertable, Deserialize)]
     #[table_name = "forum_categories"]
-    struct NewForumCategory {
+    struct Req {
         name: String,
         order_index: i16,
     }
 
-    let new_forum_category = serde_json::from_value::<NewForumCategory>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     diesel::insert_into(forum_categories)
-        .values(&new_forum_category)
+        .values(&req)
         .execute(&data.db.conn)?;
 
     Ok(None)
@@ -36,7 +36,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         id: Id,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(Queryable, Serialize)]
     pub struct ForumCategory {
@@ -66,7 +66,7 @@ pub fn update(data: RequestData) -> RequestResult {
         order_index: i16,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(AsChangeset)]
     #[table_name = "forum_categories"]
@@ -91,9 +91,14 @@ pub fn update(data: RequestData) -> RequestResult {
 
 // forum.category.delete
 pub fn delete(data: RequestData) -> RequestResult {
-    use crate::model::schema::forum_categories::dsl::*;
-    let forum_category_id = data.params.unwrap()["id"].as_i64().unwrap() as i32;
+    #[derive(Deserialize)]
+    struct Req {
+        id: Id,
+    }
 
-    diesel::delete(forum_categories.filter(id.eq(forum_category_id))).execute(&data.db.conn)?;
+    let req: Req = data.params()?;
+
+    use crate::model::schema::forum_categories::dsl::*;
+    diesel::delete(forum_categories.filter(id.eq(req.id))).execute(&data.db.conn)?;
     Ok(None)
 }

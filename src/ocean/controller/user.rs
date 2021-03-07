@@ -54,7 +54,7 @@ pub fn create(data: RequestData) -> RequestResult {
         token: String,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
     let next_id = next_id(&data.db)?;
 
     if req.id != next_id {
@@ -109,7 +109,7 @@ pub fn auth(data: RequestData) -> RequestResult {
         token: String,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
     let user_id;
 
     if let Some(u) = user_cache::get(&req.token) {
@@ -163,7 +163,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         id: Id,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(QueryableByName, Serialize)]
     struct User {
@@ -220,7 +220,7 @@ pub fn update(data: RequestData) -> RequestResult {
         code: String,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     let groups = user_groups
         .filter(code.eq(req.code))
@@ -256,7 +256,7 @@ pub fn update_token(data: RequestData) -> RequestResult {
         token: String,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     diesel::update(users.filter(id.eq(data.user.id)))
         .set(token.eq(&req.token))

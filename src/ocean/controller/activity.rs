@@ -11,7 +11,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         limit: i32,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     #[derive(Serialize)]
     struct Resp {

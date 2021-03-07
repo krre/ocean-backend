@@ -12,7 +12,7 @@ pub fn get_mandels(data: RequestData) -> RequestResult {
         offset: i32,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     use diesel::prelude::*;
     use diesel::sql_types::Int2;
@@ -91,7 +91,7 @@ pub fn get_users(data: RequestData) -> RequestResult {
         offset: i32,
     }
 
-    let req = serde_json::from_value::<Req>(data.params.unwrap())?;
+    let req: Req = data.params()?;
 
     use diesel::prelude::*;
     use diesel::sql_types::Int4;

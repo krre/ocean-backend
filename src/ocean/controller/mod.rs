@@ -1,6 +1,7 @@
 use crate::config;
 use crate::db;
 use crate::types;
+use serde::de::DeserializeOwned;
 
 pub mod activity;
 pub mod comment;
@@ -14,6 +15,25 @@ pub mod user;
 pub type RequestResult = Result<Option<serde_json::Value>, Box<dyn std::error::Error>>;
 pub type RequestHandler = fn(RequestData) -> RequestResult;
 
+#[derive(Debug)]
+pub struct Error {
+    message: String,
+}
+
+impl std::error::Error for Error {}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Controller error: {}", self.message)
+    }
+}
+
+impl Error {
+    pub fn new(message: String) -> Self {
+        Error { message }
+    }
+}
+
 pub struct RequestData {
     db: db::Db,
     user: types::User,
@@ -23,6 +43,14 @@ pub struct RequestData {
 impl RequestData {
     pub fn new(db: db::Db, user: types::User, params: Option<serde_json::Value>) -> Self {
         Self { db, user, params }
+    }
+
+    pub fn params<T: DeserializeOwned>(&self) -> Result<T, Box<dyn std::error::Error>> {
+        if let Some(p) = &self.params {
+            Ok(serde_json::from_value::<T>((*p).clone())?)
+        } else {
+            Err(Box::new(Error::new(String::from("Parameters is absent"))))
+        }
     }
 }
 
