@@ -53,7 +53,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
             "SELECT 0 AS id, 0::Int8 AS row, {0}, id AS title_id,
                 ts_headline({1}, plainto_tsquery($1)) AS content
             FROM mandels
-            WHERE to_tsvector({1}) @@ plainto_tsquery($1)
+            WHERE to_tsvector('russian', {1}) @@ plainto_tsquery($1)
             ORDER BY ts_rank(to_tsvector({1}), plainto_tsquery($1)) DESC",
             mandela_title, source
         )
@@ -67,7 +67,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
                 ts_headline(c.message, plainto_tsquery($1)) AS content
             FROM comments AS c
             JOIN mandels AS m ON m.id = c.mandela_id
-            WHERE to_tsvector(c.message) @@ plainto_tsquery($1)
+            WHERE to_tsvector('russian', c.message) @@ plainto_tsquery($1)
             ORDER BY ts_rank(to_tsvector(c.message), plainto_tsquery($1)) DESC", mandela_title)
     } else {
         // forum post
@@ -79,11 +79,13 @@ pub fn get_all(data: RequestData) -> RequestResult {
                 ts_headline(fp.post, plainto_tsquery($1)) AS content
             FROM forum_posts AS fp
             JOIN forum_topics AS ft ON ft.id = fp.topic_id
-            WHERE to_tsvector(fp.post) @@ plainto_tsquery($1)
+            WHERE to_tsvector('russian', fp.post) @@ plainto_tsquery($1)
             ORDER BY ts_rank(to_tsvector(fp.post), plainto_tsquery($1)) DESC")
     };
 
     sql = sql + " LIMIT $2 OFFSET $3";
+
+    println!("{}", sql);
 
     let records = sql_query(sql)
         .bind::<Text, _>(req.text)
