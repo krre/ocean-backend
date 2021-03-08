@@ -85,8 +85,6 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     sql = sql + " LIMIT $2 OFFSET $3";
 
-    println!("{}", sql);
-
     let records = sql_query(sql)
         .bind::<Text, _>(req.text)
         .bind::<Int8, _>(req.limit)
