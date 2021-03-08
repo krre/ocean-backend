@@ -51,10 +51,10 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
         format!(
             "SELECT 0 AS id, 0::Int8 AS row, {0}, id AS title_id,
-                ts_headline({1}, plainto_tsquery($1)) AS content
+                ts_headline({1}, plainto_tsquery('russian', $1)) AS content
             FROM mandels
-            WHERE to_tsvector('russian', {1}) @@ plainto_tsquery($1)
-            ORDER BY ts_rank(to_tsvector({1}), plainto_tsquery($1)) DESC",
+            WHERE to_tsvector('russian', {1}) @@ plainto_tsquery('russian', $1)
+            ORDER BY ts_rank(to_tsvector('russian', {1}), plainto_tsquery('russian', $1)) DESC",
             mandela_title, source
         )
     } else if req.type_ == COMMENT_TYPE {
@@ -64,11 +64,11 @@ pub fn get_all(data: RequestData) -> RequestResult {
                     FROM comments WHERE mandela_id = c.mandela_id) AS x WHERE x.id = c.id) AS row,
                 m.id AS title_id,
                 {},
-                ts_headline(c.message, plainto_tsquery($1)) AS content
+                ts_headline('russian', c.message, plainto_tsquery($1)) AS content
             FROM comments AS c
             JOIN mandels AS m ON m.id = c.mandela_id
-            WHERE to_tsvector('russian', c.message) @@ plainto_tsquery($1)
-            ORDER BY ts_rank(to_tsvector(c.message), plainto_tsquery($1)) DESC", mandela_title)
+            WHERE to_tsvector('russian', c.message) @@ plainto_tsquery('russian', $1)
+            ORDER BY ts_rank(to_tsvector('russian', c.message), plainto_tsquery('russian', $1)) DESC", mandela_title)
     } else {
         // forum post
         format!(
@@ -76,11 +76,11 @@ pub fn get_all(data: RequestData) -> RequestResult {
                 (SELECT row FROM (SELECT id, row_number() OVER (PARTITION BY topic_id ORDER BY id ASC) AS row
                     FROM forum_posts WHERE topic_id = fp.topic_id) AS x WHERE x.id = fp.id) AS row,
                 ft.id AS title_id, ft.name AS title,
-                ts_headline(fp.post, plainto_tsquery($1)) AS content
+                ts_headline('russian', fp.post, plainto_tsquery($1)) AS content
             FROM forum_posts AS fp
             JOIN forum_topics AS ft ON ft.id = fp.topic_id
-            WHERE to_tsvector('russian', fp.post) @@ plainto_tsquery($1)
-            ORDER BY ts_rank(to_tsvector(fp.post), plainto_tsquery($1)) DESC")
+            WHERE to_tsvector('russian', fp.post) @@ plainto_tsquery('russian', $1)
+            ORDER BY ts_rank(to_tsvector('russian', fp.post), plainto_tsquery('russian', $1)) DESC")
     };
 
     sql = sql + " LIMIT $2 OFFSET $3";
