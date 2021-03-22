@@ -5,6 +5,7 @@ use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel::sql_types::Int2;
 use diesel::sql_types::Int4;
 use diesel::sql_types::Int8;
 use diesel::sql_types::Text;
@@ -123,6 +124,7 @@ pub fn auth(data: RequestData) -> RequestResult {
         group_id: Id,
         create_ts: NaiveDateTime,
         update_ts: NaiveDateTime,
+        gender: i16,
     }
 
     let user = users
@@ -137,11 +139,13 @@ pub fn auth(data: RequestData) -> RequestResult {
     struct Resp {
         code: String,
         name: String,
+        gender: i16,
     }
 
     let resp = Resp {
         code: user_group.code,
         name: user.name,
+        gender: user.gender,
     };
 
     let result = serde_json::to_value(&resp)?;
@@ -165,6 +169,8 @@ pub fn get_one(data: RequestData) -> RequestResult {
         name: String,
         #[sql_type = "Text"]
         code: String,
+        #[sql_type = "Int2"]
+        gender: i16,
         #[sql_type = "Timestamptz"]
         create_ts: NaiveDateTime,
         #[sql_type = "Int8"]
@@ -180,7 +186,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     use diesel::dsl::*;
 
     let user = sql_query(
-        "SELECT u.id, u.name, ug.code, u.create_ts,
+        "SELECT u.id, u.name, ug.code, u.gender, u.create_ts,
             (SELECT COUNT(*) FROM mandels WHERE user_id = u.id) AS mandela_count,
             (SELECT COUNT(*) FROM comments WHERE user_id = u.id) AS comment_count,
             (SELECT COUNT(*) FROM forum_topics WHERE user_id = u.id) AS forum_topic_count,
@@ -210,6 +216,7 @@ pub fn update(data: RequestData) -> RequestResult {
     struct Req {
         name: String,
         code: String,
+        gender: i16,
     }
 
     let req: Req = data.params()?;
@@ -222,12 +229,14 @@ pub fn update(data: RequestData) -> RequestResult {
     #[table_name = "users"]
     pub struct UpdateUser {
         pub name: String,
+        pub gender: i16,
         pub group_id: Id,
         pub update_ts: NaiveDateTime,
     }
 
     let update_user = UpdateUser {
         name: req.name,
+        gender: req.gender,
         group_id: groups.id,
         update_ts: Utc::now().naive_utc(),
     };

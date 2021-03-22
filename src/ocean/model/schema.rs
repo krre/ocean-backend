@@ -123,6 +123,7 @@ table! {
         group_id -> Int4,
         create_ts -> Timestamptz,
         update_ts -> Timestamptz,
+        gender -> Int2,
     }
 }
 
