@@ -56,6 +56,6 @@ pub fn user_code(code: &String) -> types::UserCode {
         "admin" => types::UserCode::Admin,
         "user" => types::UserCode::User,
         "anonym" => types::UserCode::Anonym,
-        _ => panic!(format!("Unknown user code {}", code)),
+        _ => panic!("Unknown user code {}", code),
     }
 }

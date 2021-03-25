@@ -553,7 +553,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         poll_count: i64,
         category_count: i64,
         mandels: Vec<MandelaResp>,
-    };
+    }
 
     let resp = Resp {
         total_count: total_count,
@@ -595,7 +595,7 @@ pub fn mark(data: RequestData) -> RequestResult {
     pub struct NewMark {
         mandela_id: Id,
         user_id: Id,
-    };
+    }
 
     let new_mark = NewMark {
         mandela_id: req.id,
@@ -624,7 +624,7 @@ pub fn vote(data: RequestData) -> RequestResult {
         mandela_id: Id,
         user_id: Id,
         vote: i16,
-    };
+    }
 
     let new_vote = NewVote {
         mandela_id: req.id,

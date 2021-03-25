@@ -94,7 +94,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     #[derive(Serialize)]
     struct Resp {
         records: Vec<Record>,
-    };
+    }
 
     let resp = Resp { records: records };
     let result = serde_json::to_value(&resp)?;

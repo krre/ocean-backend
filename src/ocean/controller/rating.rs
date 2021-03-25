@@ -72,7 +72,7 @@ pub fn get_mandels(data: RequestData) -> RequestResult {
     struct Resp {
         total_count: i64,
         mandels: Vec<Mandela>,
-    };
+    }
 
     let resp = Resp {
         total_count: total_count[0].count,
@@ -139,7 +139,7 @@ pub fn get_users(data: RequestData) -> RequestResult {
     struct Resp {
         user_count: i64,
         users: Vec<User>,
-    };
+    }
 
     let resp = Resp {
         user_count: user_count[0].count,

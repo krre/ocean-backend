@@ -98,7 +98,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     struct Resp {
         feeds: Vec<Feed>,
         total_count: i64,
-    };
+    }
 
     let total_count = if total_counts.len() > 0 {
         total_counts[0].mandels_count

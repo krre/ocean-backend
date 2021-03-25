@@ -126,7 +126,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     struct Resp {
         total_count: i64,
         comments: Vec<Comment>,
-    };
+    }
 
     let resp = Resp {
         total_count: total_count,

@@ -54,7 +54,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     struct Resp {
         categories: Vec<Category>,
         sections: Vec<section::Section>,
-    };
+    }
 
     let resp = Resp {
         categories: categories,

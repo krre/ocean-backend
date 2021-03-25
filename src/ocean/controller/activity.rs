@@ -17,7 +17,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     struct Resp {
         comments: Vec<mandela::Comment>,
         topics: Vec<forum::Topic>,
-    };
+    }
 
     let topics = forum::new_topics(&data.db, req.limit, 0)?;
     let comments = mandela::new_comments(&data.db, req.limit, 0)?;

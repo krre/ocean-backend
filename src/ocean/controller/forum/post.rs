@@ -29,7 +29,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         topic_type: i16,
         topic_user_id: Id,
         poll_selection_type: Option<i16>,
-    };
+    }
 
     use crate::model::schema::forum_categories;
     use crate::model::schema::forum_posts;

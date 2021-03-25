@@ -44,7 +44,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         category_id: Id,
         category_name: String,
         section_name: String,
-    };
+    }
 
     use crate::model::schema::forum_categories;
     use crate::model::schema::forum_sections;
@@ -312,7 +312,7 @@ pub fn vote(data: RequestData) -> RequestResult {
             topic_id: Id,
             answer_id: Id,
             user_id: Id,
-        };
+        }
         for vote in req.votes {
             let new_vote = NewVote {
                 topic_id: poll_topic_id,
