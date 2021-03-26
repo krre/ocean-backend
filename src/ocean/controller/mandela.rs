@@ -682,3 +682,23 @@ pub fn new_comments(
 
     Ok(result)
 }
+
+// mandela.updateTrash
+pub fn update_trash(data: RequestData) -> RequestResult {
+    #[derive(Deserialize)]
+    struct Req {
+        id: Id,
+        trash: bool,
+    }
+
+    let req: Req = data.params()?;
+
+    use crate::model::schema::mandels;
+    use crate::model::schema::mandels::dsl::*;
+
+    diesel::update(mandels.filter(mandels::id.eq(req.id)))
+        .set(trash.eq(req.trash))
+        .execute(&data.db.conn)?;
+
+    Ok(None)
+}
