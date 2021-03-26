@@ -401,7 +401,8 @@ pub fn get_all(data: RequestData) -> RequestResult {
     const SHOW_NEW: i8 = 1;
     const SHOW_MINE: i8 = 2;
     const SHOW_POLL: i8 = 3;
-    const SHOW_CATEGORY: i8 = 4;
+    const SHOW_TRASH: i8 = 4;
+    const SHOW_CATEGORY: i8 = 5;
 
     let filter = if let Some(i) = req.filter {
         i
@@ -437,12 +438,16 @@ pub fn get_all(data: RequestData) -> RequestResult {
         ))
         .into_boxed();
 
-    if filter == SHOW_NEW {
+    if filter == SHOW_ALL {
+        query = query.filter(mandels::trash.eq(false))
+    } else if filter == SHOW_NEW {
         query = query.filter(marks::create_ts.is_null())
     } else if filter == SHOW_MINE {
         query = query.filter(mandels::user_id.eq(data.user.id))
     } else if filter == SHOW_POLL {
         query = query.filter(votes::create_ts.is_null())
+    } else if filter == SHOW_TRASH {
+        query = query.filter(mandels::trash.eq(true))
     } else if filter == SHOW_CATEGORY {
         query = query.filter(categories::number.eq(req.category.unwrap()));
     }
@@ -547,12 +552,18 @@ pub fn get_all(data: RequestData) -> RequestResult {
             .first(&data.db.conn)?;
     }
 
+    let trash_count = mandels
+        .select(count_star())
+        .filter(mandels::trash.eq(true))
+        .first(&data.db.conn)?;
+
     #[derive(Serialize)]
     struct Resp {
         total_count: i64,
         new_count: i64,
         mine_count: i64,
         poll_count: i64,
+        trash_count: i64,
         category_count: i64,
         mandels: Vec<MandelaResp>,
     }
@@ -562,6 +573,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         new_count: new_count,
         mine_count: mine_count,
         poll_count: poll_count,
+        trash_count: trash_count,
         category_count: category_count,
         mandels: mandels_resp,
     };
