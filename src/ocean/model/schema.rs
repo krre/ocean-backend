@@ -95,6 +95,7 @@ table! {
         what -> Text,
         before -> Text,
         after -> Text,
+        trash -> Bool,
     }
 }
 
