@@ -5,8 +5,7 @@ use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 // comment.create
 pub fn create(data: RequestData) -> RequestResult {

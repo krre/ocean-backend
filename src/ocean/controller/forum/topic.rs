@@ -3,15 +3,8 @@ use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use diesel::sql_types::Bool;
-use diesel::sql_types::Int2;
-use diesel::sql_types::Int4;
-use diesel::sql_types::Int8;
-use diesel::sql_types::Nullable;
-use diesel::sql_types::Text;
-use diesel::sql_types::Timestamptz;
-use serde::Deserialize;
-use serde::Serialize;
+use diesel::sql_types::{Bool, Int2, Int4, Int8, Nullable, Text, Timestamptz};
+use serde::{Deserialize, Serialize};
 
 pub const COMMON_TOPIC_TYPE: i16 = 0;
 pub const POLL_TOPIC_TYPE: i16 = 1;

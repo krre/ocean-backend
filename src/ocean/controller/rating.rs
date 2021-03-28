@@ -1,7 +1,6 @@
 use super::*;
 use crate::types::Id;
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 // rating.getMandels
 pub fn get_mandels(data: RequestData) -> RequestResult {

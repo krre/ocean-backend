@@ -1,6 +1,5 @@
 use crate::types::Id;
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug)]
 pub struct Response {

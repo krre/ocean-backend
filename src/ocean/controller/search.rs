@@ -2,11 +2,8 @@ use super::*;
 use crate::types::Id;
 use diesel::dsl::*;
 use diesel::prelude::*;
-use diesel::sql_types::Int4;
-use diesel::sql_types::Int8;
-use diesel::sql_types::Text;
-use serde::Deserialize;
-use serde::Serialize;
+use diesel::sql_types::{Int4, Int8, Text};
+use serde::{Deserialize, Serialize};
 
 // search.getAll
 pub fn get_all(data: RequestData) -> RequestResult {

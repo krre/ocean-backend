@@ -2,10 +2,7 @@ use crate::controller::*;
 use crate::types::Id;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use diesel::sql_types::Int4;
-use diesel::sql_types::Int8;
-use diesel::sql_types::Text;
-use diesel::sql_types::Timestamptz;
+use diesel::sql_types::{Int4, Int8, Text, Timestamptz};
 use serde::{Deserialize, Serialize};
 
 pub mod category;

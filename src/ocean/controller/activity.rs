@@ -1,8 +1,7 @@
 use crate::controller::forum;
 use crate::controller::mandela;
 use crate::controller::*;
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 // activity.getAll
 pub fn get_all(data: RequestData) -> RequestResult {

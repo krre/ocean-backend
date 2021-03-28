@@ -3,12 +3,8 @@ use crate::types::Id;
 use chrono::NaiveDateTime;
 use diesel::dsl::*;
 use diesel::prelude::*;
-use diesel::sql_types::Int4;
-use diesel::sql_types::Int8;
-use diesel::sql_types::Text;
-use diesel::sql_types::Timestamptz;
-use serde::Deserialize;
-use serde::Serialize;
+use diesel::sql_types::{Int4, Int8, Text, Timestamptz};
+use serde::{Deserialize, Serialize};
 
 // feed.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
