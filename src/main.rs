@@ -14,7 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     info!("Ocean started");
 
     let db = db::Db::new();
-    embedded_migrations::run_with_output(&db.conn, &mut std::io::stdout()).unwrap();
+    embedded_migrations::run_with_output(&db.conn, &mut std::io::stdout())?;
 
     user_cache::init(db);
 
