@@ -18,9 +18,18 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     let req: Req = data.params()?;
 
+    #[derive(Serialize)]
+    struct Resp {
+        records: Vec<Record>,
+        total_count: i64,
+    }
+
     if req.text.is_empty() {
-        let data = r#"[]"#;
-        let result = serde_json::from_str(data)?;
+        let resp = Resp {
+            records: Vec::new(),
+            total_count: 0,
+        };
+        let result = serde_json::to_value(&resp)?;
         return Ok(Some(result));
     }
 
@@ -43,19 +52,27 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     let mandela_title = "(CASE WHEN title_mode = 0 THEN title ELSE what || ': ' || before || ' / ' || after END) AS title";
 
-    let mut sql = if req.type_ == MANDELA_TYPE {
+    let (mut sql_content, sql_count) = if req.type_ == MANDELA_TYPE {
         let source = "title || ' ' || what || ' ' || before || ' ' || after || ' ' || description";
 
-        format!(
-            "SELECT 0 AS id, 0::Int8 AS row, {0}, id AS title_id,
+        (
+            format!(
+                "SELECT 0 AS id, 0::Int8 AS row, {0}, id AS title_id,
                 ts_headline({1}, plainto_tsquery('russian', $1)) AS content
             FROM mandels
             WHERE to_tsvector('russian', {1}) @@ plainto_tsquery('russian', $1)
             ORDER BY ts_rank(to_tsvector('russian', {1}), plainto_tsquery('russian', $1)) DESC",
-            mandela_title, source
+                mandela_title, source
+            ),
+            format!(
+                "SELECT count(*)
+            FROM mandels
+            WHERE to_tsvector('russian', {}) @@ plainto_tsquery('russian', $1)",
+                source
+            ),
         )
     } else if req.type_ == COMMENT_TYPE {
-        format!(
+        (format!(
             "SELECT c.id,
                 (SELECT row FROM (SELECT id, row_number() OVER (PARTITION BY mandela_id ORDER BY id ASC) AS row
                     FROM comments WHERE mandela_id = c.mandela_id) AS x WHERE x.id = c.id) AS row,
@@ -65,10 +82,15 @@ pub fn get_all(data: RequestData) -> RequestResult {
             FROM comments AS c
             JOIN mandels AS m ON m.id = c.mandela_id
             WHERE to_tsvector('russian', c.message) @@ plainto_tsquery('russian', $1)
-            ORDER BY ts_rank(to_tsvector('russian', c.message), plainto_tsquery('russian', $1)) DESC", mandela_title)
+            ORDER BY ts_rank(to_tsvector('russian', c.message), plainto_tsquery('russian', $1)) DESC", mandela_title),
+
+        "SELECT count(*)
+        FROM comments AS c
+        JOIN mandels AS m ON m.id = c.mandela_id
+        WHERE to_tsvector('russian', c.message) @@ plainto_tsquery('russian', $1)".to_string())
     } else {
         // forum post
-        format!(
+        (format!(
             "SELECT fp.id,
                 (SELECT row FROM (SELECT id, row_number() OVER (PARTITION BY topic_id ORDER BY id ASC) AS row
                     FROM forum_posts WHERE topic_id = fp.topic_id) AS x WHERE x.id = fp.id) AS row,
@@ -77,23 +99,36 @@ pub fn get_all(data: RequestData) -> RequestResult {
             FROM forum_posts AS fp
             JOIN forum_topics AS ft ON ft.id = fp.topic_id
             WHERE to_tsvector('russian', fp.post) @@ plainto_tsquery('russian', $1)
-            ORDER BY ts_rank(to_tsvector('russian', fp.post), plainto_tsquery('russian', $1)) DESC")
+            ORDER BY ts_rank(to_tsvector('russian', fp.post), plainto_tsquery('russian', $1)) DESC"),
+
+        "SELECT count(*)
+        FROM forum_posts AS fp
+        JOIN forum_topics AS ft ON ft.id = fp.topic_id
+        WHERE to_tsvector('russian', fp.post) @@ plainto_tsquery('russian', $1)".to_string())
     };
 
-    sql = sql + " LIMIT $2 OFFSET $3";
+    sql_content = sql_content + " LIMIT $2 OFFSET $3";
 
-    let records = sql_query(sql)
-        .bind::<Text, _>(req.text)
+    let records = sql_query(sql_content)
+        .bind::<Text, _>(&req.text)
         .bind::<Int8, _>(req.limit)
         .bind::<Int8, _>(req.offset)
         .load::<Record>(&data.db.conn)?;
 
-    #[derive(Serialize)]
-    struct Resp {
-        records: Vec<Record>,
+    #[derive(QueryableByName)]
+    struct TotalCount {
+        #[sql_type = "Int8"]
+        count: i64,
     }
 
-    let resp = Resp { records: records };
+    let total_count = sql_query(sql_count)
+        .bind::<Text, _>(&req.text)
+        .load::<TotalCount>(&data.db.conn)?;
+
+    let resp = Resp {
+        records: records,
+        total_count: total_count[0].count,
+    };
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
 }
