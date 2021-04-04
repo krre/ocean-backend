@@ -9,8 +9,7 @@ use rustls::internal::pemfile;
 use std::pin::Pin;
 use std::{fs, io, sync};
 use tokio::net::{TcpListener, TcpStream};
-use tokio_rustls::server::TlsStream;
-use tokio_rustls::TlsAcceptor;
+use tokio_rustls::{server::TlsStream, TlsAcceptor};
 use tokio_stream::wrappers::TcpListenerStream;
 
 #[derive(Default)]
