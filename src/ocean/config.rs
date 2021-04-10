@@ -11,12 +11,12 @@ pub struct Config {
     pub frontend: Frontend,
     pub postgres: Postgres,
     pub telegram_bot: TelegramBot,
+    pub watchdog: Watchdog,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Server {
     pub port: u16,
-    pub anonym_token: String,
     pub ssl: Ssl,
 }
 
@@ -47,6 +47,12 @@ pub struct TelegramBot {
     pub channel: String,
     pub admin_chat_id: String,
     pub enabled: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Watchdog {
+    pub enabled: bool,
+    pub anonym_token: String,
 }
 
 impl Config {

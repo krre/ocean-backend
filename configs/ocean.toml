@@ -1,6 +1,5 @@
 [server]
 port = 21000
-anonym_token = ""
 
 [server.ssl]
 key = "/home/../ssl/ocean.key"
@@ -22,3 +21,7 @@ url = "https://api.telegram.org"
 channel = ""
 admin_chat_id = ""
 enabled = true
+
+[watchdog]
+enabled = false
+anonym_token = ""

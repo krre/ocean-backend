@@ -14,11 +14,11 @@ pub fn start() {
 
         let client = reqwest::blocking::Client::new();
 
-        let mut url = Url::parse("https://localhost/api").unwrap();
+        let mut url = Url::parse(&format!("{}/api", config::CONFIG.frontend.domen)).unwrap();
         url.set_port(Some(config::CONFIG.server.port)).unwrap();
         url.set_query(Some(&format!(
             "token={}",
-            config::CONFIG.server.anonym_token
+            config::CONFIG.watchdog.anonym_token
         )));
 
         let req = json_rpc::Request {
@@ -31,9 +31,10 @@ pub fn start() {
         let resp = client.post(url).json(&json).send();
 
         if let Err(e) = resp {
-            error!("Watchdog request error {:?}", e);
+            error!("Watchdog request error: {:?}", e);
             std::process::exit(0);
         }
     });
+
     info!("Watchdog started");
 }
