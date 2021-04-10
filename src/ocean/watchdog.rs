@@ -12,9 +12,12 @@ pub fn start() {
         thread::sleep(time::Duration::from_secs(60));
         info!("Heartbeat");
 
-        let client = reqwest::blocking::Client::new();
+        let client = reqwest::blocking::Client::builder()
+            .danger_accept_invalid_certs(true)
+            .build()
+            .unwrap();
 
-        let mut url = Url::parse(&format!("{}/api", config::CONFIG.frontend.domen)).unwrap();
+        let mut url = Url::parse("https://localhost/api").unwrap();
         url.set_port(Some(config::CONFIG.server.port)).unwrap();
         url.set_query(Some(&format!(
             "token={}",
