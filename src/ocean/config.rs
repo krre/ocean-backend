@@ -16,6 +16,7 @@ pub struct Config {
 #[derive(Debug, Deserialize)]
 pub struct Server {
     pub port: u16,
+    pub anonym_token: String,
     pub ssl: Ssl,
 }
 

@@ -84,3 +84,7 @@ pub fn format_mandela_title(mandela_title: mandela::MandelaTitle) -> String {
         title
     )
 }
+
+pub fn ping(_data: RequestData) -> RequestResult {
+    Ok(None)
+}

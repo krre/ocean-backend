@@ -18,6 +18,7 @@ type ResponseResult = Result<Response<Body>, hyper::Error>;
 lazy_static! {
     static ref METHODS: HashMap<String, Rh> = {
         let mut m = HashMap::new();
+        m.insert("ping".to_string(), Rh(controller::ping));
         m.insert(
             "mandela.create".to_string(),
             Rh(controller::mandela::create),
@@ -208,8 +209,6 @@ pub async fn route(req: Request<Body>, addr: SocketAddr) -> ResponseResult {
 
     let user_id = user.id;
     let user_name = user.name.clone();
-    // let address = req.remote
-
     let whole_body = body::to_bytes(req).await?;
     let bytes = whole_body.as_ref();
     let raw_req = String::from_utf8_lossy(bytes);
