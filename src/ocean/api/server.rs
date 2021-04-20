@@ -12,7 +12,6 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio_rustls::{server::TlsStream, TlsAcceptor};
 use tokio_stream::wrappers::TcpListenerStream;
 
-#[derive(Default)]
 pub struct ApiServer;
 
 impl ApiServer {
