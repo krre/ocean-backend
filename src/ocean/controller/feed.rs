@@ -96,7 +96,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         total_count: i64,
     }
 
-    let total_count = if total_counts.len() > 0 {
+    let total_count = if !total_counts.is_empty() {
         total_counts[0].mandels_count
             + total_counts[0].comments_count
             + total_counts[0].forum_topics_count
@@ -105,10 +105,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         0
     };
 
-    let resp = Resp {
-        total_count: total_count,
-        feeds: feeds,
-    };
+    let resp = Resp { feeds, total_count };
 
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))

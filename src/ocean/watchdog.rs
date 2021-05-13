@@ -1,8 +1,6 @@
 use crate::config;
 use crate::json_rpc;
 use log::{error, info};
-use reqwest;
-use serde_json;
 use std::thread;
 use std::time;
 use url::Url;

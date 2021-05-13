@@ -118,8 +118,8 @@ pub fn get_all(data: RequestData) -> RequestResult {
         topic_type: topic_meta.topic_type,
         topic_user_id: topic_meta.topic_user_id,
         poll_selection_type: topic_meta.poll_selection_type,
-        poll: poll,
-        post_count: post_count,
+        poll,
+        post_count,
         posts: list,
     };
 

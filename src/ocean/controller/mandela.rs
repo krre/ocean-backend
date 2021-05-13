@@ -95,10 +95,7 @@ fn update_categories(
     }
 
     for number in insert_numbers.into_iter() {
-        let new_category_number = NewCategoryNumber {
-            mandela_id: mandela_id,
-            number: number,
-        };
+        let new_category_number = NewCategoryNumber { mandela_id, number };
 
         diesel::insert_into(categories::table)
             .values(&new_category_number)
@@ -341,7 +338,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     }
 
     let resp = MandelaResp {
-        mandela: mandela,
+        mandela,
         votes: mandela_votes,
         vote: mandela_vote,
         categories: category_numbers,
@@ -505,7 +502,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
             create_ts: elem.create_ts,
             user_name: elem.user_name,
             user_id: elem.user_id,
-            comment_count: comment_count,
+            comment_count,
             mark_ts: elem.mark_ts,
             votes: mandela_votes,
         };
@@ -564,12 +561,12 @@ pub fn get_all(data: RequestData) -> RequestResult {
     }
 
     let resp = Resp {
-        total_count: total_count,
-        new_count: new_count,
-        mine_count: mine_count,
-        poll_count: poll_count,
-        trash_count: trash_count,
-        category_count: category_count,
+        total_count,
+        new_count,
+        mine_count,
+        poll_count,
+        trash_count,
+        category_count,
         mandels: mandels_resp,
     };
 

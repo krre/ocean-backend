@@ -51,10 +51,7 @@ impl ApiServer {
             move |conn: &tokio_rustls::server::TlsStream<tokio::net::TcpStream>| {
                 let (stream, _) = conn.get_ref();
                 let addr = stream.peer_addr().unwrap();
-                async move {
-                    let addr = addr.clone();
-                    Ok::<_, hyper::Error>(service_fn(move |req| router::route(req, addr)))
-                }
+                async move { Ok::<_, hyper::Error>(service_fn(move |req| router::route(req, addr))) }
             },
         );
 
@@ -67,6 +64,12 @@ impl ApiServer {
 
         server.await?;
         Ok(())
+    }
+}
+
+impl Default for ApiServer {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

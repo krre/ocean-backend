@@ -194,7 +194,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     .bind::<Int4, _>(req.id)
     .load::<User>(&data.db.conn)?;
 
-    if user.len() > 0 {
+    if !user.is_empty() {
         let result = serde_json::to_value(&user[0])?;
         Ok(Some(result))
     } else {

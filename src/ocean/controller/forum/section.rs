@@ -71,8 +71,8 @@ pub fn get_all(data: RequestData) -> RequestResult {
     }
 
     let resp = Resp {
-        category_name: category_name,
-        sections: sections,
+        category_name,
+        sections,
     };
 
     let result = serde_json::to_value(&resp)?;

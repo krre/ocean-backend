@@ -11,7 +11,6 @@ use hyper::{Body, Method, Request, Response, StatusCode};
 use log::{error, info};
 use std::collections::HashMap;
 use std::net::SocketAddr;
-use url;
 
 type ResponseResult = Result<Response<Body>, hyper::Error>;
 
@@ -230,12 +229,13 @@ pub async fn route(req: Request<Body>, addr: SocketAddr) -> ResponseResult {
 
         exec(user, r)
     } else {
-        let mut resp = json_rpc::Response::default();
-        resp.error = Some(json_rpc::Error::from_api_error(&api::Error::new(
-            api::error::PARSE_ERROR,
-            Some(json_rpc_req.err().unwrap().to_string()),
-        )));
-        resp
+        json_rpc::response::Response {
+            error: Some(json_rpc::Error::from_api_error(&api::Error::new(
+                api::error::PARSE_ERROR,
+                Some(json_rpc_req.err().unwrap().to_string()),
+            ))),
+            ..Default::default()
+        }
     };
 
     let raw_resp = serde_json::to_string(&json_rpc_resp).unwrap();
@@ -269,7 +269,7 @@ fn bad_request(req: Request<Body>) -> ResponseResult {
         .unwrap())
 }
 
-fn unauthorized(token: &String) -> ResponseResult {
+fn unauthorized(token: &str) -> ResponseResult {
     info!("Unauthorized: token: {}", token);
 
     Ok(Response::builder()
@@ -278,7 +278,7 @@ fn unauthorized(token: &String) -> ResponseResult {
         .unwrap())
 }
 
-fn forbidden(method: &String, user_code: &types::UserCode) -> ResponseResult {
+fn forbidden(method: &str, user_code: &types::UserCode) -> ResponseResult {
     info!("Forbidden: method: {} user code: {:?}", method, user_code);
 
     Ok(Response::builder()

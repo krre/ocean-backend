@@ -112,8 +112,8 @@ pub fn get_all(data: RequestData) -> RequestResult {
         category_id: section_meta.category_id,
         category_name: section_meta.category_name,
         section_name: section_meta.section_name,
-        topic_count: topic_count,
-        topics: topics,
+        topic_count,
+        topics,
     };
 
     let result = serde_json::to_value(&resp)?;
@@ -327,7 +327,7 @@ pub fn vote(data: RequestData) -> RequestResult {
         poll: Vec<Poll>,
     }
 
-    let resp = Resp { poll: poll };
+    let resp = Resp { poll };
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
 }

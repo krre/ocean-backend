@@ -54,8 +54,8 @@ pub fn get_all(data: RequestData) -> RequestResult {
     }
 
     let resp = Resp {
-        categories: categories,
-        sections: sections,
+        categories,
+        sections,
     };
 
     let result = serde_json::to_value(&resp)?;
@@ -90,7 +90,7 @@ pub fn get_new(data: RequestData) -> RequestResult {
     }
 
     let resp = Resp {
-        topic_count: topic_count,
+        topic_count,
         topics: list,
     };
 

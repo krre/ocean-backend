@@ -1,6 +1,5 @@
 use crate::config;
 use log::error;
-use reqwest;
 
 pub mod api;
 
@@ -25,7 +24,7 @@ fn send_message_to(chat_id: String, text: String) {
     }
 
     let params = api::SendMessageParams {
-        chat_id: chat_id,
+        chat_id,
         text: adaptive_text,
         parse_mode: Some("HTML".into()),
     };
@@ -41,10 +40,10 @@ async fn send_request(method: &str, params: serde_json::Value) -> serde_json::Va
     let res = send(url, params).await;
 
     match res {
-        Ok(r) => return r,
+        Ok(r) => r,
         Err(e) => {
             error!("Telegram API request error: {:?}", e);
-            return serde_json::Value::Null;
+            serde_json::Value::Null
         }
     }
 }

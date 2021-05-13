@@ -84,13 +84,14 @@ pub fn get_all(data: RequestData) -> RequestResult {
             WHERE to_tsvector('russian', c.message) @@ plainto_tsquery('russian', $1)
             ORDER BY ts_rank(to_tsvector('russian', c.message), plainto_tsquery('russian', $1)) DESC", mandela_title),
 
-        "SELECT count(*)
-        FROM comments AS c
-        JOIN mandels AS m ON m.id = c.mandela_id
-        WHERE to_tsvector('russian', c.message) @@ plainto_tsquery('russian', $1)".to_string())
+            "SELECT count(*)
+            FROM comments AS c
+            JOIN mandels AS m ON m.id = c.mandela_id
+            WHERE to_tsvector('russian', c.message) @@ plainto_tsquery('russian', $1)".to_string()
+        )
     } else {
         // forum post
-        (format!(
+        (
             "SELECT fp.id,
                 (SELECT row FROM (SELECT id, row_number() OVER (PARTITION BY topic_id ORDER BY id ASC) AS row
                     FROM forum_posts WHERE topic_id = fp.topic_id) AS x WHERE x.id = fp.id) AS row,
@@ -99,15 +100,16 @@ pub fn get_all(data: RequestData) -> RequestResult {
             FROM forum_posts AS fp
             JOIN forum_topics AS ft ON ft.id = fp.topic_id
             WHERE to_tsvector('russian', fp.post) @@ plainto_tsquery('russian', $1)
-            ORDER BY ts_rank(to_tsvector('russian', fp.post), plainto_tsquery('russian', $1)) DESC"),
+            ORDER BY ts_rank(to_tsvector('russian', fp.post), plainto_tsquery('russian', $1)) DESC".to_string(),
 
-        "SELECT count(*)
-        FROM forum_posts AS fp
-        JOIN forum_topics AS ft ON ft.id = fp.topic_id
-        WHERE to_tsvector('russian', fp.post) @@ plainto_tsquery('russian', $1)".to_string())
+            "SELECT count(*)
+            FROM forum_posts AS fp
+            JOIN forum_topics AS ft ON ft.id = fp.topic_id
+            WHERE to_tsvector('russian', fp.post) @@ plainto_tsquery('russian', $1)".to_string()
+        )
     };
 
-    sql_content = sql_content + " LIMIT $2 OFFSET $3";
+    sql_content += " LIMIT $2 OFFSET $3";
 
     let records = sql_query(sql_content)
         .bind::<Text, _>(&req.text)
@@ -126,7 +128,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .load::<TotalCount>(&data.db.conn)?;
 
     let resp = Resp {
-        records: records,
+        records,
         total_count: total_count[0].count,
     };
     let result = serde_json::to_value(&resp)?;

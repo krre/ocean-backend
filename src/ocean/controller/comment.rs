@@ -128,7 +128,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     }
 
     let resp = Resp {
-        total_count: total_count,
+        total_count,
         comments: list,
     };
 

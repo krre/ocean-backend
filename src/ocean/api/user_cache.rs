@@ -39,20 +39,16 @@ pub fn init(db: db::Db) {
     }
 }
 
-pub fn set(token: &String, user: types::User) {
+pub fn set(token: &str, user: types::User) {
     USER_CACHE.lock().unwrap().insert(token.to_string(), user);
 }
 
-pub fn get(token: &String) -> Option<types::User> {
-    if let Some(u) = USER_CACHE.lock().unwrap().get(token) {
-        Some((*u).clone())
-    } else {
-        None
-    }
+pub fn get(token: &str) -> Option<types::User> {
+    USER_CACHE.lock().unwrap().get(token).map(|u| (*u).clone())
 }
 
-pub fn user_code(code: &String) -> types::UserCode {
-    match code.as_ref() {
+pub fn user_code(code: &str) -> types::UserCode {
+    match code {
         "admin" => types::UserCode::Admin,
         "user" => types::UserCode::User,
         "anonym" => types::UserCode::Anonym,

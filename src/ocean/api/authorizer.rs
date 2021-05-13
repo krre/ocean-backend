@@ -1,7 +1,7 @@
 use crate::types::UserCode;
 
-pub fn authorize(method: &String, user_code: &UserCode) -> bool {
-    let allowed_code = match method.as_ref() {
+pub fn authorize(method: &str, user_code: &UserCode) -> bool {
+    let allowed_code = match method {
         "mandela.update" => UserCode::User,
         "mandela.delete" => UserCode::Admin,
         "mandela.mark" => UserCode::User,
