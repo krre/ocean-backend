@@ -433,9 +433,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     if let Some(filter_user_id) = req.user_id {
         query = query.filter(mandels::user_id.eq(filter_user_id))
-    }
-
-    if filter == SHOW_ALL {
+    } else if filter == SHOW_ALL {
         query = query.filter(mandels::trash.eq(false))
     } else if filter == SHOW_NEW {
         query = query.filter(marks::create_ts.is_null())
@@ -445,7 +443,9 @@ pub fn get_all(data: RequestData) -> RequestResult {
         query = query.filter(votes::create_ts.is_null())
     } else if filter == SHOW_TRASH {
         query = query.filter(mandels::trash.eq(true))
-    } else if filter == SHOW_CATEGORY {
+    }
+
+    if filter == SHOW_CATEGORY {
         query = query.filter(categories::number.eq(req.category.unwrap()));
     }
 
