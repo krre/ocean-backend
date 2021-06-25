@@ -515,44 +515,67 @@ pub fn get_all(data: RequestData) -> RequestResult {
         mandels_resp.push(mandela_resp);
     }
 
-    let total_count: i64 = mandels.select(count_star()).first(&data.db.conn)?;
+    let mut total_count = 0;
     let mut new_count = 0;
     let mut mine_count = 0;
     let mut poll_count = 0;
     let mut category_count = 0;
+    let mut trash_count = 0;
+    let mut user_count = 0;
 
-    if filter == SHOW_CATEGORY {
-        category_count = mandels
+    if let Some(filter_user_id) = req.user_id {
+        user_count = if filter == SHOW_CATEGORY {
+            mandels
+                .select(count_star())
+                .inner_join(categories)
+                .filter(
+                    mandels::user_id
+                        .eq(filter_user_id)
+                        .and(number.eq(req.category.unwrap())),
+                )
+                .first(&data.db.conn)?
+        } else {
+            mandels
+                .select(count_star())
+                .filter(mandels::user_id.eq(filter_user_id))
+                .first(&data.db.conn)?
+        }
+    } else {
+        total_count = mandels.select(count_star()).first(&data.db.conn)?;
+
+        if filter == SHOW_CATEGORY {
+            category_count = mandels
+                .select(count_star())
+                .inner_join(categories)
+                .filter(number.eq(req.category.unwrap()))
+                .first(&data.db.conn)?;
+        }
+
+        if data.user.code != types::UserCode::Anonym {
+            let mark_count: i64 = marks
+                .select(count_star())
+                .filter(marks::user_id.eq(data.user.id))
+                .first(&data.db.conn)?;
+            new_count = total_count - mark_count;
+
+            let vote_count: i64 = votes
+                .select(count_star())
+                .filter(votes::user_id.eq(data.user.id))
+                .first(&data.db.conn)?;
+
+            poll_count = total_count - vote_count;
+
+            mine_count = mandels
+                .select(count_star())
+                .filter(mandels::user_id.eq(data.user.id))
+                .first(&data.db.conn)?;
+        }
+
+        trash_count = mandels
             .select(count_star())
-            .inner_join(categories)
-            .filter(number.eq(req.category.unwrap()))
+            .filter(mandels::trash.eq(true))
             .first(&data.db.conn)?;
     }
-
-    if data.user.code != types::UserCode::Anonym {
-        let mark_count: i64 = marks
-            .select(count_star())
-            .filter(marks::user_id.eq(data.user.id))
-            .first(&data.db.conn)?;
-        new_count = total_count - mark_count;
-
-        let vote_count: i64 = votes
-            .select(count_star())
-            .filter(votes::user_id.eq(data.user.id))
-            .first(&data.db.conn)?;
-
-        poll_count = total_count - vote_count;
-
-        mine_count = mandels
-            .select(count_star())
-            .filter(mandels::user_id.eq(data.user.id))
-            .first(&data.db.conn)?;
-    }
-
-    let trash_count = mandels
-        .select(count_star())
-        .filter(mandels::trash.eq(true))
-        .first(&data.db.conn)?;
 
     #[derive(Serialize)]
     struct Resp {
@@ -562,6 +585,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         poll_count: i64,
         trash_count: i64,
         category_count: i64,
+        user_count: i64,
         mandels: Vec<MandelaResp>,
     }
 
@@ -572,6 +596,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         poll_count,
         trash_count,
         category_count,
+        user_count,
         mandels: mandels_resp,
     };
 
