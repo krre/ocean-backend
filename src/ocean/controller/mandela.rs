@@ -368,6 +368,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     struct Req {
         offset: i64,
         limit: i64,
+        user_id: Option<Id>,
         filter: Option<i8>,
         category: Option<i16>,
         sort: i8,
@@ -429,6 +430,10 @@ pub fn get_all(data: RequestData) -> RequestResult {
             marks::create_ts.nullable(),
         ))
         .into_boxed();
+
+    if let Some(filter_user_id) = req.user_id {
+        query = query.filter(mandels::user_id.eq(filter_user_id))
+    }
 
     if filter == SHOW_ALL {
         query = query.filter(mandels::trash.eq(false))
