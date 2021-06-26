@@ -20,11 +20,18 @@ pub fn init(db: db::Db) {
         name: String,
         token: String,
         code: String,
+        blocked: bool,
     }
 
     let list = users
         .inner_join(user_groups)
-        .select((users::id, users::name, users::token, user_groups::code))
+        .select((
+            users::id,
+            users::name,
+            users::token,
+            user_groups::code,
+            users::blocked,
+        ))
         .load::<UserData>(&db.conn)
         .unwrap();
 
@@ -33,6 +40,7 @@ pub fn init(db: db::Db) {
             id: user_data.id,
             code: user_code(&user_data.code),
             name: user_data.name,
+            blocked: user_data.blocked,
         };
 
         USER_CACHE.lock().unwrap().insert(user_data.token, user);

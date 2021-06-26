@@ -29,5 +29,6 @@ pub mod types {
         pub id: Id,
         pub code: UserCode,
         pub name: String,
+        pub blocked: bool,
     }
 }

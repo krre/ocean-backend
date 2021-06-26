@@ -65,6 +65,7 @@ pub fn create(data: RequestData) -> RequestResult {
         name: String,
         group_id: Id,
         token: String,
+        blocked: bool,
     }
 
     let user_name = req.name.clone();
@@ -73,6 +74,7 @@ pub fn create(data: RequestData) -> RequestResult {
         name: req.name,
         group_id: groups.id,
         token: req.token,
+        blocked: false,
     };
 
     diesel::insert_into(users)
@@ -84,6 +86,7 @@ pub fn create(data: RequestData) -> RequestResult {
         id: req.id,
         code: user_cache::user_code(&req.code),
         name: user_name,
+        blocked: new_user.blocked,
     };
 
     user_cache::set(&new_user.token, user);
@@ -266,6 +269,7 @@ pub fn update_token(data: RequestData) -> RequestResult {
         id: data.user.id,
         code: data.user.code,
         name: data.user.name,
+        blocked: data.user.blocked,
     };
 
     user_cache::set(&req.token, user);
