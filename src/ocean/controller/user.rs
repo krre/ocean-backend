@@ -5,7 +5,7 @@ use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use diesel::sql_types::{Int2, Int4, Int8, Text, Timestamptz};
+use diesel::sql_types::{Bool, Int2, Int4, Int8, Text, Timestamptz};
 use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize)]
@@ -121,6 +121,7 @@ pub fn auth(data: RequestData) -> RequestResult {
         create_ts: NaiveDateTime,
         update_ts: NaiveDateTime,
         gender: i16,
+        blocked: bool,
     }
 
     let user = users
@@ -167,6 +168,8 @@ pub fn get_one(data: RequestData) -> RequestResult {
         code: String,
         #[sql_type = "Int2"]
         gender: i16,
+        #[sql_type = "Bool"]
+        blocked: bool,
         #[sql_type = "Timestamptz"]
         create_ts: NaiveDateTime,
         #[sql_type = "Int8"]
@@ -182,7 +185,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     use diesel::dsl::*;
 
     let user = sql_query(
-        "SELECT u.id, u.name, ug.code, u.gender, u.create_ts,
+        "SELECT u.id, u.name, ug.code, u.gender, u.blocked, u.create_ts,
             (SELECT COUNT(*) FROM mandels WHERE user_id = u.id) AS mandela_count,
             (SELECT COUNT(*) FROM comments WHERE user_id = u.id) AS comment_count,
             (SELECT COUNT(*) FROM forum_topics WHERE user_id = u.id) AS forum_topic_count,

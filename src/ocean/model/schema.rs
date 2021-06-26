@@ -125,6 +125,7 @@ table! {
         create_ts -> Timestamptz,
         update_ts -> Timestamptz,
         gender -> Int2,
+        blocked -> Bool,
     }
 }
 
