@@ -297,7 +297,7 @@ fn exec(user: types::User, req: json_rpc::Request) -> json_rpc::Response {
     let method = req.method;
     resp.method = method.clone();
 
-    if user.blocked {
+    if user.blocked && method != "user.logout" {
         resp.error = Some(json_rpc::Error::from_api_error(&api::Error::new(
             api::error::ACCOUNT_BLOCKED,
             None,
