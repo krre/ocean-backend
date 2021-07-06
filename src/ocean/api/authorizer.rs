@@ -2,6 +2,7 @@ use crate::types::UserCode;
 
 pub fn authorize(method: &str, user_code: &UserCode) -> bool {
     let allowed_code = match method {
+        "mandela.create" => UserCode::User,
         "mandela.update" => UserCode::User,
         "mandela.delete" => UserCode::Admin,
         "mandela.mark" => UserCode::User,
@@ -10,6 +11,7 @@ pub fn authorize(method: &str, user_code: &UserCode) -> bool {
         "user.logout" => UserCode::User,
         "user.update" => UserCode::User,
         "user.updateToken" => UserCode::User,
+        "comment.create" => UserCode::User,
         "comment.update" => UserCode::User,
         "comment.delete" => UserCode::User,
         "forum.category.create" => UserCode::Admin,
@@ -18,9 +20,11 @@ pub fn authorize(method: &str, user_code: &UserCode) -> bool {
         "forum.section.create" => UserCode::Admin,
         "forum.section.update" => UserCode::Admin,
         "forums.section.delete" => UserCode::Admin,
+        "forum.topic.create" => UserCode::User,
         "forum.topic.update" => UserCode::User,
         "forums.topic.delete" => UserCode::User,
         "forums.topic.vote" => UserCode::User,
+        "forum.post.create" => UserCode::User,
         "forum.post.update" => UserCode::User,
         "forums.post.delete" => UserCode::User,
         _ => UserCode::Anonym,
