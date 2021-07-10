@@ -1,5 +1,6 @@
 [server]
 port = 21000
+anonym_allowed = false
 
 [server.ssl]
 key = "/home/../ssl/ocean.key"
