@@ -223,10 +223,6 @@ pub async fn route(req: Request<Body>, addr: SocketAddr) -> ResponseResult {
     let json_rpc_req = serde_json::from_slice::<json_rpc::Request>(bytes);
 
     let json_rpc_resp = if let Ok(r) = json_rpc_req {
-        if !authorizer::authorize(&r.method, &user.code) {
-            return forbidden(&r.method, &user.code);
-        }
-
         exec(user, r)
     } else {
         json_rpc::response::Response {
@@ -278,15 +274,6 @@ fn unauthorized(token: &str) -> ResponseResult {
         .unwrap())
 }
 
-fn forbidden(method: &str, user_code: &types::UserCode) -> ResponseResult {
-    info!("Forbidden: method: {} user code: {:?}", method, user_code);
-
-    Ok(Response::builder()
-        .status(StatusCode::FORBIDDEN)
-        .body(Body::from("Forbidden"))
-        .unwrap())
-}
-
 fn exec(user: types::User, req: json_rpc::Request) -> json_rpc::Response {
     let mut resp = json_rpc::Response::default();
 
@@ -296,6 +283,14 @@ fn exec(user: types::User, req: json_rpc::Request) -> json_rpc::Response {
 
     let method = req.method;
     resp.method = method.clone();
+
+    if !authorizer::authorize(&method, &user.code) {
+        resp.error = Some(json_rpc::Error::from_api_error(&api::Error::new(
+            api::error::ACCESS_DENIED,
+            None,
+        )));
+        return resp;
+    }
 
     if user.blocked && method != "user.logout" {
         resp.error = Some(json_rpc::Error::from_api_error(&api::Error::new(
