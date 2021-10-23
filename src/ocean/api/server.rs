@@ -5,7 +5,9 @@ use futures_util::{future::TryFutureExt, stream::Stream, StreamExt, TryStreamExt
 use hyper::server::Server;
 use hyper::service::{make_service_fn, service_fn};
 use log::info;
-use rustls::internal::pemfile;
+use rustls::PrivateKey;
+use rustls::ServerConfig;
+use rustls_pemfile;
 use std::pin::Pin;
 use std::{fs, io, sync};
 use tokio::net::{TcpListener, TcpStream};
@@ -27,10 +29,11 @@ impl ApiServer {
             let certs = load_certs(config::CONFIG.server.ssl.cert.as_str())?;
             let key = load_private_key(config::CONFIG.server.ssl.key.as_str())?;
 
-            let mut cfg = rustls::ServerConfig::new(rustls::NoClientAuth::new());
-            cfg.set_single_cert(certs, key)
-                .map_err(|e| error(format!("{}", e)))?;
-            cfg.set_protocols(&[b"h2".to_vec(), b"http/1.1".to_vec()]);
+            let cfg = ServerConfig::builder()
+                .with_safe_defaults()
+                .with_no_client_auth()
+                .with_single_cert(certs, key)
+                .expect("bad certificate/key");
             sync::Arc::new(cfg)
         };
 
@@ -81,8 +84,11 @@ fn load_certs(filename: &str) -> io::Result<Vec<rustls::Certificate>> {
     let certfile = fs::File::open(filename)
         .map_err(|e| error(format!("failed to open {}: {}", filename, e)))?;
     let mut reader = io::BufReader::new(certfile);
-
-    pemfile::certs(&mut reader).map_err(|_| error("failed to load certificate".into()))
+    let certs = rustls_pemfile::certs(&mut reader)?;
+    Ok(certs
+        .iter()
+        .map(|v| rustls::Certificate(v.clone()))
+        .collect())
 }
 
 fn load_private_key(filename: &str) -> io::Result<rustls::PrivateKey> {
@@ -90,13 +96,15 @@ fn load_private_key(filename: &str) -> io::Result<rustls::PrivateKey> {
         .map_err(|e| error(format!("failed to open {}: {}", filename, e)))?;
     let mut reader = io::BufReader::new(keyfile);
 
-    let keys = pemfile::rsa_private_keys(&mut reader)
+    let keys = rustls_pemfile::rsa_private_keys(&mut reader)
         .map_err(|_| error("failed to load private key".into()))?;
 
     if keys.len() != 1 {
         return Err(error("expected a single private key".into()));
     }
-    Ok(keys[0].clone())
+
+    let key = &keys[0];
+    Ok(PrivateKey(key.to_vec()))
 }
 
 struct HyperAcceptor<'a> {
