@@ -84,6 +84,17 @@ table! {
 }
 
 table! {
+    likes (id) {
+        id -> Int4,
+        user_id -> Int4,
+        comment_id -> Nullable<Int4>,
+        post_id -> Nullable<Int4>,
+        value -> Int2,
+        create_ts -> Timestamptz,
+    }
+}
+
+table! {
     mandels (id) {
         id -> Int4,
         title -> Text,
@@ -158,6 +169,9 @@ joinable!(forum_posts -> users (user_id));
 joinable!(forum_sections -> forum_categories (category_id));
 joinable!(forum_topics -> forum_sections (section_id));
 joinable!(forum_topics -> users (user_id));
+joinable!(likes -> comments (comment_id));
+joinable!(likes -> forum_posts (post_id));
+joinable!(likes -> users (user_id));
 joinable!(mandels -> users (user_id));
 joinable!(marks -> mandels (mandela_id));
 joinable!(marks -> users (user_id));
@@ -174,6 +188,7 @@ allow_tables_to_appear_in_same_query!(
     forum_posts,
     forum_sections,
     forum_topics,
+    likes,
     mandels,
     marks,
     user_groups,
