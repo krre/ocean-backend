@@ -1,5 +1,6 @@
 use crate::api::server;
 use crate::config;
+use crate::trash_monitor;
 use crate::watchdog;
 
 pub struct App;
@@ -13,6 +14,8 @@ impl App {
         if config::CONFIG.watchdog.enabled {
             watchdog::start();
         }
+
+        trash_monitor::start();
 
         let server = server::ApiServer::new();
         server.listen().await?;

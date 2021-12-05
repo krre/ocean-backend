@@ -12,6 +12,7 @@ pub mod db;
 pub mod json_rpc;
 pub mod model;
 pub mod telegram_bot;
+pub mod trash_monitor;
 pub mod watchdog;
 
 pub mod types {
@@ -22,6 +23,13 @@ pub mod types {
         Admin,
         User,
         Anonym,
+    }
+
+    pub enum Vote {
+        Yes = 0,
+        No,
+        Neutral,
+        Fake,
     }
 
     #[derive(Clone)]
