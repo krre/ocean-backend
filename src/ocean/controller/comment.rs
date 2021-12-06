@@ -5,6 +5,7 @@ use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel::sql_types::{Int2, Int4, Int8, Nullable, Text, Timestamptz};
 use serde::{Deserialize, Serialize};
 
 // comment.create
@@ -76,45 +77,56 @@ pub fn create(data: RequestData) -> RequestResult {
 
 // comment.getAll
 pub fn get_all(data: RequestData) -> RequestResult {
-    use crate::model::schema::comments;
     use crate::model::schema::comments::dsl::*;
-    use crate::model::schema::users;
-    use crate::model::schema::users::dsl::*;
 
     #[derive(Deserialize)]
     struct Req {
         mandela_id: Id,
-        offset: i64,
-        limit: i64,
+        offset: i32,
+        limit: i32,
     }
 
     let req: Req = data.params()?;
 
-    #[derive(Queryable, Serialize)]
+    #[derive(QueryableByName, Serialize)]
     pub struct Comment {
+        #[sql_type = "Int4"]
         pub id: Id,
+        #[sql_type = "Int4"]
         pub user_id: Id,
+        #[sql_type = "Text"]
         pub user_name: String,
+        #[sql_type = "Text"]
         pub message: String,
+        #[sql_type = "Int8"]
+        pub likes: i64,
+        #[sql_type = "Int8"]
+        pub dislikes: i64,
+        #[sql_type = "Nullable<Int2>"]
+        pub like: Option<i16>,
+        #[sql_type = "Timestamptz"]
         pub create_ts: NaiveDateTime,
+        #[sql_type = "Timestamptz"]
         pub update_ts: NaiveDateTime,
     }
 
-    let list = comments
-        .inner_join(users)
-        .select((
-            comments::id,
-            users::id,
-            users::name,
-            message,
-            comments::create_ts,
-            comments::update_ts,
-        ))
-        .filter(mandela_id.eq(req.mandela_id))
-        .order(comments::id.asc())
-        .offset(req.offset)
-        .limit(req.limit)
-        .load::<Comment>(&data.db.conn)?;
+    let list = diesel::dsl::sql_query(
+        "SELECT c.id, u.id AS user_id, u.name AS user_name, message, l.value AS like, c.create_ts, c.update_ts,
+            (SELECT count(*) FROM likes WHERE comment_id = c.id AND value = 0) AS likes,
+            (SELECT count(*) FROM likes WHERE comment_id = c.id AND value = 1) AS dislikes
+        FROM comments AS c
+            JOIN users AS u ON u.id = c.user_id
+            LEFT JOIN likes AS l ON l.comment_id = c.id AND l.user_id = $1
+        WHERE mandela_id = $2
+        ORDER BY c.id ASC
+        OFFSET $3
+        LIMIT $4",
+    )
+    .bind::<Int4, _>(data.user.id)
+    .bind::<Int4, _>(req.mandela_id)
+    .bind::<Int4, _>(req.offset)
+    .bind::<Int4, _>(req.limit)
+    .load::<Comment>(&data.db.conn)?;
 
     let total_count: i64 = comments
         .filter(mandela_id.eq(req.mandela_id))
