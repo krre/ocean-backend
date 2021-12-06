@@ -8,6 +8,7 @@ pub mod activity;
 pub mod comment;
 pub mod feed;
 pub mod forum;
+pub mod like;
 pub mod mandela;
 pub mod rating;
 pub mod search;
