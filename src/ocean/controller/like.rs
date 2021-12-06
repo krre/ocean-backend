@@ -52,24 +52,15 @@ pub fn delete(data: RequestData) -> RequestResult {
 
     let req: Req = data.params()?;
 
-    let query = diesel::delete(
-        likes.filter(
-            comment_id
-                .eq(req.comment_id)
-                .and(post_id.eq(req.post_id).and(user_id.eq(data.user.id))),
-        ),
-    );
+    if let Some(like_comment_id) = req.comment_id {
+        diesel::delete(likes.filter(comment_id.eq(like_comment_id).and(user_id.eq(data.user.id))))
+            .execute(&data.db.conn)?;
+    }
 
-    let debug = diesel::debug_query::<diesel::pg::Pg, _>(&query);
-    println!("Debug query: {:?}", debug);
+    if let Some(like_post_id) = req.post_id {
+        diesel::delete(likes.filter(post_id.eq(like_post_id).and(user_id.eq(data.user.id))))
+            .execute(&data.db.conn)?;
+    }
 
-    diesel::delete(
-        likes.filter(
-            comment_id
-                .eq(req.comment_id)
-                .and(post_id.eq(req.post_id).and(user_id.eq(data.user.id))),
-        ),
-    )
-    .execute(&data.db.conn)?;
     Ok(None)
 }
