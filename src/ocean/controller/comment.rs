@@ -99,9 +99,9 @@ pub fn get_all(data: RequestData) -> RequestResult {
         #[sql_type = "Text"]
         pub message: String,
         #[sql_type = "Int8"]
-        pub likes: i64,
+        pub like_count: i64,
         #[sql_type = "Int8"]
-        pub dislikes: i64,
+        pub dislike_count: i64,
         #[sql_type = "Nullable<Int2>"]
         pub like: Option<i16>,
         #[sql_type = "Timestamptz"]
@@ -112,8 +112,8 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     let list = diesel::dsl::sql_query(
         "SELECT c.id, u.id AS user_id, u.name AS user_name, message, l.value AS like, c.create_ts, c.update_ts,
-            (SELECT count(*) FROM likes WHERE comment_id = c.id AND value = 0) AS likes,
-            (SELECT count(*) FROM likes WHERE comment_id = c.id AND value = 1) AS dislikes
+            (SELECT count(*) FROM likes WHERE comment_id = c.id AND value = 0) AS like_count,
+            (SELECT count(*) FROM likes WHERE comment_id = c.id AND value = 1) AS dislike_count
         FROM comments AS c
             JOIN users AS u ON u.id = c.user_id
             LEFT JOIN likes AS l ON l.comment_id = c.id AND l.user_id = $1
