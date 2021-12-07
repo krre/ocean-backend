@@ -5,6 +5,7 @@ use crate::types::Id;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel::sql_types::{Int2, Int4, Int8, Nullable, Text, Timestamptz};
 use serde::{Deserialize, Serialize};
 
 // forum.post.getAll
@@ -12,8 +13,8 @@ pub fn get_all(data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         topic_id: Id,
-        offset: i64,
-        limit: i64,
+        offset: i32,
+        limit: i32,
     }
 
     let req: Req = data.params()?;
@@ -31,7 +32,6 @@ pub fn get_all(data: RequestData) -> RequestResult {
     }
 
     use crate::model::schema::forum_categories;
-    use crate::model::schema::forum_posts;
     use crate::model::schema::forum_posts::dsl::*;
     use crate::model::schema::forum_sections;
     use crate::model::schema::forum_topics;
@@ -55,32 +55,43 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .filter(forum_topics::id.eq(req.topic_id))
         .first::<TopicMeta>(&data.db.conn)?;
 
-    use crate::model::schema::users;
-    use crate::model::schema::users::dsl::*;
-
-    #[derive(Queryable, Serialize)]
+    #[derive(QueryableByName, Serialize)]
     struct Post {
+        #[sql_type = "Int4"]
         id: Id,
+        #[sql_type = "Int4"]
         user_id: Id,
+        #[sql_type = "Text"]
         user_name: String,
+        #[sql_type = "Text"]
         post: String,
+        #[sql_type = "Int8"]
+        like_count: i64,
+        #[sql_type = "Int8"]
+        dislike_count: i64,
+        #[sql_type = "Nullable<Int2>"]
+        like: Option<i16>,
+        #[sql_type = "Timestamptz"]
         create_ts: NaiveDateTime,
     }
 
-    let list = forum_posts
-        .inner_join(users)
-        .select((
-            forum_posts::id,
-            users::id,
-            users::name,
-            forum_posts::post,
-            forum_posts::create_ts,
-        ))
-        .filter(topic_id.eq(req.topic_id))
-        .order(forum_posts::id.asc())
-        .offset(req.offset)
-        .limit(req.limit)
-        .load::<Post>(&data.db.conn)?;
+    let list = diesel::sql_query(
+        "SELECT fp.id, u.id AS user_id, u.name AS user_name, post, l.value AS like, fp.create_ts,
+            (SELECT count(*) FROM likes WHERE post_id = fp.id AND value = 0) AS like_count,
+            (SELECT count(*) FROM likes WHERE post_id = fp.id AND value = 1) AS dislike_count
+        FROM forum_posts AS fp
+            JOIN users AS u ON u.id = fp.user_id
+            LEFT JOIN likes AS l ON l.post_id = fp.id AND l.user_id = $1
+        WHERE topic_id = $2
+        ORDER BY fp.id ASC
+        OFFSET $3
+        LIMIT $4",
+    )
+    .bind::<Int4, _>(data.user.id)
+    .bind::<Int4, _>(req.topic_id)
+    .bind::<Int4, _>(req.offset)
+    .bind::<Int4, _>(req.limit)
+    .load::<Post>(&data.db.conn)?;
 
     let post_count: i64 = forum_posts
         .filter(topic_id.eq(req.topic_id))
