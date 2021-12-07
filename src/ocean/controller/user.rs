@@ -191,18 +191,32 @@ pub fn get_one(data: RequestData) -> RequestResult {
 
     use diesel::dsl::*;
 
-    let user = sql_query(
+    let user = sql_query(format!(
         "SELECT u.id, u.name, ug.code, u.gender, u.blocked, u.create_ts,
-            (SELECT COUNT(*) FROM mandels WHERE user_id = u.id) AS mandela_count,
-            (SELECT COUNT(*) FROM comments WHERE user_id = u.id) AS comment_count,
-            (SELECT COUNT(*) FROM forum_topics WHERE user_id = u.id) AS forum_topic_count,
-            (SELECT COUNT(*) FROM forum_posts WHERE user_id = u.id) AS forum_post_count,
-            (SELECT COUNT(*) FROM likes WHERE user_id = u.id AND value = 0) AS like_count,
-            (SELECT COUNT(*) FROM likes WHERE user_id = u.id AND value = 1) AS dislike_count
+            (SELECT count(*) FROM mandels WHERE user_id = u.id) AS mandela_count,
+            (SELECT count(*) FROM comments WHERE user_id = u.id) AS comment_count,
+            (SELECT count(*) FROM forum_topics WHERE user_id = u.id) AS forum_topic_count,
+            (SELECT count(*) FROM forum_posts WHERE user_id = u.id) AS forum_post_count,
+            (SELECT count(c.*)
+            FROM comments AS c
+                JOIN likes AS l ON l.comment_id = c.id
+            WHERE c.user_id = $1 and l.value = 0) +
+            (SELECT count(fp.*)
+            FROM forum_posts AS fp
+                JOIN likes AS l ON l.post_id = fp.id
+            WHERE fp.user_id = $1 and l.value = 0) AS like_count,
+            (SELECT count(c.*)
+            FROM comments AS c
+                JOIN likes AS l ON l.comment_id = c.id
+            WHERE c.user_id = $1 and l.value = 1) +
+            (SELECT count(fp.*)
+            FROM forum_posts AS fp
+                JOIN likes AS l ON l.post_id = fp.id
+            WHERE fp.user_id = $1 and l.value = 1) AS dislike_count
         FROM users AS u
             JOIN user_groups AS ug ON ug.id = u.group_id
-        WHERE u.id = $1",
-    )
+        WHERE u.id = $1"
+    ))
     .bind::<Int4, _>(req.id)
     .load::<User>(&data.db.conn)?;
 
