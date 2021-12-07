@@ -24,7 +24,7 @@ fn process_mandels(db: &db::Db) {
     // Move to trash (for mandels older then 2 days)
     let moved = diesel::sql_query(
         "UPDATE mandels AS m SET trash = true
-        WHERE trash = false AND (SELECT (EXTRACT(epoch FROM (SELECT (now() - create_ts))) / 86400)::int) > 2
+        WHERE trash = false AND (SELECT (EXTRACT(epoch FROM (SELECT (now() - create_ts))) / 86400)::int) >= 2
             AND ((SELECT count(*) FROM votes WHERE mandela_id = m.id AND vote = $1) > (SELECT count(*) FROM votes WHERE mandela_id = m.id AND vote = $2)
             OR (SELECT count(*) FROM votes WHERE mandela_id = m.id AND vote = $2) < 4)"
         )
