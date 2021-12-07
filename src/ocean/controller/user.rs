@@ -183,6 +183,10 @@ pub fn get_one(data: RequestData) -> RequestResult {
         forum_topic_count: i64,
         #[sql_type = "Int8"]
         forum_post_count: i64,
+        #[sql_type = "Int8"]
+        like_count: i64,
+        #[sql_type = "Int8"]
+        dislike_count: i64,
     }
 
     use diesel::dsl::*;
@@ -192,7 +196,9 @@ pub fn get_one(data: RequestData) -> RequestResult {
             (SELECT COUNT(*) FROM mandels WHERE user_id = u.id) AS mandela_count,
             (SELECT COUNT(*) FROM comments WHERE user_id = u.id) AS comment_count,
             (SELECT COUNT(*) FROM forum_topics WHERE user_id = u.id) AS forum_topic_count,
-            (SELECT COUNT(*) FROM forum_posts WHERE user_id = u.id) AS forum_post_count
+            (SELECT COUNT(*) FROM forum_posts WHERE user_id = u.id) AS forum_post_count,
+            (SELECT COUNT(*) FROM likes WHERE user_id = u.id AND value = 0) AS like_count,
+            (SELECT COUNT(*) FROM likes WHERE user_id = u.id AND value = 1) AS dislike_count
         FROM users AS u
             JOIN user_groups AS ug ON ug.id = u.group_id
         WHERE u.id = $1",
