@@ -694,6 +694,36 @@ pub fn vote(data: RequestData) -> RequestResult {
     Ok(Some(result))
 }
 
+// mandela.getVoteUsers
+pub fn get_vote_users(data: RequestData) -> RequestResult {
+    #[derive(Deserialize)]
+    struct Req {
+        id: Id,
+    }
+
+    let req: Req = data.params()?;
+
+    #[derive(Queryable, Serialize)]
+    struct VoteUser {
+        id: Id,
+        name: String,
+        vote: i16,
+    }
+
+    use crate::model::schema::users;
+    use crate::model::schema::votes::dsl::*;
+
+    let vote_users = votes
+        .inner_join(users::table)
+        .select((users::id, users::name, vote))
+        .filter(mandela_id.eq(req.id))
+        .order((vote.asc(), users::name.asc()))
+        .load::<VoteUser>(&data.db.conn)?;
+
+    let result = serde_json::to_value(&vote_users)?;
+    Ok(Some(result))
+}
+
 pub fn new_comments(
     db: &db::Db,
     limit: i32,
