@@ -725,6 +725,7 @@ pub fn update_trash(data: RequestData) -> RequestResult {
     struct Req {
         id: Id,
         trash: bool,
+        automatic_trash: bool,
     }
 
     let req: Req = data.params()?;
@@ -733,7 +734,7 @@ pub fn update_trash(data: RequestData) -> RequestResult {
     use crate::model::schema::mandels::dsl::*;
 
     diesel::update(mandels.filter(mandels::id.eq(req.id)))
-        .set(trash.eq(req.trash))
+        .set((trash.eq(req.trash), automatic_trash.eq(req.automatic_trash)))
         .execute(&data.db.conn)?;
 
     Ok(None)
