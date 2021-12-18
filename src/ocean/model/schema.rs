@@ -107,6 +107,7 @@ table! {
         before -> Text,
         after -> Text,
         trash -> Bool,
+        automatic_trash -> Bool,
     }
 }
 

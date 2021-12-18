@@ -267,6 +267,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         after: String,
         mark_ts: Option<NaiveDateTime>,
         trash: bool,
+        automatic_trash: bool,
     }
 
     let mandela_record = mandels
@@ -290,6 +291,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
             after,
             marks::create_ts.nullable(),
             trash,
+            automatic_trash,
         ))
         .filter(mandels::id.eq(req.id))
         .first::<Mandela>(&data.db.conn);
