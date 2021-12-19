@@ -347,3 +347,33 @@ pub fn get_poll(db: &db::Db, topic_id: Id, user_id: Id) -> Vec<Poll> {
     .load::<Poll>(&db.conn)
     .unwrap()
 }
+
+// forum.topic.getVoteUsers
+pub fn get_vote_users(data: RequestData) -> RequestResult {
+    #[derive(Deserialize)]
+    struct Req {
+        id: Id,
+    }
+
+    let req: Req = data.params()?;
+
+    #[derive(Queryable, Serialize)]
+    struct VoteUser {
+        id: Id,
+        name: String,
+        answer_id: Id,
+    }
+
+    use crate::model::schema::forum_poll_votes::dsl::*;
+    use crate::model::schema::users;
+
+    let vote_users = forum_poll_votes
+        .inner_join(users::table)
+        .select((users::id, users::name, answer_id))
+        .filter(topic_id.eq(req.id))
+        .order((answer_id.asc(), users::name.asc()))
+        .load::<VoteUser>(&data.db.conn)?;
+
+    let result = serde_json::to_value(&vote_users)?;
+    Ok(Some(result))
+}
