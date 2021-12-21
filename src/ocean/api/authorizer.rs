@@ -17,6 +17,7 @@ pub fn authorize(method: &str, user_code: &UserCode) -> bool {
         "mandela.mark" => UserCode::User,
         "mandela.vote" => UserCode::User,
         "mandela.updateTrash" => UserCode::Admin,
+        "mandela.getVoteUsers" => UserCode::Admin,
         "user.logout" => UserCode::User,
         "user.update" => UserCode::Admin,
         "user.updateToken" => UserCode::User,
@@ -46,6 +47,7 @@ pub fn authorize(method: &str, user_code: &UserCode) -> bool {
         "forum.topic.update" => UserCode::User,
         "forums.topic.delete" => UserCode::User,
         "forums.topic.vote" => UserCode::User,
+        "forums.topic.getVoteUsers" => UserCode::Admin,
         "forum.post.create" => {
             if anonym_allowed {
                 UserCode::Anonym
@@ -55,6 +57,8 @@ pub fn authorize(method: &str, user_code: &UserCode) -> bool {
         }
         "forum.post.update" => UserCode::User,
         "forums.post.delete" => UserCode::User,
+        "like.create" => UserCode::User,
+        "like.delete" => UserCode::User,
         _ => UserCode::Anonym,
     };
 
