@@ -236,9 +236,11 @@ pub fn update(data: RequestData) -> RequestResult {
 
     #[derive(Deserialize)]
     struct Req {
+        id: Id,
         name: String,
         code: String,
         gender: i16,
+        blocked: bool,
     }
 
     let req: Req = data.params()?;
@@ -253,6 +255,7 @@ pub fn update(data: RequestData) -> RequestResult {
         pub name: String,
         pub gender: i16,
         pub group_id: Id,
+        pub blocked: bool,
         pub update_ts: NaiveDateTime,
     }
 
@@ -260,10 +263,11 @@ pub fn update(data: RequestData) -> RequestResult {
         name: req.name,
         gender: req.gender,
         group_id: groups.id,
+        blocked: req.blocked,
         update_ts: Utc::now().naive_utc(),
     };
 
-    diesel::update(users.filter(users::id.eq(data.user.id)))
+    diesel::update(users.filter(users::id.eq(req.id)))
         .set(&update_user)
         .execute(&data.db.conn)?;
 
