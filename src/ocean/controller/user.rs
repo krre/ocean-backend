@@ -274,6 +274,40 @@ pub fn update(data: RequestData) -> RequestResult {
     Ok(None)
 }
 
+// user.updateProfile
+pub fn update_profile(data: RequestData) -> RequestResult {
+    use crate::model::schema::users;
+    use crate::model::schema::users::dsl::*;
+
+    #[derive(Deserialize)]
+    struct Req {
+        name: String,
+        gender: i16,
+    }
+
+    let req: Req = data.params()?;
+
+    #[derive(AsChangeset)]
+    #[table_name = "users"]
+    pub struct UpdateUser {
+        pub name: String,
+        pub gender: i16,
+        pub update_ts: NaiveDateTime,
+    }
+
+    let update_user = UpdateUser {
+        name: req.name,
+        gender: req.gender,
+        update_ts: Utc::now().naive_utc(),
+    };
+
+    diesel::update(users.filter(users::id.eq(data.user.id)))
+        .set(&update_user)
+        .execute(&data.db.conn)?;
+
+    Ok(None)
+}
+
 // user.updateToken
 pub fn update_token(data: RequestData) -> RequestResult {
     use crate::model::schema::users::dsl::*;

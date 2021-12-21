@@ -62,6 +62,10 @@ lazy_static! {
             Rh(controller::user::update_token),
         );
         m.insert(
+            "user.updateProfile".to_string(),
+            Rh(controller::user::update_profile),
+        );
+        m.insert(
             "comment.create".to_string(),
             Rh(controller::comment::create),
         );

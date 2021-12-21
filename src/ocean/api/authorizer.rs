@@ -18,8 +18,9 @@ pub fn authorize(method: &str, user_code: &UserCode) -> bool {
         "mandela.vote" => UserCode::User,
         "mandela.updateTrash" => UserCode::Admin,
         "user.logout" => UserCode::User,
-        "user.update" => UserCode::User,
+        "user.update" => UserCode::Admin,
         "user.updateToken" => UserCode::User,
+        "user.updateProfile" => UserCode::User,
         "comment.create" => {
             if anonym_allowed {
                 UserCode::Anonym
