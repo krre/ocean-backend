@@ -55,6 +55,24 @@ pub fn get(token: &str) -> Option<types::User> {
     USER_CACHE.lock().unwrap().get(token).map(|u| (*u).clone())
 }
 
+pub fn update_blocked(id: types::Id, blocked: bool) {
+    let mut token: String = String::new();
+    let mut user: Option<types::User> = None;
+
+    for (key, value) in USER_CACHE.lock().unwrap().iter() {
+        if value.id == id {
+            token = (*key).clone();
+            user = Some((*value).clone());
+            break;
+        }
+    }
+
+    if let Some(mut u) = user {
+        u.blocked = blocked;
+        set(&token, u);
+    }
+}
+
 pub fn user_code(code: &str) -> types::UserCode {
     match code {
         "admin" => types::UserCode::Admin,

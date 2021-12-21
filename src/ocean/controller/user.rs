@@ -271,6 +271,8 @@ pub fn update(data: RequestData) -> RequestResult {
         .set(&update_user)
         .execute(&data.db.conn)?;
 
+    user_cache::update_blocked(req.id, req.blocked);
+
     Ok(None)
 }
 
