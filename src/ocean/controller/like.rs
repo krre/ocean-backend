@@ -64,3 +64,44 @@ pub fn delete(data: RequestData) -> RequestResult {
 
     Ok(None)
 }
+
+// like.getUsers
+pub fn get_users(data: RequestData) -> RequestResult {
+    #[derive(Deserialize)]
+    struct Req {
+        comment_id: Option<Id>,
+        post_id: Option<Id>,
+    }
+
+    let req: Req = data.params()?;
+
+    #[derive(Queryable, Serialize)]
+    struct LikeUser {
+        id: Id,
+        name: String,
+        action: i16,
+    }
+
+    use crate::model::schema::likes::dsl::*;
+    use crate::model::schema::users;
+
+    let mut query = likes
+        .inner_join(users::table)
+        .select((users::id, users::name, value))
+        .into_boxed();
+
+    if let Some(filter_comment_id) = req.comment_id {
+        query = query.filter(comment_id.eq(filter_comment_id));
+    }
+
+    if let Some(filter_post_id) = req.post_id {
+        query = query.filter(post_id.eq(filter_post_id));
+    }
+
+    let like_users = query
+        .order((value.asc(), users::name.asc()))
+        .load::<LikeUser>(&data.db.conn)?;
+
+    let result = serde_json::to_value(&like_users)?;
+    Ok(Some(result))
+}

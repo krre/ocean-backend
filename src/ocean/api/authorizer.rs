@@ -59,6 +59,7 @@ pub fn authorize(method: &str, user_code: &UserCode) -> bool {
         "forums.post.delete" => UserCode::User,
         "like.create" => UserCode::User,
         "like.delete" => UserCode::User,
+        "like.getUsers" => UserCode::Admin,
         _ => UserCode::Anonym,
     };
 

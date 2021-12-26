@@ -83,6 +83,7 @@ lazy_static! {
         );
         m.insert("like.create".to_string(), Rh(controller::like::create));
         m.insert("like.delete".to_string(), Rh(controller::like::delete));
+        m.insert("like.getUsers".to_string(), Rh(controller::like::get_users));
         m.insert("search.getAll".to_string(), Rh(controller::search::get_all));
         m.insert(
             "rating.getMandels".to_string(),
