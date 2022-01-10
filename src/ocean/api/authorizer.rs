@@ -20,6 +20,7 @@ pub fn authorize(method: &str, user_code: &UserCode) -> bool {
         "mandela.getVoteUsers" => UserCode::Admin,
         "user.logout" => UserCode::User,
         "user.update" => UserCode::Admin,
+        "user.delete" => UserCode::Admin,
         "user.updateToken" => UserCode::User,
         "user.updateProfile" => UserCode::User,
         "comment.create" => {

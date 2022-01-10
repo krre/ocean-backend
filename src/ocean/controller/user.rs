@@ -336,3 +336,12 @@ pub fn update_token(data: RequestData) -> RequestResult {
 
     Ok(None)
 }
+
+// user.delete
+pub fn delete(data: RequestData) -> RequestResult {
+    use crate::model::schema::users::dsl::*;
+    let req: RequestId = data.params()?;
+
+    diesel::delete(users.filter(id.eq(req.id))).execute(&data.db.conn)?;
+    Ok(None)
+}

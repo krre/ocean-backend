@@ -53,6 +53,7 @@ lazy_static! {
             Rh(controller::user::get_next_id),
         );
         m.insert("user.create".to_string(), Rh(controller::user::create));
+        m.insert("user.delete".to_string(), Rh(controller::user::delete));
         m.insert("user.auth".to_string(), Rh(controller::user::auth));
         m.insert("user.logout".to_string(), Rh(controller::user::logout));
         m.insert("user.getOne".to_string(), Rh(controller::user::get_one));
