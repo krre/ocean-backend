@@ -170,7 +170,7 @@ pub fn create(data: RequestData) -> RequestResult {
 
     message = message + "\n" + &user_name;
 
-    telegram_bot::send_message(message);
+    telegram_bot::send_message(&message);
 
     let resp = ResponseId { id: mandela_id };
     let result = serde_json::to_value(&resp)?;

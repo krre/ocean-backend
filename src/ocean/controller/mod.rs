@@ -41,8 +41,10 @@ impl std::fmt::Display for Error {
 }
 
 impl Error {
-    pub fn new(message: String) -> Self {
-        Error { message }
+    pub fn new(message: &str) -> Self {
+        Error {
+            message: message.to_string(),
+        }
     }
 }
 
@@ -61,7 +63,7 @@ impl RequestData {
         if let Some(p) = &self.params {
             Ok(serde_json::from_value::<T>((*p).clone())?)
         } else {
-            Err(Box::new(Error::new(String::from("Parameters is absent"))))
+            Err(Box::new(Error::new("Parameters is absent")))
         }
     }
 }

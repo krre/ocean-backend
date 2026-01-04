@@ -223,7 +223,7 @@ pub fn create(data: RequestData) -> RequestResult {
         topic_title, topic_user_name, req.post
     );
 
-    telegram_bot::send_admin_message(post_message);
+    telegram_bot::send_admin_message(&post_message);
 
     let resp = ResponseId { id: post_id };
     let result = serde_json::to_value(&resp)?;

@@ -83,6 +83,6 @@ pub fn make_error(code: ErrorCode) -> Box<dyn error::Error> {
     Box::new(Error::new(code, None))
 }
 
-pub fn make_error_data(code: ErrorCode, data: String) -> Box<dyn error::Error> {
-    Box::new(Error::new(code, Some(data)))
+pub fn make_error_data(code: ErrorCode, data: &str) -> Box<dyn error::Error> {
+    Box::new(Error::new(code, Some(data.to_string())))
 }

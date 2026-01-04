@@ -41,11 +41,11 @@ impl ApiServer {
         let stream = TcpListenerStream::new(tcp);
         let tls_acceptor = TlsAcceptor::from(tls_cfg);
         let incoming_tls_stream = stream
-            .map_err(|e| error(format!("Incoming failed: {:?}", e)))
+            .map_err(|e| error(&format!("Incoming failed: {:?}", e)))
             .and_then(move |s| {
                 tls_acceptor
                     .accept(s)
-                    .map_err(|e| error(format!("TLS Error: {:?}", e)))
+                    .map_err(|e| error(&format!("TLS Error: {:?}", e)))
             })
             .filter(|i| futures_util::future::ready(i.is_ok())) // Need to filter out errors as they will stop server to accept connections
             .boxed();
@@ -76,13 +76,13 @@ impl Default for ApiServer {
     }
 }
 
-fn error(err: String) -> io::Error {
+fn error(err: &str) -> io::Error {
     io::Error::new(io::ErrorKind::Other, err)
 }
 
 fn load_certs(filename: &str) -> io::Result<Vec<rustls::Certificate>> {
     let certfile = fs::File::open(filename)
-        .map_err(|e| error(format!("failed to open {}: {}", filename, e)))?;
+        .map_err(|e| error(&format!("failed to open {}: {}", filename, e)))?;
     let mut reader = io::BufReader::new(certfile);
     let certs = rustls_pemfile::certs(&mut reader)?;
     Ok(certs
@@ -93,7 +93,7 @@ fn load_certs(filename: &str) -> io::Result<Vec<rustls::Certificate>> {
 
 fn load_private_key(filename: &str) -> io::Result<rustls::PrivateKey> {
     let keyfile = fs::File::open(filename)
-        .map_err(|e| error(format!("failed to open {}: {}", filename, e)))?;
+        .map_err(|e| error(&format!("failed to open {}: {}", filename, e)))?;
     let mut reader = io::BufReader::new(keyfile);
 
     let keys = rustls_pemfile::rsa_private_keys(&mut reader)

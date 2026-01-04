@@ -3,16 +3,16 @@ use log::error;
 
 pub mod api;
 
-pub fn send_message(text: String) {
-    send_message_to(config::CONFIG.telegram_bot.channel.clone(), text);
+pub fn send_message(text: &str) {
+    send_message_to(&config::CONFIG.telegram_bot.channel, text);
 }
 
-pub fn send_admin_message(text: String) {
-    send_message_to(config::CONFIG.telegram_bot.admin_chat_id.clone(), text);
+pub fn send_admin_message(text: &str) {
+    send_message_to(&config::CONFIG.telegram_bot.admin_chat_id, text);
 }
 
-fn send_message_to(chat_id: String, text: String) {
-    let mut adaptive_text = text;
+fn send_message_to(chat_id: &str, text: &str) {
+    let mut adaptive_text = text.to_string();
 
     const TEXT_LIMIT: usize = 4096; // Telegram Bot limit
 
@@ -24,7 +24,7 @@ fn send_message_to(chat_id: String, text: String) {
     }
 
     let params = api::SendMessageParams {
-        chat_id,
+        chat_id: chat_id.to_string(),
         text: adaptive_text,
         parse_mode: Some("HTML".into()),
     };
@@ -37,7 +37,7 @@ fn send_message_to(chat_id: String, text: String) {
 #[tokio::main]
 async fn send_request(method: &str, params: serde_json::Value) -> serde_json::Value {
     let url = make_url(method);
-    let res = send(url, params).await;
+    let res = send(&url, params).await;
 
     match res {
         Ok(r) => r,
@@ -49,13 +49,13 @@ async fn send_request(method: &str, params: serde_json::Value) -> serde_json::Va
 }
 
 async fn send(
-    url: String,
+    url: &str,
     params: serde_json::Value,
 ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
 
     let resp = client
-        .post(&url)
+        .post(url)
         .json(&params)
         .send()
         .await?

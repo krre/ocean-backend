@@ -70,7 +70,7 @@ pub fn create(data: RequestData) -> RequestResult {
         new_comment.message
     );
 
-    telegram_bot::send_admin_message(comment_message);
+    telegram_bot::send_admin_message(&comment_message);
 
     Ok(None)
 }
