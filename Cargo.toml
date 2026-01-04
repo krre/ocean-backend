@@ -9,23 +9,23 @@ name = "ocean"
 path = "src/ocean/lib.rs"
 
 [dependencies]
-toml = "0.5.8"
-serde = { version = "1.0.133", features = ["derive"] }
-serde_json = "1.0.74"
-serde_derive = "1.0.133"
-dirs = "4.0.0"
+toml = "0.9.8"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.148"
+serde_derive = "1.0.228"
+dirs = "6.0.0"
 hyper = { version = "0.14.16", features = ["server"] }
 hyper-rustls = "0.23.0"
 tokio = { version = "1.15.0", features = ["full"] }
-tokio-stream = { version = "0.1.8", features = ["net"] }
-lazy_static = "1.4.0"
+tokio-stream = { version = "0.1.17", features = ["net"] }
+lazy_static = "1.5.0"
 diesel = { version = "1.4.8", features = ["postgres", "chrono", "serde_json"] }
 diesel_migrations = "1.4.0"
-chrono = { version = "0.4.19", features = ["serde"] }
-sha1 = "0.6.0"
+chrono = { version = "0.4.42", features = ["serde"] }
+sha1 = "0.10.6"
 log = "0.4.14"
 ct-logs = { version = "0.9.0", optional = true }
-env_logger = "0.9.0"
+env_logger = "0.11.8"
 rustls = "0.20.2"
 rustls-pemfile = "0.2.1"
 tokio-rustls = "0.23.2"
@@ -38,4 +38,4 @@ url = "2.2.2"
 default = ["native-tokio"]
 webpki-tokio = ["tokio-runtime"]
 native-tokio = ["tokio-runtime", "rustls-native-certs"]
-tokio-runtime =  ["hyper/runtime", "ct-logs"]
+tokio-runtime = ["hyper/runtime", "ct-logs"]
