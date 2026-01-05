@@ -5,14 +5,20 @@ use crate::controller;
 use crate::db;
 use crate::json_rpc;
 use crate::types;
-use hyper::body;
-use hyper::header;
-use hyper::{Body, Method, Request, Response, StatusCode};
+use http_body_util::{BodyExt, Full};
+use hyper::body::Buf;
+use hyper::body::Bytes;
+use hyper::{Method, Request, Response, StatusCode, body::Incoming as IncomingBody, header};
 use log::{error, info};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 
-type ResponseResult = Result<Response<Body>, hyper::Error>;
+type GenericError = Box<dyn std::error::Error + Send + Sync>;
+type Result<T> = std::result::Result<T, GenericError>;
+type BoxBody = http_body_util::combinators::BoxBody<Bytes, hyper::Error>;
+type ResponseResult = Result<Response<BoxBody>>;
+
+struct Rh(controller::RequestHandler);
 
 lazy_static! {
     static ref METHODS: HashMap<String, Rh> = {
@@ -189,9 +195,7 @@ lazy_static! {
     };
 }
 
-struct Rh(controller::RequestHandler);
-
-pub async fn route(req: Request<Body>, addr: SocketAddr) -> ResponseResult {
+pub async fn route(req: Request<IncomingBody>, addr: SocketAddr) -> ResponseResult {
     if req.method() != Method::POST || req.uri().path() != "/api" {
         return bad_request(req);
     }
@@ -224,8 +228,8 @@ pub async fn route(req: Request<Body>, addr: SocketAddr) -> ResponseResult {
 
     let user_id = user.id;
     let user_name = user.name.clone();
-    let whole_body = body::to_bytes(req).await?;
-    let bytes = whole_body.as_ref();
+    let whole_body = req.collect().await?.aggregate();
+    let bytes = whole_body.chunk();
     let raw_req = String::from_utf8_lossy(bytes);
 
     info!(
@@ -259,7 +263,7 @@ pub async fn route(req: Request<Body>, addr: SocketAddr) -> ResponseResult {
         raw_resp
     );
 
-    let mut response = Response::new(Body::from(raw_resp));
+    let mut response = Response::builder().body(full(raw_resp)).unwrap();
     response.headers_mut().insert(
         "Access-Control-Allow-Origin",
         header::HeaderValue::from_static("*"),
@@ -268,7 +272,13 @@ pub async fn route(req: Request<Body>, addr: SocketAddr) -> ResponseResult {
     Ok(response)
 }
 
-fn bad_request(req: Request<Body>) -> ResponseResult {
+fn full<T: Into<Bytes>>(chunk: T) -> BoxBody {
+    Full::new(chunk.into())
+        .map_err(|never| match never {})
+        .boxed()
+}
+
+fn bad_request(req: Request<IncomingBody>) -> ResponseResult {
     info!(
         "Bad request: method: {}, URL: {}",
         req.method().as_str(),
@@ -277,7 +287,7 @@ fn bad_request(req: Request<Body>) -> ResponseResult {
 
     Ok(Response::builder()
         .status(StatusCode::BAD_REQUEST)
-        .body(Body::from("Bad request"))
+        .body(full("Bad request"))
         .unwrap())
 }
 
@@ -286,7 +296,7 @@ fn unauthorized(token: &str) -> ResponseResult {
 
     Ok(Response::builder()
         .status(StatusCode::UNAUTHORIZED)
-        .body(Body::from("Unauthorized"))
+        .body(full("Unauthorized"))
         .unwrap())
 }
 

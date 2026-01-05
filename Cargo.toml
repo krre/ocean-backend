@@ -14,7 +14,9 @@ serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.148"
 serde_derive = "1.0.228"
 dirs = "6.0.0"
-hyper = { version = "0.14.16", features = ["server"] }
+hyper = { version = "1.8.1", features = ["full"] }
+http-body-util = "0.1.3"
+hyper-util = { version = "0.1.19", features = ["full"] }
 hyper-rustls = "0.27.7"
 tokio = { version = "1.15.0", features = ["full"] }
 tokio-stream = { version = "0.1.18", features = ["net"] }
@@ -30,9 +32,3 @@ tokio-rustls = "0.26.4"
 futures-util = "0.3.19"
 reqwest = { version = "0.11.9", features = ["json", "blocking", "native-tls"] }
 url = "2.2.2"
-
-[features]
-default = ["native-tokio"]
-webpki-tokio = ["tokio-runtime"]
-native-tokio = ["tokio-runtime"]
-tokio-runtime = ["hyper/runtime"]
