@@ -2,7 +2,7 @@
 name = "ocean"
 version = "1.0.0"
 authors = ["Vladimir Zarypov <krre31@gmail.com>"]
-edition = "2021"
+edition = "2024"
 
 [lib]
 name = "ocean"
