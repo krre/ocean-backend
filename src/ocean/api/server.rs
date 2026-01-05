@@ -5,11 +5,11 @@ use futures_util::{future::TryFutureExt, stream::Stream, StreamExt, TryStreamExt
 use hyper::server::Server;
 use hyper::service::{make_service_fn, service_fn};
 use log::info;
-use rustls::PrivateKey;
+use rustls::pki_types::pem::PemObject;
+use rustls::pki_types::{CertificateDer, PrivateKeyDer};
 use rustls::ServerConfig;
-use rustls_pemfile;
 use std::pin::Pin;
-use std::{fs, io, sync};
+use std::{io, sync};
 use tokio::net::{TcpListener, TcpStream};
 use tokio_rustls::{server::TlsStream, TlsAcceptor};
 use tokio_stream::wrappers::TcpListenerStream;
@@ -26,15 +26,19 @@ impl ApiServer {
         let addr = format!("0.0.0.0:{}", port);
 
         let tls_cfg = {
-            let certs = load_certs(config::CONFIG.server.ssl.cert.as_str())?;
-            let key = load_private_key(config::CONFIG.server.ssl.key.as_str())?;
+            let certs = CertificateDer::pem_file_iter(config::CONFIG.server.ssl.cert.as_str())
+                .unwrap()
+                .map(|cert| cert.unwrap())
+                .collect();
 
-            let cfg = ServerConfig::builder()
-                .with_safe_defaults()
+            let private_key =
+                PrivateKeyDer::from_pem_file(config::CONFIG.server.ssl.key.as_str()).unwrap();
+
+            let config = ServerConfig::builder()
                 .with_no_client_auth()
-                .with_single_cert(certs, key)
-                .expect("bad certificate/key");
-            sync::Arc::new(cfg)
+                .with_single_cert(certs, private_key)
+                .expect("bad certificate / private key");
+            sync::Arc::new(config)
         };
 
         let tcp = TcpListener::bind(&addr).await?;
@@ -78,33 +82,6 @@ impl Default for ApiServer {
 
 fn error(err: &str) -> io::Error {
     io::Error::new(io::ErrorKind::Other, err)
-}
-
-fn load_certs(filename: &str) -> io::Result<Vec<rustls::Certificate>> {
-    let certfile = fs::File::open(filename)
-        .map_err(|e| error(&format!("failed to open {}: {}", filename, e)))?;
-    let mut reader = io::BufReader::new(certfile);
-    let certs = rustls_pemfile::certs(&mut reader)?;
-    Ok(certs
-        .iter()
-        .map(|v| rustls::Certificate(v.clone()))
-        .collect())
-}
-
-fn load_private_key(filename: &str) -> io::Result<rustls::PrivateKey> {
-    let keyfile = fs::File::open(filename)
-        .map_err(|e| error(&format!("failed to open {}: {}", filename, e)))?;
-    let mut reader = io::BufReader::new(keyfile);
-
-    let keys = rustls_pemfile::rsa_private_keys(&mut reader)
-        .map_err(|_| error("failed to load private key".into()))?;
-
-    if keys.len() != 1 {
-        return Err(error("expected a single private key".into()));
-    }
-
-    let key = &keys[0];
-    Ok(PrivateKey(key.to_vec()))
 }
 
 struct HyperAcceptor<'a> {
