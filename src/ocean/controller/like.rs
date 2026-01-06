@@ -18,7 +18,7 @@ pub fn create(mut data: RequestData) -> RequestResult {
     let req: Req = data.params()?;
 
     #[derive(Insertable, Deserialize)]
-    #[table_name = "likes"]
+    #[diesel(table_name = likes)]
     struct NewLike {
         user_id: Id,
         comment_id: Option<Id>,

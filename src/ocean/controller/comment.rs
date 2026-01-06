@@ -21,7 +21,7 @@ pub fn create(mut data: RequestData) -> RequestResult {
     use crate::model::schema::comments;
 
     #[derive(Insertable)]
-    #[table_name = "comments"]
+    #[diesel(table_name = comments)]
     pub struct NewComment {
         mandela_id: Id,
         user_id: Id,
@@ -162,7 +162,7 @@ pub fn update(mut data: RequestData) -> RequestResult {
     let req: Req = data.params()?;
 
     #[derive(AsChangeset)]
-    #[table_name = "comments"]
+    #[diesel(table_name = comments)]
     pub struct UpdateComment {
         pub message: String,
         pub update_ts: NaiveDateTime,

@@ -161,7 +161,7 @@ pub fn create(mut data: RequestData) -> RequestResult {
     let req: Req = data.params()?;
 
     #[derive(Insertable)]
-    #[table_name = "forum_topics"]
+    #[diesel(table_name = forum_topics)]
     struct NewForumTopic {
         section_id: Id,
         user_id: Id,
@@ -224,7 +224,7 @@ pub fn update(mut data: RequestData) -> RequestResult {
     let req: Req = data.params()?;
 
     #[derive(AsChangeset)]
-    #[table_name = "forum_topics"]
+    #[diesel(table_name = forum_topics)]
     pub struct UpdateForumTopic {
         pub name: String,
         pub update_ts: NaiveDateTime,
@@ -260,7 +260,7 @@ pub fn update_last_post(
     use crate::model::schema::forum_topics;
 
     #[derive(AsChangeset)]
-    #[table_name = "forum_topics"]
+    #[diesel(table_name = forum_topics)]
     #[changeset_options(treat_none_as_null = "true")]
     pub struct UpdateForumTopic {
         last_post_id: Option<Id>,
@@ -300,7 +300,7 @@ pub fn vote(mut data: RequestData) -> RequestResult {
         )
         .execute(conn)?;
         #[derive(Insertable)]
-        #[table_name = "forum_poll_votes"]
+        #[diesel(table_name = forum_poll_votes)]
         struct NewVote {
             topic_id: Id,
             answer_id: Id,

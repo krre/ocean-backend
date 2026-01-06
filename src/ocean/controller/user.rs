@@ -60,7 +60,7 @@ pub fn create(mut data: RequestData) -> RequestResult {
         .first::<UserGroup>(&mut data.db.conn)?;
 
     #[derive(Insertable)]
-    #[table_name = "users"]
+    #[diesel(table_name = users)]
     pub struct NewUser {
         name: String,
         group_id: Id,
@@ -250,7 +250,7 @@ pub fn update(mut data: RequestData) -> RequestResult {
         .first::<UserGroup>(&mut data.db.conn)?;
 
     #[derive(AsChangeset)]
-    #[table_name = "users"]
+    #[diesel(table_name = users)]
     pub struct UpdateUser {
         pub name: String,
         pub gender: i16,
@@ -290,7 +290,7 @@ pub fn update_profile(mut data: RequestData) -> RequestResult {
     let req: Req = data.params()?;
 
     #[derive(AsChangeset)]
-    #[table_name = "users"]
+    #[diesel(table_name = users)]
     pub struct UpdateUser {
         pub name: String,
         pub gender: i16,

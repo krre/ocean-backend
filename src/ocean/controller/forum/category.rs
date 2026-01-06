@@ -11,7 +11,7 @@ pub fn create(mut data: RequestData) -> RequestResult {
     use crate::model::schema::forum_categories::dsl::*;
 
     #[derive(Insertable, Deserialize)]
-    #[table_name = "forum_categories"]
+    #[diesel(table_name = forum_categories)]
     struct Req {
         name: String,
         order_index: i16,
@@ -63,7 +63,7 @@ pub fn update(mut data: RequestData) -> RequestResult {
     let req: Req = data.params()?;
 
     #[derive(AsChangeset)]
-    #[table_name = "forum_categories"]
+    #[diesel(table_name = forum_categories)]
     pub struct UpdateForumCategory {
         pub name: String,
         pub order_index: i16,

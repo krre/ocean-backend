@@ -88,7 +88,7 @@ fn update_categories(
     }
 
     #[derive(Insertable, Deserialize)]
-    #[table_name = "categories"]
+    #[diesel(table_name = categories)]
     pub struct NewCategoryNumber {
         mandela_id: Id,
         number: i16,
@@ -124,7 +124,7 @@ pub fn create(mut data: RequestData) -> RequestResult {
     use crate::model::schema::mandels::dsl::*;
 
     #[derive(Insertable)]
-    #[table_name = "mandels"]
+    #[diesel(table_name = mandels)]
     struct NewMandela {
         title_mode: i32,
         title: String,
@@ -196,7 +196,7 @@ pub fn update(mut data: RequestData) -> RequestResult {
     let req: Req = data.params()?;
 
     #[derive(AsChangeset)]
-    #[table_name = "mandels"]
+    #[diesel(table_name = mandels)]
     struct UpdateMandela {
         title_mode: i32,
         title: String,
@@ -627,7 +627,7 @@ pub fn mark(mut data: RequestData) -> RequestResult {
     use crate::model::schema::marks::dsl::*;
 
     #[derive(Insertable)]
-    #[table_name = "marks"]
+    #[diesel(table_name = marks)]
     pub struct NewMark {
         mandela_id: Id,
         user_id: Id,
@@ -655,7 +655,7 @@ pub fn vote(mut data: RequestData) -> RequestResult {
     let req: Req = data.params()?;
 
     #[derive(Insertable, AsChangeset)]
-    #[table_name = "votes"]
+    #[diesel(table_name = votes)]
     pub struct NewVote {
         mandela_id: Id,
         user_id: Id,

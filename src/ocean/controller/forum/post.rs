@@ -173,7 +173,7 @@ pub fn create(mut data: RequestData) -> RequestResult {
     let req: Req = data.params()?;
 
     #[derive(Insertable)]
-    #[table_name = "forum_posts"]
+    #[diesel(table_name = forum_posts)]
     struct NewForumPost<'a> {
         topic_id: Id,
         user_id: Id,
@@ -248,7 +248,7 @@ pub fn update(mut data: RequestData) -> RequestResult {
     let req: Req = data.params()?;
 
     #[derive(AsChangeset)]
-    #[table_name = "forum_posts"]
+    #[diesel(table_name = forum_posts)]
     pub struct UpdateForumPost {
         pub post: String,
         pub update_ts: NaiveDateTime,
