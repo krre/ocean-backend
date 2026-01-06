@@ -90,23 +90,23 @@ pub fn get_all(mut data: RequestData) -> RequestResult {
 
     #[derive(QueryableByName, Serialize)]
     pub struct Comment {
-        #[sql_type = "Int4"]
+        #[diesel(sql_type = Int4)]
         pub id: Id,
-        #[sql_type = "Int4"]
+        #[diesel(sql_type = Int4)]
         pub user_id: Id,
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         pub user_name: String,
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         pub message: String,
-        #[sql_type = "Int8"]
+        #[diesel(sql_type = Int8)]
         pub like_count: i64,
-        #[sql_type = "Int8"]
+        #[diesel(sql_type = Int8)]
         pub dislike_count: i64,
-        #[sql_type = "Nullable<Int2>"]
+        #[diesel(sql_type = Nullable<Int2>)]
         pub like: Option<i16>,
-        #[sql_type = "Timestamptz"]
+        #[diesel(sql_type = Timestamptz)]
         pub create_ts: NaiveDateTime,
-        #[sql_type = "Timestamptz"]
+        #[diesel(sql_type = Timestamptz)]
         pub update_ts: NaiveDateTime,
     }
 

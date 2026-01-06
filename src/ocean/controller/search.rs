@@ -35,16 +35,16 @@ pub fn get_all(mut data: RequestData) -> RequestResult {
 
     #[derive(QueryableByName, Serialize)]
     struct Record {
-        #[sql_type = "Int4"]
+        #[diesel(sql_type = Int4)]
         title_id: Id,
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         title: String,
-        #[sql_type = "Int4"]
+        #[diesel(sql_type = Int4)]
         id: Id,
         #[diesel(sql_type = Int8, column_name = "row")]
         #[serde(rename = "row")]
         row_number: i64,
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         content: String,
     }
 
@@ -120,7 +120,7 @@ pub fn get_all(mut data: RequestData) -> RequestResult {
 
     #[derive(QueryableByName)]
     struct TotalCount {
-        #[sql_type = "Int8"]
+        #[diesel(sql_type = Int8)]
         count: i64,
     }
 

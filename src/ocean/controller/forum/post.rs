@@ -56,21 +56,21 @@ pub fn get_all(mut data: RequestData) -> RequestResult {
 
     #[derive(QueryableByName, Serialize)]
     struct Post {
-        #[sql_type = "Int4"]
+        #[diesel(sql_type = Int4)]
         id: Id,
-        #[sql_type = "Int4"]
+        #[diesel(sql_type = Int4)]
         user_id: Id,
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         user_name: String,
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         post: String,
-        #[sql_type = "Int8"]
+        #[diesel(sql_type = Int8)]
         like_count: i64,
-        #[sql_type = "Int8"]
+        #[diesel(sql_type = Int8)]
         dislike_count: i64,
-        #[sql_type = "Nullable<Int2>"]
+        #[diesel(sql_type = Nullable<Int2>)]
         like: Option<i16>,
-        #[sql_type = "Timestamptz"]
+        #[diesel(sql_type = Timestamptz)]
         create_ts: NaiveDateTime,
     }
 

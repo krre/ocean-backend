@@ -20,37 +20,37 @@ pub struct MandelaTitle {
 
 #[derive(QueryableByName, Serialize)]
 struct Votes {
-    #[sql_type = "Int2"]
+    #[diesel(sql_type = Int2)]
     vote: i16,
-    #[sql_type = "Int8"]
+    #[diesel(sql_type = Int8)]
     count: i64,
 }
 
 #[derive(QueryableByName, Serialize)]
 pub struct Comment {
-    #[sql_type = "Int4"]
+    #[diesel(sql_type = Int4)]
     id: Id,
-    #[sql_type = "Int4"]
+    #[diesel(sql_type = Int4)]
     mandela_id: Id,
-    #[sql_type = "Int4"]
+    #[diesel(sql_type = Int4)]
     title_mode: i32,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     title: String,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     what: String,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     before: String,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     after: String,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     message: String,
-    #[sql_type = "Int4"]
+    #[diesel(sql_type = Int4)]
     user_id: i32,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     user_name: String,
-    #[sql_type = "Timestamptz"]
+    #[diesel(sql_type = Timestamptz)]
     create_ts: NaiveDateTime,
-    #[sql_type = "Int8"]
+    #[diesel(sql_type = Int8)]
     comment_count: i64,
 }
 

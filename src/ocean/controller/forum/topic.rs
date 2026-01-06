@@ -11,13 +11,13 @@ pub const POLL_TOPIC_TYPE: i16 = 1;
 
 #[derive(Serialize, QueryableByName)]
 pub struct Poll {
-    #[sql_type = "Int4"]
+    #[diesel(sql_type = Int4)]
     id: Id,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     answer: String,
-    #[sql_type = "Int8"]
+    #[diesel(sql_type = Int8)]
     count: i64,
-    #[sql_type = "Bool"]
+    #[diesel(sql_type = Bool)]
     voted: bool,
 }
 
@@ -57,24 +57,24 @@ pub fn get_all(mut data: RequestData) -> RequestResult {
 
     #[derive(QueryableByName, Serialize)]
     struct Topic {
-        #[sql_type = "Int4"]
+        #[diesel(sql_type = Int4)]
         id: Id,
-        #[sql_type = "Int4"]
+        #[diesel(sql_type = Int4)]
         user_id: Id,
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         user_name: String,
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         name: String,
         #[serde(rename(serialize = "type"))]
-        #[sql_type = "Int2"]
+        #[diesel(sql_type = Int2)]
         type_: i16,
-        #[sql_type = "Timestamptz"]
+        #[diesel(sql_type = Timestamptz)]
         create_ts: NaiveDateTime,
-        #[sql_type = "Nullable<Int4>"]
+        #[diesel(sql_type = Nullable<Int4>)]
         last_post_id: Option<Id>,
-        #[sql_type = "Nullable<Timestamptz>"]
+        #[diesel(sql_type = Nullable<Timestamptz>)]
         last_post_create_ts: Option<NaiveDateTime>,
-        #[sql_type = "Int8"]
+        #[diesel(sql_type = Int8)]
         post_count: i64,
     }
 

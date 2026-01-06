@@ -8,15 +8,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(QueryableByName, Serialize)]
 pub struct Section {
-    #[sql_type = "Int4"]
+    #[diesel(sql_type = Int4)]
     id: Id,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     name: String,
-    #[sql_type = "Int4"]
+    #[diesel(sql_type = Int4)]
     category_id: Id,
-    #[sql_type = "Int8"]
+    #[diesel(sql_type = Int8)]
     topic_count: i64,
-    #[sql_type = "Int8"]
+    #[diesel(sql_type = Int8)]
     post_count: i64,
 }
 

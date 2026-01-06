@@ -12,21 +12,21 @@ pub mod topic;
 
 #[derive(QueryableByName, Serialize)]
 pub struct Topic {
-    #[sql_type = "Int4"]
+    #[diesel(sql_type = Int4)]
     id: Id,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     name: String,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     post: String,
-    #[sql_type = "Int4"]
+    #[diesel(sql_type = Int4)]
     post_id: Id,
-    #[sql_type = "Timestamptz"]
+    #[diesel(sql_type = Timestamptz)]
     post_create_ts: NaiveDateTime,
-    #[sql_type = "Int4"]
+    #[diesel(sql_type = Int4)]
     user_id: Id,
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     user_name: String,
-    #[sql_type = "Int8"]
+    #[diesel(sql_type = Int8)]
     post_count: i64,
 }
 

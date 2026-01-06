@@ -21,25 +21,25 @@ pub fn get_mandels(mut data: RequestData) -> RequestResult {
 
     #[derive(QueryableByName, Serialize)]
     struct Mandela {
-        #[sql_type = "Int4"]
+        #[diesel(sql_type = Int4)]
         id: Id,
-        #[sql_type = "Int4"]
+        #[diesel(sql_type = Int4)]
         title_mode: i32,
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         title: String,
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         what: String,
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         before: String,
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         after: String,
-        #[sql_type = "Int8"]
+        #[diesel(sql_type = Int8)]
         count: i64,
     }
 
     #[derive(QueryableByName)]
     struct TotalCount {
-        #[sql_type = "Int8"]
+        #[diesel(sql_type = Int8)]
         count: i64,
     }
 
@@ -99,11 +99,11 @@ pub fn get_users(mut data: RequestData) -> RequestResult {
 
     #[derive(QueryableByName, Serialize)]
     struct User {
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         name: String,
-        #[sql_type = "Int4"]
+        #[diesel(sql_type = Int4)]
         id: Id,
-        #[sql_type = "Int8"]
+        #[diesel(sql_type = Int8)]
         count: i64,
     }
 
@@ -122,7 +122,7 @@ pub fn get_users(mut data: RequestData) -> RequestResult {
 
     #[derive(QueryableByName)]
     struct UserCount {
-        #[sql_type = "Int8"]
+        #[diesel(sql_type = Int8)]
         count: i64,
     }
 
