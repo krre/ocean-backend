@@ -9,6 +9,7 @@ use http_body_util::{BodyExt, Full};
 use hyper::body::Buf;
 use hyper::body::Bytes;
 use hyper::{Method, Request, Response, StatusCode, body::Incoming as IncomingBody, header};
+use lazy_static::lazy_static;
 use log::{error, info};
 use std::collections::HashMap;
 use std::net::SocketAddr;

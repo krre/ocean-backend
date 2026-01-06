@@ -1,6 +1,7 @@
 use crate::db;
 use crate::types;
 use diesel::prelude::*;
+use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
