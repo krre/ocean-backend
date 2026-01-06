@@ -2,8 +2,8 @@ use super::*;
 use crate::api;
 use crate::telegram_bot;
 use crate::types::Id;
-use chrono::prelude::*;
 use chrono::NaiveDateTime;
+use chrono::prelude::*;
 use diesel::prelude::*;
 use diesel::sql_types::{Int2, Int4, Int8, Text, Timestamptz};
 use serde::{Deserialize, Serialize};
@@ -55,7 +55,7 @@ pub struct Comment {
 }
 
 fn update_categories(
-    conn: &PgConnection,
+    conn: &mut PgConnection,
     mandela_id: Id,
     category_numbers: Vec<i16>,
 ) -> RequestResult {
@@ -106,7 +106,7 @@ fn update_categories(
 }
 
 // mandela.create
-pub fn create(data: RequestData) -> RequestResult {
+pub fn create(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         title_mode: i32,
@@ -148,10 +148,10 @@ pub fn create(data: RequestData) -> RequestResult {
     let mandela_id = diesel::insert_into(mandels)
         .values(&new_mandela)
         .returning(id)
-        .get_result::<Id>(&data.db.conn)?;
+        .get_result::<Id>(&mut data.db.conn)?;
 
     let category_numbers: Vec<i16> = serde_json::from_value(req.categories).unwrap();
-    update_categories(&data.db.conn, mandela_id, category_numbers)?;
+    update_categories(&mut data.db.conn, mandela_id, category_numbers)?;
 
     let mut message = format_mandela_title(mandela::MandelaTitle {
         id: mandela_id,
@@ -166,7 +166,7 @@ pub fn create(data: RequestData) -> RequestResult {
     let user_name: String = users::table
         .select(users::name)
         .filter(users::id.eq(data.user.id))
-        .first(&data.db.conn)?;
+        .first(&mut data.db.conn)?;
 
     message = message + "\n" + &user_name;
 
@@ -178,7 +178,7 @@ pub fn create(data: RequestData) -> RequestResult {
 }
 
 // mandela.update
-pub fn update(data: RequestData) -> RequestResult {
+pub fn update(mut data: RequestData) -> RequestResult {
     use crate::model::schema::mandels;
     use crate::model::schema::mandels::dsl::*;
     #[derive(Deserialize)]
@@ -219,15 +219,15 @@ pub fn update(data: RequestData) -> RequestResult {
 
     diesel::update(mandels.filter(mandels::id.eq(req.id)))
         .set(&update_mandela)
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
 
     let category_numbers: Vec<i16> = serde_json::from_value(req.categories).unwrap();
-    update_categories(&data.db.conn, req.id, category_numbers)?;
+    update_categories(&mut data.db.conn, req.id, category_numbers)?;
 
     Ok(None)
 }
 
-fn get_poll(db: &db::Db, mandela_id: Id) -> Vec<Votes> {
+fn get_poll(db: &mut db::Db, mandela_id: Id) -> Vec<Votes> {
     use diesel::dsl::*;
 
     sql_query(
@@ -237,12 +237,12 @@ fn get_poll(db: &db::Db, mandela_id: Id) -> Vec<Votes> {
     GROUP BY vote",
     )
     .bind::<Int4, _>(mandela_id)
-    .load::<Votes>(&db.conn)
+    .load::<Votes>(&mut db.conn)
     .unwrap()
 }
 
 // mandela.getOne
-pub fn get_one(data: RequestData) -> RequestResult {
+pub fn get_one(mut data: RequestData) -> RequestResult {
     use crate::model::schema::mandels;
     use crate::model::schema::mandels::dsl::*;
     use crate::model::schema::marks;
@@ -294,7 +294,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
             automatic_trash,
         ))
         .filter(mandels::id.eq(req.id))
-        .first::<Mandela>(&data.db.conn);
+        .first::<Mandela>(&mut data.db.conn);
 
     let mandela: Mandela;
 
@@ -304,7 +304,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         return Err(api::make_error(api::error::RECORD_NOT_FOUND));
     }
 
-    let mandela_votes = get_poll(&data.db, req.id);
+    let mandela_votes = get_poll(&mut data.db, req.id);
 
     use crate::model::schema::votes;
     use crate::model::schema::votes::dsl::*;
@@ -319,7 +319,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
                     .eq(req.id)
                     .and(votes::user_id.eq(data.user.id)),
             )
-            .get_result::<i16>(&data.db.conn)
+            .get_result::<i16>(&mut data.db.conn)
             .optional()?;
     };
 
@@ -329,7 +329,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     let category_numbers = categories
         .select(categories::number)
         .filter(categories::mandela_id.eq(req.id))
-        .load(&data.db.conn)?;
+        .load(&mut data.db.conn)?;
 
     #[derive(Serialize)]
     struct MandelaResp {
@@ -351,7 +351,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
 }
 
 // mandela.getAll
-pub fn get_all(data: RequestData) -> RequestResult {
+pub fn get_all(mut data: RequestData) -> RequestResult {
     use crate::model::schema::categories;
     use crate::model::schema::categories::dsl::*;
     use crate::model::schema::comments;
@@ -405,6 +405,11 @@ pub fn get_all(data: RequestData) -> RequestResult {
         SHOW_ALL
     };
 
+    let last_comment_subquery = comments::table
+        .filter(comments::mandela_id.eq(mandels::id))
+        .select(max(comments::create_ts))
+        .single_value();
+
     let mut query = mandels
         .inner_join(users)
         .left_join(
@@ -417,8 +422,6 @@ pub fn get_all(data: RequestData) -> RequestResult {
                 .eq(data.user.id)
                 .and(votes::mandela_id.eq(mandels::id))),
         )
-        .left_join(categories.on(categories::mandela_id.eq(mandels::id)))
-        .left_join(comments.on(comments::mandela_id.eq(mandels::id)))
         .select((
             mandels::id,
             title_mode,
@@ -434,44 +437,39 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .into_boxed();
 
     if let Some(filter_user_id) = req.user_id {
-        query = query.filter(mandels::user_id.eq(filter_user_id))
-    } else if filter == SHOW_ALL {
-        query = query.filter(mandels::trash.eq(false))
-    } else if filter == SHOW_NEW {
-        query = query.filter(marks::create_ts.is_null())
-    } else if filter == SHOW_MINE {
-        query = query.filter(mandels::user_id.eq(data.user.id))
-    } else if filter == SHOW_POLL {
-        query = query.filter(votes::create_ts.is_null())
-    } else if filter == SHOW_TRASH {
-        query = query.filter(mandels::trash.eq(true))
+        query = query.filter(mandels::user_id.eq(filter_user_id));
+    } else {
+        match req.filter.unwrap_or(SHOW_ALL) {
+            SHOW_ALL => query = query.filter(mandels::trash.eq(false)),
+            SHOW_NEW => query = query.filter(marks::create_ts.is_null()),
+            SHOW_MINE => query = query.filter(mandels::user_id.eq(data.user.id)),
+            SHOW_POLL => query = query.filter(votes::create_ts.is_null()),
+            SHOW_TRASH => query = query.filter(mandels::trash.eq(true)),
+            SHOW_CATEGORY => {
+                if let Some(category_num) = req.category {
+                    let category_exists = categories::table
+                        .filter(categories::mandela_id.eq(mandels::id))
+                        .filter(categories::number.eq(category_num));
+                    query = query.filter(diesel::dsl::exists(category_exists));
+                }
+            }
+            _ => query = query.filter(mandels::trash.eq(false)),
+        }
     }
-
-    if filter == SHOW_CATEGORY {
-        query = query.filter(categories::number.eq(req.category.unwrap()));
-    }
-
-    query = query.group_by((
-        mandels::id,
-        users::name,
-        users::id,
-        marks::create_ts,
-        votes::create_ts,
-    ));
 
     const SORT_MANDELA: i8 = 0;
     const SORT_COMMENT: i8 = 1;
 
     if req.sort == SORT_MANDELA {
-        query = query.order(mandels::id.desc());
+        query = query.order_by(mandels::id.desc());
     } else if req.sort == SORT_COMMENT {
-        query = query.order(max(comments::create_ts).desc().nulls_last());
+        query = query.order(last_comment_subquery.desc().nulls_last());
     }
 
     let list = query
         .offset(req.offset)
         .limit(req.limit)
-        .load::<Mandela>(&data.db.conn)?;
+        .load::<Mandela>(&mut data.db.conn)?;
 
     #[derive(Serialize)]
     struct MandelaResp {
@@ -495,9 +493,9 @@ pub fn get_all(data: RequestData) -> RequestResult {
         let comment_count: i64 = comments
             .filter(comments::mandela_id.eq(elem.id))
             .select(count_star())
-            .first(&data.db.conn)?;
+            .first(&mut data.db.conn)?;
 
-        let mandela_votes = get_poll(&data.db, elem.id);
+        let mandela_votes = get_poll(&mut data.db, elem.id);
 
         let mandela_resp = MandelaResp {
             id: elem.id,
@@ -535,48 +533,48 @@ pub fn get_all(data: RequestData) -> RequestResult {
                         .eq(filter_user_id)
                         .and(number.eq(req.category.unwrap())),
                 )
-                .first(&data.db.conn)?
+                .first(&mut data.db.conn)?
         } else {
             mandels
                 .select(count_star())
                 .filter(mandels::user_id.eq(filter_user_id))
-                .first(&data.db.conn)?
+                .first(&mut data.db.conn)?
         }
     } else {
-        total_count = mandels.select(count_star()).first(&data.db.conn)?;
+        total_count = mandels.select(count_star()).first(&mut data.db.conn)?;
 
         if filter == SHOW_CATEGORY {
             category_count = mandels
                 .select(count_star())
                 .inner_join(categories)
                 .filter(number.eq(req.category.unwrap()))
-                .first(&data.db.conn)?;
+                .first(&mut data.db.conn)?;
         }
 
         if data.user.code != types::UserCode::Anonym {
             let mark_count: i64 = marks
                 .select(count_star())
                 .filter(marks::user_id.eq(data.user.id))
-                .first(&data.db.conn)?;
+                .first(&mut data.db.conn)?;
             new_count = total_count - mark_count;
 
             let vote_count: i64 = votes
                 .select(count_star())
                 .filter(votes::user_id.eq(data.user.id))
-                .first(&data.db.conn)?;
+                .first(&mut data.db.conn)?;
 
             poll_count = total_count - vote_count;
 
             mine_count = mandels
                 .select(count_star())
                 .filter(mandels::user_id.eq(data.user.id))
-                .first(&data.db.conn)?;
+                .first(&mut data.db.conn)?;
         }
 
         trash_count = mandels
             .select(count_star())
             .filter(mandels::trash.eq(true))
-            .first(&data.db.conn)?;
+            .first(&mut data.db.conn)?;
     }
 
     #[derive(Serialize)]
@@ -607,7 +605,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 }
 
 // mandela.delete
-pub fn delete(data: RequestData) -> RequestResult {
+pub fn delete(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         id: Vec<i32>,
@@ -617,12 +615,12 @@ pub fn delete(data: RequestData) -> RequestResult {
 
     use crate::model::schema::mandels::dsl::*;
 
-    diesel::delete(mandels.filter(id.eq_any(req.id))).execute(&data.db.conn)?;
+    diesel::delete(mandels.filter(id.eq_any(req.id))).execute(&mut data.db.conn)?;
     Ok(None)
 }
 
 // mandela.mark
-pub fn mark(data: RequestData) -> RequestResult {
+pub fn mark(mut data: RequestData) -> RequestResult {
     let req: RequestId = data.params()?;
 
     use crate::model::schema::marks;
@@ -642,12 +640,12 @@ pub fn mark(data: RequestData) -> RequestResult {
 
     diesel::insert_into(marks)
         .values(&new_mark)
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
     Ok(None)
 }
 
 // mandela.vote
-pub fn vote(data: RequestData) -> RequestResult {
+pub fn vote(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         id: Id,
@@ -676,26 +674,26 @@ pub fn vote(data: RequestData) -> RequestResult {
     let vote_id = votes
         .select(id)
         .filter(mandela_id.eq(req.id).and(user_id.eq(data.user.id)))
-        .first::<Id>(&data.db.conn)
+        .first::<Id>(&mut data.db.conn)
         .optional()?;
 
     if let Some(i) = vote_id {
         diesel::update(votes.filter(votes::id.eq(i)))
             .set(&new_vote)
-            .execute(&data.db.conn)?;
+            .execute(&mut data.db.conn)?;
     } else {
         diesel::insert_into(votes)
             .values(&new_vote)
-            .execute(&data.db.conn)?;
+            .execute(&mut data.db.conn)?;
     }
 
-    let votes_count = get_poll(&data.db, req.id);
+    let votes_count = get_poll(&mut data.db, req.id);
     let result = serde_json::to_value(&votes_count)?;
     Ok(Some(result))
 }
 
 // mandela.getVoteUsers
-pub fn get_vote_users(data: RequestData) -> RequestResult {
+pub fn get_vote_users(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         id: Id,
@@ -718,14 +716,14 @@ pub fn get_vote_users(data: RequestData) -> RequestResult {
         .select((users::id, users::name, vote))
         .filter(mandela_id.eq(req.id))
         .order((vote.asc(), users::name.asc()))
-        .load::<VoteUser>(&data.db.conn)?;
+        .load::<VoteUser>(&mut data.db.conn)?;
 
     let result = serde_json::to_value(&vote_users)?;
     Ok(Some(result))
 }
 
 pub fn new_comments(
-    db: &db::Db,
+    db: &mut db::Db,
     limit: i32,
     offset: i32,
 ) -> Result<Vec<Comment>, Box<dyn std::error::Error>> {
@@ -744,13 +742,13 @@ pub fn new_comments(
     )
     .bind::<Int4, _>(limit)
     .bind::<Int4, _>(offset)
-    .load::<Comment>(&db.conn)?;
+    .load::<Comment>(&mut db.conn)?;
 
     Ok(result)
 }
 
 // mandela.updateTrash
-pub fn update_trash(data: RequestData) -> RequestResult {
+pub fn update_trash(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         id: Id,
@@ -765,7 +763,7 @@ pub fn update_trash(data: RequestData) -> RequestResult {
 
     diesel::update(mandels.filter(mandels::id.eq(req.id)))
         .set((trash.eq(req.trash), automatic_trash.eq(req.automatic_trash)))
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
 
     Ok(None)
 }

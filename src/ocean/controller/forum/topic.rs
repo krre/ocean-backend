@@ -1,7 +1,7 @@
 use crate::controller::*;
 use crate::types::Id;
-use chrono::prelude::*;
 use chrono::NaiveDateTime;
+use chrono::prelude::*;
 use diesel::prelude::*;
 use diesel::sql_types::{Bool, Int2, Int4, Int8, Nullable, Text, Timestamptz};
 use serde::{Deserialize, Serialize};
@@ -22,7 +22,7 @@ pub struct Poll {
 }
 
 // forum.topic.getAll
-pub fn get_all(data: RequestData) -> RequestResult {
+pub fn get_all(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         section_id: Id,
@@ -41,7 +41,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     use crate::model::schema::forum_categories;
     use crate::model::schema::forum_sections;
-    use crate::model::schema::forum_topics::dsl::*;
+    use crate::model::schema::forum_topics;
 
     let section_meta = forum_sections::table
         .inner_join(
@@ -53,7 +53,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
             forum_sections::name,
         ))
         .filter(forum_sections::id.eq(req.section_id))
-        .first::<SectionMeta>(&data.db.conn)?;
+        .first::<SectionMeta>(&mut data.db.conn)?;
 
     #[derive(QueryableByName, Serialize)]
     struct Topic {
@@ -92,12 +92,12 @@ pub fn get_all(data: RequestData) -> RequestResult {
     .bind::<Int4, _>(req.section_id)
     .bind::<Int8, _>(req.offset)
     .bind::<Int8, _>(req.limit)
-    .load::<Topic>(&data.db.conn)?;
+    .load::<Topic>(&mut data.db.conn)?;
 
-    let topic_count: i64 = forum_topics
-        .filter(section_id.eq(req.section_id))
+    let topic_count: i64 = forum_topics::dsl::forum_topics
+        .filter(forum_topics::section_id.eq(req.section_id))
         .select(diesel::dsl::count_star())
-        .first(&data.db.conn)?;
+        .first(&mut data.db.conn)?;
 
     #[derive(Serialize)]
     struct Resp {
@@ -121,7 +121,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 }
 
 // forum.topic.getOne
-pub fn get_one(data: RequestData) -> RequestResult {
+pub fn get_one(mut data: RequestData) -> RequestResult {
     use crate::model::schema::forum_topics::dsl::*;
 
     let req: RequestId = data.params()?;
@@ -136,7 +136,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     let forum_topic = forum_topics
         .select((user_id, section_id, name))
         .filter(id.eq(req.id))
-        .first::<ForumTopic>(&data.db.conn)
+        .first::<ForumTopic>(&mut data.db.conn)
         .optional()?;
 
     let result = serde_json::to_value(&forum_topic)?;
@@ -144,7 +144,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
 }
 
 // forum.topic.create
-pub fn create(data: RequestData) -> RequestResult {
+pub fn create(mut data: RequestData) -> RequestResult {
     use crate::model::schema::forum_topics;
     use crate::model::schema::forum_topics::dsl::*;
 
@@ -181,13 +181,13 @@ pub fn create(data: RequestData) -> RequestResult {
     };
 
     let mut topic_id: Id = 0;
-    let conn = data.db.conn;
+    let conn = &mut data.db.conn;
 
-    conn.transaction::<_, diesel::result::Error, _>(|| {
+    conn.transaction::<_, diesel::result::Error, _>(|conn| {
         topic_id = diesel::insert_into(forum_topics)
             .values(&new_forum_topic)
             .returning(id)
-            .get_result::<Id>(&conn)?;
+            .get_result::<Id>(conn)?;
 
         if r.topic_type == POLL_TOPIC_TYPE {
             use crate::model::schema::forum_poll_answers;
@@ -198,7 +198,7 @@ pub fn create(data: RequestData) -> RequestResult {
                         forum_poll_answers::topic_id.eq(topic_id),
                         forum_poll_answers::answer.eq(answer),
                     ))
-                    .execute(&conn)?;
+                    .execute(conn)?;
             }
         }
 
@@ -211,7 +211,7 @@ pub fn create(data: RequestData) -> RequestResult {
 }
 
 // forum.topic.update
-pub fn update(data: RequestData) -> RequestResult {
+pub fn update(mut data: RequestData) -> RequestResult {
     use crate::model::schema::forum_topics;
     use crate::model::schema::forum_topics::dsl::*;
 
@@ -237,22 +237,22 @@ pub fn update(data: RequestData) -> RequestResult {
 
     diesel::update(forum_topics.filter(id.eq(req.id)))
         .set(&update_forum_topic)
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
 
     Ok(None)
 }
 
 // forum.topic.delete
-pub fn delete(data: RequestData) -> RequestResult {
+pub fn delete(mut data: RequestData) -> RequestResult {
     let req: RequestId = data.params()?;
 
     use crate::model::schema::forum_topics::dsl::*;
-    diesel::delete(forum_topics.filter(id.eq(req.id))).execute(&data.db.conn)?;
+    diesel::delete(forum_topics.filter(id.eq(req.id))).execute(&mut data.db.conn)?;
     Ok(None)
 }
 
 pub fn update_last_post(
-    db: &db::Db,
+    db: &mut db::Db,
     id: Id,
     post_id: Option<Id>,
     post_create_ts: Option<NaiveDateTime>,
@@ -274,13 +274,13 @@ pub fn update_last_post(
 
     diesel::update(forum_topics::table.filter(forum_topics::id.eq(id)))
         .set(&update_forum_topic)
-        .execute(&db.conn)?;
+        .execute(&mut db.conn)?;
 
     Ok(())
 }
 
 // forum.topic.vote
-pub fn vote(data: RequestData) -> RequestResult {
+pub fn vote(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         id: Id,
@@ -288,11 +288,11 @@ pub fn vote(data: RequestData) -> RequestResult {
     }
 
     let req: Req = data.params()?;
-    let conn = &data.db.conn;
+    let conn = &mut data.db.conn;
     let poll_user_id = data.user.id;
     let poll_topic_id = req.id;
 
-    conn.transaction::<_, diesel::result::Error, _>(|| {
+    conn.transaction::<_, diesel::result::Error, _>(|conn| {
         use crate::model::schema::forum_poll_votes;
         use crate::model::schema::forum_poll_votes::dsl::*;
         diesel::delete(
@@ -320,7 +320,7 @@ pub fn vote(data: RequestData) -> RequestResult {
         Ok(())
     })?;
 
-    let poll = get_poll(&data.db, poll_topic_id, poll_user_id);
+    let poll = get_poll(&mut data.db, poll_topic_id, poll_user_id);
 
     #[derive(Serialize)]
     struct Resp {
@@ -332,7 +332,7 @@ pub fn vote(data: RequestData) -> RequestResult {
     Ok(Some(result))
 }
 
-pub fn get_poll(db: &db::Db, topic_id: Id, user_id: Id) -> Vec<Poll> {
+pub fn get_poll(db: &mut db::Db, topic_id: Id, user_id: Id) -> Vec<Poll> {
     diesel::dsl::sql_query(
         "SELECT fpa.id, answer, COUNT(fpv.*),
             (SELECT true AS voted FROM forum_poll_votes WHERE answer_id = fpa.id AND user_id = $2) AS voted
@@ -344,12 +344,12 @@ pub fn get_poll(db: &db::Db, topic_id: Id, user_id: Id) -> Vec<Poll> {
     )
     .bind::<Int4, _>(topic_id)
     .bind::<Int4, _>(user_id)
-    .load::<Poll>(&db.conn)
+    .load::<Poll>(&mut db.conn)
     .unwrap()
 }
 
 // forum.topic.getVoteUsers
-pub fn get_vote_users(data: RequestData) -> RequestResult {
+pub fn get_vote_users(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         id: Id,
@@ -372,7 +372,7 @@ pub fn get_vote_users(data: RequestData) -> RequestResult {
         .select((users::id, users::name, answer_id))
         .filter(topic_id.eq(req.id))
         .order((answer_id.asc(), users::name.asc()))
-        .load::<VoteUser>(&data.db.conn)?;
+        .load::<VoteUser>(&mut data.db.conn)?;
 
     let result = serde_json::to_value(&vote_users)?;
     Ok(Some(result))

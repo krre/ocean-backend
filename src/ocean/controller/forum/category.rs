@@ -1,12 +1,12 @@
 use crate::controller::*;
 use crate::types::Id;
-use chrono::prelude::*;
 use chrono::NaiveDateTime;
+use chrono::prelude::*;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 // forum.category.create
-pub fn create(data: RequestData) -> RequestResult {
+pub fn create(mut data: RequestData) -> RequestResult {
     use crate::model::schema::forum_categories;
     use crate::model::schema::forum_categories::dsl::*;
 
@@ -21,13 +21,13 @@ pub fn create(data: RequestData) -> RequestResult {
 
     diesel::insert_into(forum_categories)
         .values(&req)
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
 
     Ok(None)
 }
 
 // forum.category.getOne
-pub fn get_one(data: RequestData) -> RequestResult {
+pub fn get_one(mut data: RequestData) -> RequestResult {
     use crate::model::schema::forum_categories::dsl::*;
 
     let req: RequestId = data.params()?;
@@ -41,7 +41,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     let forum_category = forum_categories
         .select((name, order_index))
         .filter(id.eq(req.id))
-        .first::<ForumCategory>(&data.db.conn)
+        .first::<ForumCategory>(&mut data.db.conn)
         .optional()?;
 
     let result = serde_json::to_value(&forum_category)?;
@@ -49,7 +49,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
 }
 
 // forum.category.update
-pub fn update(data: RequestData) -> RequestResult {
+pub fn update(mut data: RequestData) -> RequestResult {
     use crate::model::schema::forum_categories;
     use crate::model::schema::forum_categories::dsl::*;
 
@@ -78,16 +78,16 @@ pub fn update(data: RequestData) -> RequestResult {
 
     diesel::update(forum_categories.filter(id.eq(req.id)))
         .set(&update_forum_category)
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
 
     Ok(None)
 }
 
 // forum.category.delete
-pub fn delete(data: RequestData) -> RequestResult {
+pub fn delete(mut data: RequestData) -> RequestResult {
     let req: RequestId = data.params()?;
 
     use crate::model::schema::forum_categories::dsl::*;
-    diesel::delete(forum_categories.filter(id.eq(req.id))).execute(&data.db.conn)?;
+    diesel::delete(forum_categories.filter(id.eq(req.id))).execute(&mut data.db.conn)?;
     Ok(None)
 }

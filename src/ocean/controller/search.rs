@@ -6,7 +6,7 @@ use diesel::sql_types::{Int4, Int8, Text};
 use serde::{Deserialize, Serialize};
 
 // search.getAll
-pub fn get_all(data: RequestData) -> RequestResult {
+pub fn get_all(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         text: String,
@@ -41,8 +41,9 @@ pub fn get_all(data: RequestData) -> RequestResult {
         title: String,
         #[sql_type = "Int4"]
         id: Id,
-        #[sql_type = "Int8"]
-        row: i64,
+        #[diesel(sql_type = Int8, column_name = "row")]
+        #[serde(rename = "row")]
+        row_number: i64,
         #[sql_type = "Text"]
         content: String,
     }
@@ -115,7 +116,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
         .bind::<Text, _>(&req.text)
         .bind::<Int8, _>(req.limit)
         .bind::<Int8, _>(req.offset)
-        .load::<Record>(&data.db.conn)?;
+        .load::<Record>(&mut data.db.conn)?;
 
     #[derive(QueryableByName)]
     struct TotalCount {
@@ -125,7 +126,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 
     let total_count = sql_query(sql_count)
         .bind::<Text, _>(&req.text)
-        .load::<TotalCount>(&data.db.conn)?;
+        .load::<TotalCount>(&mut data.db.conn)?;
 
     let resp = Resp {
         records,

@@ -1,7 +1,7 @@
 use crate::controller::*;
 use crate::types::Id;
-use chrono::prelude::*;
 use chrono::NaiveDateTime;
+use chrono::prelude::*;
 use diesel::prelude::*;
 use diesel::sql_types::{Int4, Int8, Text};
 use serde::{Deserialize, Serialize};
@@ -21,7 +21,7 @@ pub struct Section {
 }
 
 pub fn get_sections(
-    db: &db::Db,
+    db: &mut db::Db,
     category_id: Option<Id>,
 ) -> Result<Vec<Section>, Box<dyn std::error::Error>> {
     let mut result = diesel::dsl::sql_query(
@@ -33,7 +33,7 @@ pub fn get_sections(
         FROM forum_sections AS fs
         ORDER BY fs.order_index ASC",
     )
-    .load::<Section>(&db.conn)?;
+    .load::<Section>(&mut db.conn)?;
 
     if let Some(id) = category_id {
         // Expensive but simple
@@ -47,7 +47,7 @@ pub fn get_sections(
 }
 
 // forum.section.getAll
-pub fn get_all(data: RequestData) -> RequestResult {
+pub fn get_all(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         category_id: Id,
@@ -60,9 +60,9 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let category_name = forum_categories::table
         .select(forum_categories::name)
         .filter(forum_categories::id.eq(req.category_id))
-        .first::<String>(&data.db.conn)?;
+        .first::<String>(&mut data.db.conn)?;
 
-    let sections = get_sections(&data.db, Some(req.category_id))?;
+    let sections = get_sections(&mut data.db, Some(req.category_id))?;
 
     #[derive(Serialize)]
     struct Resp {
@@ -80,7 +80,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 }
 
 // forum.section.getOne
-pub fn get_one(data: RequestData) -> RequestResult {
+pub fn get_one(mut data: RequestData) -> RequestResult {
     use crate::model::schema::forum_sections::dsl::*;
 
     let req: RequestId = data.params()?;
@@ -95,7 +95,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     let forum_section = forum_sections
         .select((category_id, name, order_index))
         .filter(id.eq(req.id))
-        .first::<ForumSection>(&data.db.conn)
+        .first::<ForumSection>(&mut data.db.conn)
         .optional()?;
 
     let result = serde_json::to_value(&forum_section)?;
@@ -103,7 +103,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
 }
 
 // forum.section.create
-pub fn create(data: RequestData) -> RequestResult {
+pub fn create(mut data: RequestData) -> RequestResult {
     use crate::model::schema::forum_sections;
     use crate::model::schema::forum_sections::dsl::*;
 
@@ -119,13 +119,13 @@ pub fn create(data: RequestData) -> RequestResult {
 
     diesel::insert_into(forum_sections)
         .values(&req)
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
 
     Ok(None)
 }
 
 // forum.section.update
-pub fn update(data: RequestData) -> RequestResult {
+pub fn update(mut data: RequestData) -> RequestResult {
     use crate::model::schema::forum_sections;
     use crate::model::schema::forum_sections::dsl::*;
 
@@ -154,17 +154,17 @@ pub fn update(data: RequestData) -> RequestResult {
 
     diesel::update(forum_sections.filter(id.eq(req.id)))
         .set(&update_forum_section)
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
 
     Ok(None)
 }
 
 // forum.section.delete
-pub fn delete(data: RequestData) -> RequestResult {
+pub fn delete(mut data: RequestData) -> RequestResult {
     let req: RequestId = data.params()?;
 
     use crate::model::schema::forum_sections::dsl::*;
 
-    diesel::delete(forum_sections.filter(id.eq(req.id))).execute(&data.db.conn)?;
+    diesel::delete(forum_sections.filter(id.eq(req.id))).execute(&mut data.db.conn)?;
     Ok(None)
 }

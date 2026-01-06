@@ -2,8 +2,8 @@ use super::*;
 use crate::api;
 use crate::api::user_cache;
 use crate::types::Id;
-use chrono::prelude::*;
 use chrono::NaiveDateTime;
+use chrono::prelude::*;
 use diesel::prelude::*;
 use diesel::sql_types::{Bool, Int2, Int4, Int8, Text, Timestamptz};
 use serde::{Deserialize, Serialize};
@@ -16,27 +16,27 @@ struct UserGroup {
 }
 
 // user.getNextId
-pub fn get_next_id(data: RequestData) -> RequestResult {
+pub fn get_next_id(mut data: RequestData) -> RequestResult {
     let resp = ResponseId {
-        id: next_id(&data.db)?,
+        id: next_id(&mut data.db)?,
     };
     let result = serde_json::to_value(&resp)?;
     Ok(Some(result))
 }
 
-fn next_id(db: &db::Db) -> Result<Id, Box<dyn std::error::Error>> {
+fn next_id(db: &mut db::Db) -> Result<Id, Box<dyn std::error::Error>> {
     use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
     let user_id: Id = users
         .select(users::id)
         .order(users::id.desc())
-        .first(&db.conn)?;
+        .first(&mut db.conn)?;
 
     Ok(user_id + 1)
 }
 
 // user.create
-pub fn create(data: RequestData) -> RequestResult {
+pub fn create(mut data: RequestData) -> RequestResult {
     use crate::model::schema::user_groups::dsl::*;
     use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
@@ -49,7 +49,7 @@ pub fn create(data: RequestData) -> RequestResult {
     }
 
     let req: Req = data.params()?;
-    let next_id = next_id(&data.db)?;
+    let next_id = next_id(&mut data.db)?;
 
     if req.id != next_id {
         return Err(api::make_error(api::error::NEXT_ID_EXPIRED));
@@ -57,7 +57,7 @@ pub fn create(data: RequestData) -> RequestResult {
 
     let groups = user_groups
         .filter(code.eq(&req.code))
-        .first::<UserGroup>(&data.db.conn)?;
+        .first::<UserGroup>(&mut data.db.conn)?;
 
     #[derive(Insertable)]
     #[table_name = "users"]
@@ -80,7 +80,7 @@ pub fn create(data: RequestData) -> RequestResult {
     diesel::insert_into(users)
         .values(&new_user)
         .returning(users::id)
-        .get_result::<Id>(&data.db.conn)?;
+        .get_result::<Id>(&mut data.db.conn)?;
 
     let user = types::User {
         id: req.id,
@@ -95,7 +95,7 @@ pub fn create(data: RequestData) -> RequestResult {
 }
 
 // user.auth
-pub fn auth(data: RequestData) -> RequestResult {
+pub fn auth(mut data: RequestData) -> RequestResult {
     use crate::model::schema::user_groups;
     use crate::model::schema::user_groups::dsl::*;
     use crate::model::schema::users;
@@ -129,11 +129,11 @@ pub fn auth(data: RequestData) -> RequestResult {
 
     let user = users
         .filter(users::id.eq(user_id))
-        .first::<User>(&data.db.conn)?;
+        .first::<User>(&mut data.db.conn)?;
 
     let user_group = user_groups
         .filter(user_groups::id.eq(user.group_id))
-        .first::<UserGroup>(&data.db.conn)?;
+        .first::<UserGroup>(&mut data.db.conn)?;
 
     #[derive(Serialize)]
     struct Resp {
@@ -158,7 +158,7 @@ pub fn logout(_data: RequestData) -> RequestResult {
 }
 
 // user.getOne
-pub fn get_one(data: RequestData) -> RequestResult {
+pub fn get_one(mut data: RequestData) -> RequestResult {
     let req: RequestId = data.params()?;
 
     #[derive(QueryableByName, Serialize)]
@@ -218,7 +218,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
         WHERE u.id = $1"
     ))
     .bind::<Int4, _>(req.id)
-    .load::<User>(&data.db.conn)?;
+    .load::<User>(&mut data.db.conn)?;
 
     if !user.is_empty() {
         let result = serde_json::to_value(&user[0])?;
@@ -229,7 +229,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
 }
 
 // user.update
-pub fn update(data: RequestData) -> RequestResult {
+pub fn update(mut data: RequestData) -> RequestResult {
     use crate::model::schema::user_groups::dsl::*;
     use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
@@ -247,7 +247,7 @@ pub fn update(data: RequestData) -> RequestResult {
 
     let groups = user_groups
         .filter(code.eq(req.code))
-        .first::<UserGroup>(&data.db.conn)?;
+        .first::<UserGroup>(&mut data.db.conn)?;
 
     #[derive(AsChangeset)]
     #[table_name = "users"]
@@ -269,7 +269,7 @@ pub fn update(data: RequestData) -> RequestResult {
 
     diesel::update(users.filter(users::id.eq(req.id)))
         .set(&update_user)
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
 
     user_cache::update_blocked(req.id, req.blocked);
 
@@ -277,7 +277,7 @@ pub fn update(data: RequestData) -> RequestResult {
 }
 
 // user.updateProfile
-pub fn update_profile(data: RequestData) -> RequestResult {
+pub fn update_profile(mut data: RequestData) -> RequestResult {
     use crate::model::schema::users;
     use crate::model::schema::users::dsl::*;
 
@@ -305,13 +305,13 @@ pub fn update_profile(data: RequestData) -> RequestResult {
 
     diesel::update(users.filter(users::id.eq(data.user.id)))
         .set(&update_user)
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
 
     Ok(None)
 }
 
 // user.updateToken
-pub fn update_token(data: RequestData) -> RequestResult {
+pub fn update_token(mut data: RequestData) -> RequestResult {
     use crate::model::schema::users::dsl::*;
 
     #[derive(Deserialize)]
@@ -323,7 +323,7 @@ pub fn update_token(data: RequestData) -> RequestResult {
 
     diesel::update(users.filter(id.eq(data.user.id)))
         .set(token.eq(&req.token))
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
 
     let user = types::User {
         id: data.user.id,
@@ -338,10 +338,10 @@ pub fn update_token(data: RequestData) -> RequestResult {
 }
 
 // user.delete
-pub fn delete(data: RequestData) -> RequestResult {
+pub fn delete(mut data: RequestData) -> RequestResult {
     use crate::model::schema::users::dsl::*;
     let req: RequestId = data.params()?;
 
-    diesel::delete(users.filter(id.eq(req.id))).execute(&data.db.conn)?;
+    diesel::delete(users.filter(id.eq(req.id))).execute(&mut data.db.conn)?;
     Ok(None)
 }

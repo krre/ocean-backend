@@ -6,19 +6,19 @@ use std::time;
 
 pub fn start() {
     thread::spawn(|| {
-        let db = db::Db::new();
-        process_mandels(&db);
+        let mut db = db::Db::new();
+        process_mandels(&mut db);
 
         loop {
             thread::sleep(time::Duration::from_secs(12 * 60 * 60)); // 12 hours
-            process_mandels(&db);
+            process_mandels(&mut db);
         }
     });
 
     info!("Trash monitor started");
 }
 
-fn process_mandels(db: &db::Db) {
+fn process_mandels(db: &mut db::Db) {
     use diesel::sql_types::Int4;
 
     // Move to trash (for mandels older then 2 days)
@@ -30,7 +30,7 @@ fn process_mandels(db: &db::Db) {
         )
         .bind::<Int4, _>(crate::types::Vote::Fake as i32)
         .bind::<Int4, _>(crate::types::Vote::Yes as i32)
-        .execute(&db.conn).expect("Failed to move mandels to trash");
+        .execute(&mut db.conn).expect("Failed to move mandels to trash");
 
     info!("Moved to trash {} mandels", moved);
 
@@ -43,7 +43,7 @@ fn process_mandels(db: &db::Db) {
         )
         .bind::<Int4, _>(crate::types::Vote::Fake as i32)
         .bind::<Int4, _>(crate::types::Vote::Yes as i32)
-        .execute(&db.conn).expect("Failed to restore mandels from trash");
+        .execute(&mut db.conn).expect("Failed to restore mandels from trash");
 
     info!("Restored from trash {} mandels", restored);
 }

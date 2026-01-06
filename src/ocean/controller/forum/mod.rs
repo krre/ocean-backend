@@ -31,7 +31,7 @@ pub struct Topic {
 }
 
 // forum.getAll
-pub fn get_all(data: RequestData) -> RequestResult {
+pub fn get_all(mut data: RequestData) -> RequestResult {
     use crate::model::schema::forum_categories;
 
     #[derive(Queryable, Serialize)]
@@ -43,9 +43,9 @@ pub fn get_all(data: RequestData) -> RequestResult {
     let categories = forum_categories::table
         .select((forum_categories::id, forum_categories::name))
         .order(forum_categories::order_index.asc())
-        .load::<Category>(&data.db.conn)?;
+        .load::<Category>(&mut data.db.conn)?;
 
-    let sections = section::get_sections(&data.db, None)?;
+    let sections = section::get_sections(&mut data.db, None)?;
 
     #[derive(Serialize)]
     struct Resp {
@@ -63,7 +63,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 }
 
 // forum.getNew
-pub fn get_new(data: RequestData) -> RequestResult {
+pub fn get_new(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         offset: i32,
@@ -76,12 +76,12 @@ pub fn get_new(data: RequestData) -> RequestResult {
 
     use crate::model::schema::forum_topics::dsl::*;
 
-    let list = new_topics(&data.db, req.limit, req.offset)?;
+    let list = new_topics(&mut data.db, req.limit, req.offset)?;
 
     let topic_count: i64 = forum_topics
         .filter(last_post_create_ts.is_not_null())
         .select(diesel::dsl::count_star())
-        .first(&data.db.conn)?;
+        .first(&mut data.db.conn)?;
 
     #[derive(Serialize)]
     struct Resp {
@@ -99,7 +99,7 @@ pub fn get_new(data: RequestData) -> RequestResult {
 }
 
 pub fn new_topics(
-    db: &db::Db,
+    db: &mut db::Db,
     limit: i32,
     offset: i32,
 ) -> Result<Vec<Topic>, Box<dyn std::error::Error>> {
@@ -115,7 +115,7 @@ pub fn new_topics(
     OFFSET $2")
     .bind::<Int4, _>(limit)
     .bind::<Int4, _>(offset)
-    .load::<Topic>(&db.conn)?;
+    .load::<Topic>(&mut db.conn)?;
 
     Ok(result)
 }

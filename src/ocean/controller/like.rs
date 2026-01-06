@@ -4,7 +4,7 @@ use diesel::prelude::*;
 use serde::Deserialize;
 
 // like.create
-pub fn create(data: RequestData) -> RequestResult {
+pub fn create(mut data: RequestData) -> RequestResult {
     use crate::model::schema::likes;
     use crate::model::schema::likes::dsl::*;
 
@@ -35,13 +35,13 @@ pub fn create(data: RequestData) -> RequestResult {
 
     diesel::insert_into(likes)
         .values(&new_like)
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
 
     Ok(None)
 }
 
 // like.delete
-pub fn delete(data: RequestData) -> RequestResult {
+pub fn delete(mut data: RequestData) -> RequestResult {
     use crate::model::schema::likes::dsl::*;
 
     #[derive(Deserialize)]
@@ -54,19 +54,19 @@ pub fn delete(data: RequestData) -> RequestResult {
 
     if let Some(like_comment_id) = req.comment_id {
         diesel::delete(likes.filter(comment_id.eq(like_comment_id).and(user_id.eq(data.user.id))))
-            .execute(&data.db.conn)?;
+            .execute(&mut data.db.conn)?;
     }
 
     if let Some(like_post_id) = req.post_id {
         diesel::delete(likes.filter(post_id.eq(like_post_id).and(user_id.eq(data.user.id))))
-            .execute(&data.db.conn)?;
+            .execute(&mut data.db.conn)?;
     }
 
     Ok(None)
 }
 
 // like.getUsers
-pub fn get_users(data: RequestData) -> RequestResult {
+pub fn get_users(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         comment_id: Option<Id>,
@@ -100,7 +100,7 @@ pub fn get_users(data: RequestData) -> RequestResult {
 
     let like_users = query
         .order((value.asc(), users::name.asc()))
-        .load::<LikeUser>(&data.db.conn)?;
+        .load::<LikeUser>(&mut data.db.conn)?;
 
     let result = serde_json::to_value(&like_users)?;
     Ok(Some(result))

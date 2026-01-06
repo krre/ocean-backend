@@ -21,8 +21,8 @@ hyper-rustls = "0.27.7"
 tokio = { version = "1.15.0", features = ["full"] }
 tokio-stream = { version = "0.1.18", features = ["net"] }
 lazy_static = "1.5.0"
-diesel = { version = "1.4.8", features = ["postgres", "chrono", "serde_json"] }
-diesel_migrations = "1.4.0"
+diesel = { version = "2.3.5", features = ["postgres", "chrono", "serde_json"] }
+diesel_migrations = "2.3.1"
 chrono = { version = "0.4.42", features = ["serde"] }
 sha1 = "0.10.6"
 log = "0.4.14"

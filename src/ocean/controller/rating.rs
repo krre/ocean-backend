@@ -3,7 +3,7 @@ use crate::types::Id;
 use serde::{Deserialize, Serialize};
 
 // rating.getMandels
-pub fn get_mandels(data: RequestData) -> RequestResult {
+pub fn get_mandels(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         vote: i16,
@@ -58,14 +58,14 @@ pub fn get_mandels(data: RequestData) -> RequestResult {
     .bind::<Int2, _>(req.vote)
     .bind::<Int4, _>(req.limit)
     .bind::<Int4, _>(req.offset)
-    .load::<Mandela>(&data.db.conn)?;
+    .load::<Mandela>(&mut data.db.conn)?;
 
     let total_count = sql_query(
         "SELECT COUNT(DISTINCT mandela_id) from votes
         WHERE vote = $1",
     )
     .bind::<Int2, _>(req.vote)
-    .load::<TotalCount>(&data.db.conn)?;
+    .load::<TotalCount>(&mut data.db.conn)?;
 
     #[derive(Serialize)]
     struct Resp {
@@ -83,7 +83,7 @@ pub fn get_mandels(data: RequestData) -> RequestResult {
 }
 
 // rating.getUsers
-pub fn get_users(data: RequestData) -> RequestResult {
+pub fn get_users(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         limit: i32,
@@ -118,7 +118,7 @@ pub fn get_users(data: RequestData) -> RequestResult {
     )
     .bind::<Int4, _>(req.limit)
     .bind::<Int4, _>(req.offset)
-    .load::<User>(&data.db.conn)?;
+    .load::<User>(&mut data.db.conn)?;
 
     #[derive(QueryableByName)]
     struct UserCount {
@@ -132,7 +132,7 @@ pub fn get_users(data: RequestData) -> RequestResult {
             INNER JOIN mandels AS m ON m.user_id = u.id
             GROUP BY u.id) AS user_count",
     )
-    .load::<UserCount>(&data.db.conn)?;
+    .load::<UserCount>(&mut data.db.conn)?;
 
     #[derive(Serialize)]
     struct Resp {

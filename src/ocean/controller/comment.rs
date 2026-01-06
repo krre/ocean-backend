@@ -2,14 +2,14 @@ use self::mandela;
 use super::*;
 use crate::telegram_bot;
 use crate::types::Id;
-use chrono::prelude::*;
 use chrono::NaiveDateTime;
+use chrono::prelude::*;
 use diesel::prelude::*;
 use diesel::sql_types::{Int2, Int4, Int8, Nullable, Text, Timestamptz};
 use serde::{Deserialize, Serialize};
 
 // comment.create
-pub fn create(data: RequestData) -> RequestResult {
+pub fn create(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         mandela_id: Id,
@@ -40,7 +40,7 @@ pub fn create(data: RequestData) -> RequestResult {
 
     diesel::insert_into(comments)
         .values(&new_comment)
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
 
     let mandela_title = mandels::table
         .select((
@@ -52,12 +52,12 @@ pub fn create(data: RequestData) -> RequestResult {
             mandels::after,
         ))
         .filter(mandels::id.eq(new_comment.mandela_id))
-        .first::<mandela::MandelaTitle>(&data.db.conn)?;
+        .first::<mandela::MandelaTitle>(&mut data.db.conn)?;
 
     let user_name = users::table
         .select(users::name.nullable())
         .filter(users::id.eq(data.user.id))
-        .first::<Option<String>>(&data.db.conn)?;
+        .first::<Option<String>>(&mut data.db.conn)?;
 
     let comment_message = format!(
         "Каталог
@@ -76,8 +76,8 @@ pub fn create(data: RequestData) -> RequestResult {
 }
 
 // comment.getAll
-pub fn get_all(data: RequestData) -> RequestResult {
-    use crate::model::schema::comments::dsl::*;
+pub fn get_all(mut data: RequestData) -> RequestResult {
+    use crate::model::schema::comments;
 
     #[derive(Deserialize)]
     struct Req {
@@ -126,12 +126,12 @@ pub fn get_all(data: RequestData) -> RequestResult {
     .bind::<Int4, _>(req.mandela_id)
     .bind::<Int4, _>(req.offset)
     .bind::<Int4, _>(req.limit)
-    .load::<Comment>(&data.db.conn)?;
+    .load::<Comment>(&mut data.db.conn)?;
 
-    let total_count: i64 = comments
-        .filter(mandela_id.eq(req.mandela_id))
+    let total_count: i64 = comments::dsl::comments
+        .filter(comments::mandela_id.eq(req.mandela_id))
         .select(diesel::dsl::count_star())
-        .first(&data.db.conn)?;
+        .first(&mut data.db.conn)?;
 
     #[derive(Serialize)]
     struct Resp {
@@ -149,7 +149,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 }
 
 // comment.update
-pub fn update(data: RequestData) -> RequestResult {
+pub fn update(mut data: RequestData) -> RequestResult {
     use crate::model::schema::comments;
     use crate::model::schema::comments::dsl::*;
 
@@ -175,16 +175,16 @@ pub fn update(data: RequestData) -> RequestResult {
 
     diesel::update(comments.filter(id.eq(req.id)))
         .set(&update_comment)
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
 
     Ok(None)
 }
 
 // comment.delete
-pub fn delete(data: RequestData) -> RequestResult {
+pub fn delete(mut data: RequestData) -> RequestResult {
     use crate::model::schema::comments::dsl::*;
     let req: RequestId = data.params()?;
 
-    diesel::delete(comments.filter(id.eq(req.id))).execute(&data.db.conn)?;
+    diesel::delete(comments.filter(id.eq(req.id))).execute(&mut data.db.conn)?;
     Ok(None)
 }

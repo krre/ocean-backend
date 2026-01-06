@@ -2,14 +2,14 @@ use crate::controller::forum::topic;
 use crate::controller::*;
 use crate::telegram_bot;
 use crate::types::Id;
-use chrono::prelude::*;
 use chrono::NaiveDateTime;
+use chrono::prelude::*;
 use diesel::prelude::*;
 use diesel::sql_types::{Int2, Int4, Int8, Nullable, Text, Timestamptz};
 use serde::{Deserialize, Serialize};
 
 // forum.post.getAll
-pub fn get_all(data: RequestData) -> RequestResult {
+pub fn get_all(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         topic_id: Id,
@@ -32,12 +32,11 @@ pub fn get_all(data: RequestData) -> RequestResult {
     }
 
     use crate::model::schema::forum_categories;
-    use crate::model::schema::forum_posts::dsl::*;
+    use crate::model::schema::forum_posts;
     use crate::model::schema::forum_sections;
     use crate::model::schema::forum_topics;
-    use crate::model::schema::forum_topics::dsl::*;
 
-    let topic_meta = forum_topics
+    let topic_meta = forum_topics::dsl::forum_topics
         .inner_join(forum_sections::table.on(forum_sections::id.eq(forum_topics::section_id)))
         .inner_join(
             forum_categories::table.on(forum_categories::id.eq(forum_sections::category_id)),
@@ -53,7 +52,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
             forum_topics::poll_selection_type,
         ))
         .filter(forum_topics::id.eq(req.topic_id))
-        .first::<TopicMeta>(&data.db.conn)?;
+        .first::<TopicMeta>(&mut data.db.conn)?;
 
     #[derive(QueryableByName, Serialize)]
     struct Post {
@@ -91,17 +90,17 @@ pub fn get_all(data: RequestData) -> RequestResult {
     .bind::<Int4, _>(req.topic_id)
     .bind::<Int4, _>(req.offset)
     .bind::<Int4, _>(req.limit)
-    .load::<Post>(&data.db.conn)?;
+    .load::<Post>(&mut data.db.conn)?;
 
-    let post_count: i64 = forum_posts
-        .filter(topic_id.eq(req.topic_id))
+    let post_count: i64 = forum_posts::dsl::forum_posts
+        .filter(forum_posts::topic_id.eq(req.topic_id))
         .select(diesel::dsl::count_star())
-        .first(&data.db.conn)?;
+        .first(&mut data.db.conn)?;
 
     let mut poll: Option<Vec<topic::Poll>> = None;
 
     if topic_meta.topic_type == topic::POLL_TOPIC_TYPE {
-        let answers = topic::get_poll(&data.db, req.topic_id, data.user.id);
+        let answers = topic::get_poll(&mut data.db, req.topic_id, data.user.id);
         poll = Some(answers);
     }
 
@@ -139,7 +138,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
 }
 
 // forum.post.getOne
-pub fn get_one(data: RequestData) -> RequestResult {
+pub fn get_one(mut data: RequestData) -> RequestResult {
     use crate::model::schema::forum_posts::dsl::*;
 
     let req: RequestId = data.params()?;
@@ -153,7 +152,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
     let forum_post = forum_posts
         .select((topic_id, post))
         .filter(id.eq(req.id))
-        .first::<ForumPost>(&data.db.conn)
+        .first::<ForumPost>(&mut data.db.conn)
         .optional()?;
 
     let result = serde_json::to_value(&forum_post)?;
@@ -161,7 +160,7 @@ pub fn get_one(data: RequestData) -> RequestResult {
 }
 
 // forum.post.create
-pub fn create(data: RequestData) -> RequestResult {
+pub fn create(mut data: RequestData) -> RequestResult {
     use crate::model::schema::forum_posts;
     use crate::model::schema::forum_posts::dsl::*;
 
@@ -190,9 +189,14 @@ pub fn create(data: RequestData) -> RequestResult {
     let (post_id, post_create_ts) = diesel::insert_into(forum_posts)
         .values(&new_forum_post)
         .returning((forum_posts::id, forum_posts::create_ts))
-        .get_result::<(Id, NaiveDateTime)>(&data.db.conn)?;
+        .get_result::<(Id, NaiveDateTime)>(&mut data.db.conn)?;
 
-    topic::update_last_post(&data.db, req.topic_id, Some(post_id), Some(post_create_ts))?;
+    topic::update_last_post(
+        &mut data.db,
+        req.topic_id,
+        Some(post_id),
+        Some(post_create_ts),
+    )?;
 
     use crate::model::schema::forum_topics;
     use crate::model::schema::users;
@@ -200,12 +204,12 @@ pub fn create(data: RequestData) -> RequestResult {
     let topic_name = forum_topics::table
         .select(forum_topics::name)
         .filter(forum_topics::id.eq(req.topic_id))
-        .first::<String>(&data.db.conn)?;
+        .first::<String>(&mut data.db.conn)?;
 
     let topic_user_name = users::table
         .select(users::name)
         .filter(users::id.eq(data.user.id))
-        .first::<String>(&data.db.conn)?;
+        .first::<String>(&mut data.db.conn)?;
 
     let topic_title = format!(
         "<a href='{}/forum/topic/{}'>{}</a>",
@@ -231,7 +235,7 @@ pub fn create(data: RequestData) -> RequestResult {
 }
 
 // forum.post.update
-pub fn update(data: RequestData) -> RequestResult {
+pub fn update(mut data: RequestData) -> RequestResult {
     use crate::model::schema::forum_posts;
     use crate::model::schema::forum_posts::dsl::*;
 
@@ -257,13 +261,13 @@ pub fn update(data: RequestData) -> RequestResult {
 
     diesel::update(forum_posts.filter(id.eq(req.id)))
         .set(&update_forum_post)
-        .execute(&data.db.conn)?;
+        .execute(&mut data.db.conn)?;
 
     Ok(None)
 }
 
 // forum.post.delete
-pub fn delete(data: RequestData) -> RequestResult {
+pub fn delete(mut data: RequestData) -> RequestResult {
     let req: RequestId = data.params()?;
 
     use crate::model::schema::forum_posts;
@@ -271,7 +275,7 @@ pub fn delete(data: RequestData) -> RequestResult {
     let topic_id = forum_posts::table
         .select(forum_posts::topic_id)
         .filter(forum_posts::id.eq(req.id))
-        .first::<Id>(&data.db.conn)?;
+        .first::<Id>(&mut data.db.conn)?;
 
     #[derive(Queryable, Serialize)]
     pub struct ForumPost {
@@ -284,7 +288,7 @@ pub fn delete(data: RequestData) -> RequestResult {
         .filter(forum_posts::topic_id.eq(topic_id))
         .order(forum_posts::id.desc())
         .offset(1)
-        .first::<ForumPost>(&data.db.conn)
+        .first::<ForumPost>(&mut data.db.conn)
         .optional()?;
 
     let mut prev_post_id: Option<Id> = None;
@@ -295,7 +299,8 @@ pub fn delete(data: RequestData) -> RequestResult {
         prev_post_create_ts = Some(fp.create_ts);
     }
 
-    topic::update_last_post(&data.db, topic_id, prev_post_id, prev_post_create_ts)?;
-    diesel::delete(forum_posts::table.filter(forum_posts::id.eq(req.id))).execute(&data.db.conn)?;
+    topic::update_last_post(&mut data.db, topic_id, prev_post_id, prev_post_create_ts)?;
+    diesel::delete(forum_posts::table.filter(forum_posts::id.eq(req.id)))
+        .execute(&mut data.db.conn)?;
     Ok(None)
 }

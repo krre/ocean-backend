@@ -8,7 +8,7 @@ lazy_static! {
     static ref USER_CACHE: Mutex<HashMap<String, types::User>> = Mutex::new(HashMap::new());
 }
 
-pub fn init(db: db::Db) {
+pub fn init(mut db: db::Db) {
     use crate::model::schema::user_groups;
     use crate::model::schema::user_groups::dsl::*;
     use crate::model::schema::users;
@@ -32,7 +32,7 @@ pub fn init(db: db::Db) {
             user_groups::code,
             users::blocked,
         ))
-        .load::<UserData>(&db.conn)
+        .load::<UserData>(&mut db.conn)
         .unwrap();
 
     for user_data in list {

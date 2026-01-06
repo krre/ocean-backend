@@ -1,11 +1,13 @@
-#[macro_use]
 extern crate diesel_migrations;
+use diesel_migrations::MigrationHarness;
 use log::info;
 use ocean::api::user_cache;
 use ocean::app;
 use ocean::db;
 
-embed_migrations!("migrations");
+use diesel_migrations::{EmbeddedMigrations, embed_migrations};
+
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -13,8 +15,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     info!("Ocean started");
 
-    let db = db::Db::new();
-    embedded_migrations::run_with_output(&db.conn, &mut std::io::stdout())?;
+    let mut db = db::Db::new();
+    db.conn.run_pending_migrations(MIGRATIONS)?;
 
     user_cache::init(db);
 

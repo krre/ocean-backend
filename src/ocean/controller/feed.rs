@@ -7,7 +7,7 @@ use diesel::sql_types::{Int4, Int8, Text, Timestamptz};
 use serde::{Deserialize, Serialize};
 
 // feed.getAll
-pub fn get_all(data: RequestData) -> RequestResult {
+pub fn get_all(mut data: RequestData) -> RequestResult {
     #[derive(Deserialize)]
     struct Req {
         limit: i32,
@@ -20,8 +20,9 @@ pub fn get_all(data: RequestData) -> RequestResult {
     struct Feed {
         #[sql_type = "Int4"]
         id: Id,
-        #[sql_type = "Int8"]
-        row: i64,
+        #[diesel(sql_type = Int8, column_name = "row")]
+        #[serde(rename = "row")]
+        row_number: i64,
         #[sql_type = "Int4"]
         title_id: Id,
         #[sql_type = "Text"]
@@ -67,7 +68,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
     )
     .bind::<Int4, _>(req.limit)
     .bind::<Int4, _>(req.offset)
-    .load::<Feed>(&data.db.conn)?;
+    .load::<Feed>(&mut data.db.conn)?;
 
     #[derive(QueryableByName)]
     struct TotalCount {
@@ -88,7 +89,7 @@ pub fn get_all(data: RequestData) -> RequestResult {
             (SELECT COUNT(*) FROM forum_topics) AS forum_topics_count,
             (SELECT COUNT(*) FROM forum_posts) AS forum_posts_count",
     )
-    .load::<TotalCount>(&data.db.conn)?;
+    .load::<TotalCount>(&mut data.db.conn)?;
 
     #[derive(Serialize)]
     struct Resp {
