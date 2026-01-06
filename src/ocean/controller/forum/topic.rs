@@ -261,7 +261,7 @@ pub fn update_last_post(
 
     #[derive(AsChangeset)]
     #[diesel(table_name = forum_topics)]
-    #[changeset_options(treat_none_as_null = "true")]
+    #[diesel(treat_none_as_null = true)]
     pub struct UpdateForumTopic {
         last_post_id: Option<Id>,
         last_post_create_ts: Option<NaiveDateTime>,
