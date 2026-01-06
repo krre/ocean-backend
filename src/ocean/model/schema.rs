@@ -1,3 +1,5 @@
+use diesel::prelude::*;
+
 table! {
     categories (id) {
         id -> Int4,
