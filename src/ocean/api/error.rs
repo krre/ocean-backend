@@ -1,7 +1,7 @@
-use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::error;
 use std::fmt;
+use std::sync::LazyLock;
 
 pub type ErrorCode = i32;
 
@@ -20,24 +20,22 @@ pub const NEXT_ID_EXPIRED: ErrorCode = 101;
 pub const ACCOUNT_BLOCKED: ErrorCode = 102;
 pub const ACCESS_DENIED: ErrorCode = 103;
 
-lazy_static! {
-    static ref ERROR_MESSAGES: HashMap<ErrorCode, &'static str> = {
-        let mut m = HashMap::new();
-        m.insert(PARSE_ERROR, "Parse error");
-        m.insert(CONTROLLER_NOT_FOUND, "Controller not found");
-        m.insert(METHOD_NOT_FOUND, "Method not found");
-        m.insert(PARAMETER_NOT_FOUND, "Parameter not found");
-        m.insert(INTERNAL_SERVER_ERROR, "Internal server error");
-        m.insert(INVALID_PARAMETER, "Invalid parameter");
-        m.insert(RECORD_NOT_FOUND, "Record not found");
+static ERROR_MESSAGES: LazyLock<HashMap<ErrorCode, &'static str>> = LazyLock::new(|| {
+    let mut m = HashMap::new();
+    m.insert(PARSE_ERROR, "Parse error");
+    m.insert(CONTROLLER_NOT_FOUND, "Controller not found");
+    m.insert(METHOD_NOT_FOUND, "Method not found");
+    m.insert(PARAMETER_NOT_FOUND, "Parameter not found");
+    m.insert(INTERNAL_SERVER_ERROR, "Internal server error");
+    m.insert(INVALID_PARAMETER, "Invalid parameter");
+    m.insert(RECORD_NOT_FOUND, "Record not found");
 
-        m.insert(WRONG_USER_PASSWORD, "Wrong user password");
-        m.insert(NEXT_ID_EXPIRED, "Next id expired");
-        m.insert(ACCOUNT_BLOCKED, "Account blocked");
-        m.insert(ACCESS_DENIED, "Access denied");
-        m
-    };
-}
+    m.insert(WRONG_USER_PASSWORD, "Wrong user password");
+    m.insert(NEXT_ID_EXPIRED, "Next id expired");
+    m.insert(ACCOUNT_BLOCKED, "Account blocked");
+    m.insert(ACCESS_DENIED, "Access denied");
+    m
+});
 
 #[derive(Debug)]
 pub struct Error {

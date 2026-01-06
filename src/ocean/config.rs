@@ -1,10 +1,8 @@
-use lazy_static::lazy_static;
 use serde_derive::Deserialize;
 use std::fs;
+use std::sync::LazyLock;
 
-lazy_static! {
-    pub static ref CONFIG: Config = Config::new();
-}
+pub static CONFIG: LazyLock<Config> = LazyLock::new(|| Config::new());
 
 #[derive(Debug, Deserialize)]
 pub struct Config {

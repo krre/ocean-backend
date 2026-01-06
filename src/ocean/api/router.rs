@@ -9,10 +9,10 @@ use http_body_util::{BodyExt, Full};
 use hyper::body::Buf;
 use hyper::body::Bytes;
 use hyper::{Method, Request, Response, StatusCode, body::Incoming as IncomingBody, header};
-use lazy_static::lazy_static;
 use log::{error, info};
 use std::collections::HashMap;
 use std::net::SocketAddr;
+use std::sync::LazyLock;
 
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
 type Result<T> = std::result::Result<T, GenericError>;
@@ -21,180 +21,178 @@ type ResponseResult = Result<Response<BoxBody>>;
 
 struct Rh(controller::RequestHandler);
 
-lazy_static! {
-    static ref METHODS: HashMap<String, Rh> = {
-        let mut m = HashMap::new();
-        m.insert("ping".to_string(), Rh(controller::ping));
-        m.insert(
-            "mandela.create".to_string(),
-            Rh(controller::mandela::create),
-        );
-        m.insert(
-            "mandela.update".to_string(),
-            Rh(controller::mandela::update),
-        );
-        m.insert(
-            "mandela.getOne".to_string(),
-            Rh(controller::mandela::get_one),
-        );
-        m.insert(
-            "mandela.getAll".to_string(),
-            Rh(controller::mandela::get_all),
-        );
-        m.insert(
-            "mandela.delete".to_string(),
-            Rh(controller::mandela::delete),
-        );
-        m.insert("mandela.mark".to_string(), Rh(controller::mandela::mark));
-        m.insert("mandela.vote".to_string(), Rh(controller::mandela::vote));
-        m.insert(
-            "mandela.getVoteUsers".to_string(),
-            Rh(controller::mandela::get_vote_users),
-        );
-        m.insert(
-            "mandela.updateTrash".to_string(),
-            Rh(controller::mandela::update_trash),
-        );
-        m.insert(
-            "user.getNextId".to_string(),
-            Rh(controller::user::get_next_id),
-        );
-        m.insert("user.create".to_string(), Rh(controller::user::create));
-        m.insert("user.delete".to_string(), Rh(controller::user::delete));
-        m.insert("user.auth".to_string(), Rh(controller::user::auth));
-        m.insert("user.logout".to_string(), Rh(controller::user::logout));
-        m.insert("user.getOne".to_string(), Rh(controller::user::get_one));
-        m.insert("user.update".to_string(), Rh(controller::user::update));
-        m.insert(
-            "user.updateToken".to_string(),
-            Rh(controller::user::update_token),
-        );
-        m.insert(
-            "user.updateProfile".to_string(),
-            Rh(controller::user::update_profile),
-        );
-        m.insert(
-            "comment.create".to_string(),
-            Rh(controller::comment::create),
-        );
-        m.insert(
-            "comment.getAll".to_string(),
-            Rh(controller::comment::get_all),
-        );
-        m.insert(
-            "comment.update".to_string(),
-            Rh(controller::comment::update),
-        );
-        m.insert(
-            "comment.delete".to_string(),
-            Rh(controller::comment::delete),
-        );
-        m.insert("like.create".to_string(), Rh(controller::like::create));
-        m.insert("like.delete".to_string(), Rh(controller::like::delete));
-        m.insert("like.getUsers".to_string(), Rh(controller::like::get_users));
-        m.insert("search.getAll".to_string(), Rh(controller::search::get_all));
-        m.insert(
-            "rating.getMandels".to_string(),
-            Rh(controller::rating::get_mandels),
-        );
-        m.insert(
-            "rating.getUsers".to_string(),
-            Rh(controller::rating::get_users),
-        );
-        m.insert("forum.getAll".to_string(), Rh(controller::forum::get_all));
-        m.insert("forum.getNew".to_string(), Rh(controller::forum::get_new));
-        m.insert(
-            "forum.category.create".to_string(),
-            Rh(controller::forum::category::create),
-        );
-        m.insert(
-            "forum.category.getOne".to_string(),
-            Rh(controller::forum::category::get_one),
-        );
-        m.insert(
-            "forum.category.update".to_string(),
-            Rh(controller::forum::category::update),
-        );
-        m.insert(
-            "forum.category.delete".to_string(),
-            Rh(controller::forum::category::delete),
-        );
-        m.insert(
-            "forum.section.create".to_string(),
-            Rh(controller::forum::section::create),
-        );
-        m.insert(
-            "forum.section.getAll".to_string(),
-            Rh(controller::forum::section::get_all),
-        );
-        m.insert(
-            "forum.section.getOne".to_string(),
-            Rh(controller::forum::section::get_one),
-        );
-        m.insert(
-            "forum.section.update".to_string(),
-            Rh(controller::forum::section::update),
-        );
-        m.insert(
-            "forum.section.delete".to_string(),
-            Rh(controller::forum::section::delete),
-        );
-        m.insert(
-            "forum.topic.getAll".to_string(),
-            Rh(controller::forum::topic::get_all),
-        );
-        m.insert(
-            "forum.topic.getOne".to_string(),
-            Rh(controller::forum::topic::get_one),
-        );
-        m.insert(
-            "forum.topic.create".to_string(),
-            Rh(controller::forum::topic::create),
-        );
-        m.insert(
-            "forum.topic.update".to_string(),
-            Rh(controller::forum::topic::update),
-        );
-        m.insert(
-            "forum.topic.delete".to_string(),
-            Rh(controller::forum::topic::delete),
-        );
-        m.insert(
-            "forum.topic.vote".to_string(),
-            Rh(controller::forum::topic::vote),
-        );
-        m.insert(
-            "forum.topic.getVoteUsers".to_string(),
-            Rh(controller::forum::topic::get_vote_users),
-        );
-        m.insert(
-            "forum.post.getAll".to_string(),
-            Rh(controller::forum::post::get_all),
-        );
-        m.insert(
-            "forum.post.getOne".to_string(),
-            Rh(controller::forum::post::get_one),
-        );
-        m.insert(
-            "forum.post.create".to_string(),
-            Rh(controller::forum::post::create),
-        );
-        m.insert(
-            "forum.post.update".to_string(),
-            Rh(controller::forum::post::update),
-        );
-        m.insert(
-            "forum.post.delete".to_string(),
-            Rh(controller::forum::post::delete),
-        );
-        m.insert(
-            "activity.getAll".to_string(),
-            Rh(controller::activity::get_all),
-        );
-        m.insert("feed.getAll".to_string(), Rh(controller::feed::get_all));
-        m
-    };
-}
+static METHODS: LazyLock<HashMap<String, Rh>> = LazyLock::new(|| {
+    let mut m = HashMap::new();
+    m.insert("ping".to_string(), Rh(controller::ping));
+    m.insert(
+        "mandela.create".to_string(),
+        Rh(controller::mandela::create),
+    );
+    m.insert(
+        "mandela.update".to_string(),
+        Rh(controller::mandela::update),
+    );
+    m.insert(
+        "mandela.getOne".to_string(),
+        Rh(controller::mandela::get_one),
+    );
+    m.insert(
+        "mandela.getAll".to_string(),
+        Rh(controller::mandela::get_all),
+    );
+    m.insert(
+        "mandela.delete".to_string(),
+        Rh(controller::mandela::delete),
+    );
+    m.insert("mandela.mark".to_string(), Rh(controller::mandela::mark));
+    m.insert("mandela.vote".to_string(), Rh(controller::mandela::vote));
+    m.insert(
+        "mandela.getVoteUsers".to_string(),
+        Rh(controller::mandela::get_vote_users),
+    );
+    m.insert(
+        "mandela.updateTrash".to_string(),
+        Rh(controller::mandela::update_trash),
+    );
+    m.insert(
+        "user.getNextId".to_string(),
+        Rh(controller::user::get_next_id),
+    );
+    m.insert("user.create".to_string(), Rh(controller::user::create));
+    m.insert("user.delete".to_string(), Rh(controller::user::delete));
+    m.insert("user.auth".to_string(), Rh(controller::user::auth));
+    m.insert("user.logout".to_string(), Rh(controller::user::logout));
+    m.insert("user.getOne".to_string(), Rh(controller::user::get_one));
+    m.insert("user.update".to_string(), Rh(controller::user::update));
+    m.insert(
+        "user.updateToken".to_string(),
+        Rh(controller::user::update_token),
+    );
+    m.insert(
+        "user.updateProfile".to_string(),
+        Rh(controller::user::update_profile),
+    );
+    m.insert(
+        "comment.create".to_string(),
+        Rh(controller::comment::create),
+    );
+    m.insert(
+        "comment.getAll".to_string(),
+        Rh(controller::comment::get_all),
+    );
+    m.insert(
+        "comment.update".to_string(),
+        Rh(controller::comment::update),
+    );
+    m.insert(
+        "comment.delete".to_string(),
+        Rh(controller::comment::delete),
+    );
+    m.insert("like.create".to_string(), Rh(controller::like::create));
+    m.insert("like.delete".to_string(), Rh(controller::like::delete));
+    m.insert("like.getUsers".to_string(), Rh(controller::like::get_users));
+    m.insert("search.getAll".to_string(), Rh(controller::search::get_all));
+    m.insert(
+        "rating.getMandels".to_string(),
+        Rh(controller::rating::get_mandels),
+    );
+    m.insert(
+        "rating.getUsers".to_string(),
+        Rh(controller::rating::get_users),
+    );
+    m.insert("forum.getAll".to_string(), Rh(controller::forum::get_all));
+    m.insert("forum.getNew".to_string(), Rh(controller::forum::get_new));
+    m.insert(
+        "forum.category.create".to_string(),
+        Rh(controller::forum::category::create),
+    );
+    m.insert(
+        "forum.category.getOne".to_string(),
+        Rh(controller::forum::category::get_one),
+    );
+    m.insert(
+        "forum.category.update".to_string(),
+        Rh(controller::forum::category::update),
+    );
+    m.insert(
+        "forum.category.delete".to_string(),
+        Rh(controller::forum::category::delete),
+    );
+    m.insert(
+        "forum.section.create".to_string(),
+        Rh(controller::forum::section::create),
+    );
+    m.insert(
+        "forum.section.getAll".to_string(),
+        Rh(controller::forum::section::get_all),
+    );
+    m.insert(
+        "forum.section.getOne".to_string(),
+        Rh(controller::forum::section::get_one),
+    );
+    m.insert(
+        "forum.section.update".to_string(),
+        Rh(controller::forum::section::update),
+    );
+    m.insert(
+        "forum.section.delete".to_string(),
+        Rh(controller::forum::section::delete),
+    );
+    m.insert(
+        "forum.topic.getAll".to_string(),
+        Rh(controller::forum::topic::get_all),
+    );
+    m.insert(
+        "forum.topic.getOne".to_string(),
+        Rh(controller::forum::topic::get_one),
+    );
+    m.insert(
+        "forum.topic.create".to_string(),
+        Rh(controller::forum::topic::create),
+    );
+    m.insert(
+        "forum.topic.update".to_string(),
+        Rh(controller::forum::topic::update),
+    );
+    m.insert(
+        "forum.topic.delete".to_string(),
+        Rh(controller::forum::topic::delete),
+    );
+    m.insert(
+        "forum.topic.vote".to_string(),
+        Rh(controller::forum::topic::vote),
+    );
+    m.insert(
+        "forum.topic.getVoteUsers".to_string(),
+        Rh(controller::forum::topic::get_vote_users),
+    );
+    m.insert(
+        "forum.post.getAll".to_string(),
+        Rh(controller::forum::post::get_all),
+    );
+    m.insert(
+        "forum.post.getOne".to_string(),
+        Rh(controller::forum::post::get_one),
+    );
+    m.insert(
+        "forum.post.create".to_string(),
+        Rh(controller::forum::post::create),
+    );
+    m.insert(
+        "forum.post.update".to_string(),
+        Rh(controller::forum::post::update),
+    );
+    m.insert(
+        "forum.post.delete".to_string(),
+        Rh(controller::forum::post::delete),
+    );
+    m.insert(
+        "activity.getAll".to_string(),
+        Rh(controller::activity::get_all),
+    );
+    m.insert("feed.getAll".to_string(), Rh(controller::feed::get_all));
+    m
+});
 
 pub async fn route(req: Request<IncomingBody>, addr: SocketAddr) -> ResponseResult {
     if req.method() != Method::POST || req.uri().path() != "/api" {

@@ -1,13 +1,12 @@
 use crate::db;
 use crate::types;
 use diesel::prelude::*;
-use lazy_static::lazy_static;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 use std::sync::Mutex;
 
-lazy_static! {
-    static ref USER_CACHE: Mutex<HashMap<String, types::User>> = Mutex::new(HashMap::new());
-}
+static USER_CACHE: LazyLock<Mutex<HashMap<String, types::User>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 pub fn init(mut db: db::Db) {
     use crate::model::schema::user_groups;
