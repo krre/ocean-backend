@@ -335,7 +335,11 @@ pub fn vote(mut data: RequestData) -> RequestResult {
 pub fn get_poll(db: &mut db::Db, topic_id: Id, user_id: Id) -> Vec<Poll> {
     diesel::dsl::sql_query(
         "SELECT fpa.id, answer, COUNT(fpv.*),
-            (SELECT true AS voted FROM forum_poll_votes WHERE answer_id = fpa.id AND user_id = $2) AS voted
+            EXISTS (
+                SELECT 1
+                FROM forum_poll_votes
+                WHERE answer_id = fpa.id AND user_id = $2
+            ) AS voted
         FROM forum_poll_answers AS fpa
             LEFT JOIN forum_poll_votes AS fpv ON fpv.answer_id = fpa.id
         WHERE fpa.topic_id = $1
