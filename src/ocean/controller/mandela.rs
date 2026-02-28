@@ -438,23 +438,23 @@ pub fn get_all(mut data: RequestData) -> RequestResult {
 
     if let Some(filter_user_id) = req.user_id {
         query = query.filter(mandels::user_id.eq(filter_user_id));
-    } else {
-        match req.filter.unwrap_or(SHOW_ALL) {
-            SHOW_ALL => query = query.filter(mandels::trash.eq(false)),
-            SHOW_NEW => query = query.filter(marks::create_ts.is_null()),
-            SHOW_MINE => query = query.filter(mandels::user_id.eq(data.user.id)),
-            SHOW_POLL => query = query.filter(votes::create_ts.is_null()),
-            SHOW_TRASH => query = query.filter(mandels::trash.eq(true)),
-            SHOW_CATEGORY => {
-                if let Some(category_num) = req.category {
-                    let category_exists = categories::table
-                        .filter(categories::mandela_id.eq(mandels::id))
-                        .filter(categories::number.eq(category_num));
-                    query = query.filter(diesel::dsl::exists(category_exists));
-                }
+    }
+
+    match req.filter.unwrap_or(SHOW_ALL) {
+        SHOW_ALL => query = query.filter(mandels::trash.eq(false)),
+        SHOW_NEW => query = query.filter(marks::create_ts.is_null()),
+        SHOW_MINE => query = query.filter(mandels::user_id.eq(data.user.id)),
+        SHOW_POLL => query = query.filter(votes::create_ts.is_null()),
+        SHOW_TRASH => query = query.filter(mandels::trash.eq(true)),
+        SHOW_CATEGORY => {
+            if let Some(category_num) = req.category {
+                let category_exists = categories::table
+                    .filter(categories::mandela_id.eq(mandels::id))
+                    .filter(categories::number.eq(category_num));
+                query = query.filter(diesel::dsl::exists(category_exists));
             }
-            _ => query = query.filter(mandels::trash.eq(false)),
         }
+        _ => query = query.filter(mandels::trash.eq(false)),
     }
 
     const SORT_MANDELA: i8 = 0;
